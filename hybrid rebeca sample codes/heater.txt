@@ -1,0 +1,63 @@
+physicalclass HeaterWithSensor(3)
+{
+	knownrebecs{
+		Controller controller;
+	}
+	statevars{
+		@Real float tempr;
+		@Real float timer;
+	}
+
+	HeaterWithSensor(float tempr_){
+		tempr = tempr_;
+		setMode(On);
+	}
+
+	mode On{
+		inv(timer<=0.05){
+			timer' = 1;
+			tempr' = 0.1f;
+		}
+		guard(timer==0.05){
+			timer = 0;
+			controller.control(tempr);
+		}
+	}
+
+	mode Off{
+		inv(timer<=0.05){
+			timer' = 1;
+			tempr' = -0.1f;
+		}
+		guard(timer==0.05){
+			timer = 0;
+			controller.control(tempr);
+		}
+	}
+}
+
+reactiveclass Controller(3)
+{
+	knownrebecs {
+		HeaterWithSensor hws;
+	}
+	statevars {}
+
+	msgsrv initial(){
+	}
+
+	msgsrv control(float tempr)
+	{
+		if(tempr >= 22)
+			hws.setMode(Off);
+
+		if(tempr <= 18)
+			hws.setMode(On);
+	}
+}
+
+main
+{
+	HeaterWithSensor hws(@Wire controller):(20);
+	Controller controller (@Wire hws):();
+}

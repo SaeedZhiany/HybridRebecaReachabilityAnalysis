@@ -1,0 +1,85 @@
+hybrid reachability
+{
+ state var x1, x2,u,GT,LT,LT2,jx
+
+ par
+ {
+	period = 0.2 gran = 0.05 tmp = 2
+ }
+ 
+ setting
+ {
+  fixed steps 0.01
+  time 5
+  remainder estimation 1e-5
+  identity precondition
+  gnuplot octagon x1,GT
+  fixed orders 5
+  cutoff 1e-15
+  precision 128
+  output testNew5
+  max jumps 6
+  print on
+ }
+
+ modes
+ {
+  TE
+  {
+   nonpoly ode
+   {
+    x1' = 0.55 * x1 - 0.4 * x2 + u
+    x2' = 0.3 * x1 - 0.7 * x2 + u
+	
+    LT' = -1
+    LT2' = -1
+    GT' =1
+    jx'=0
+    u'=0
+   }
+   
+   inv
+   {
+    LT>=0
+    LT2>=0
+   }
+  }
+
+}
+
+ jumps
+ {
+
+  TE -> TE 
+  guard { LT <= 0 } 
+  reset { u':=-1.35*x1 - (0.01*x2) LT':=period}
+  parallelotope aggregation {}
+
+  TE -> TE 
+  guard { LT2 <= 0 } 
+  reset { jx' := jx + (tmp*tmp) LT2':=gran}
+  parallelotope aggregation {}
+
+ }
+ 
+ init
+ {
+  TE
+  {
+   x1 in [0.5,0.5]
+   x2 in [0,0]
+   u in [0,0]
+   LT in [0.2,0.2]
+   LT2 in [0.01,0.01]
+   GT in [0,0]
+  }
+ }
+}
+
+ unsafe
+ {
+  TE
+   {
+    x1 >= 50
+   }
+ }

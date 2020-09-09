@@ -1,0 +1,152 @@
+hybrid reachability
+{
+  state var p,p_dot,teta,teta_dot,u1,u2,c2,c3,c4,p_temp,p_dot_temp,teta_temp,teta_dot_temp,RN,nRT,LT2,GT , Vx0,v,v2,s
+
+  par{
+    Tmin = 0.05     Tmax = 0.3       L = 0.046       LLM = -0.092       LM= -0.046  
+    q11 = 1.666     q12 = 0.768      q13 = -1.859    q14 = -0.248
+    q21 = 0.768     q22 = 0.991      q23 = -2.642    q24 = -0.361
+    q31 = -1.859    q32 = -2.642     q33 = 9.623     q34 = 1.139
+    q41 = -0.248    q42 = -0.361     q43 = 1.139     q44 = 0.202
+    error=0.01
+    
+  }
+  setting
+  {
+    fixed steps 0.001
+    time 2
+    remainder estimation 1e-12
+    QR precondition
+    gnuplot octagon GT,v2
+    adaptive orders {min 100,max 1000}
+    cutoff 1e-12
+    precision 128
+    output stc15_v2 
+    max jumps 1
+    print on
+  }
+ 
+ modes
+ {
+    Sys
+    {
+      nonpoly ode
+      {
+        p' = 1.38 * p - 0.20 * p_dot + 6.71 *teta - 5.67 * teta_dot 
+        p_dot' = -0.58 * p - 4.29 * p_dot + 0.67 * teta_dot + c2
+        teta' = 1.067 * p + 4.27 * p_dot - 6.65 * teta + 5.89 * teta_dot + c3
+        teta_dot'= 0.04 * p + 4.27 * p_dot + 1.34 * teta - 2.10 * teta_dot + c4
+        GT'=1
+        nRT'=-1
+        v2'= p * (3.5663 * p + 0.7326 * p_dot + 3.673 * teta - 1.3706 * teta_dot) + p_dot * (-0.0584 * p_dot + 1.2934 * teta + 1.3654 * teta_dot) + teta * ( -2.8033 * teta + 4.251 * teta_dot) + teta_dot * (-1.7199 * teta_dot)
+        u1'=0
+        u2'=0
+        c2'=0
+        c3'=0
+        c4'=0
+        p_temp'=0
+        p_dot_temp'=0
+        teta_temp'=0
+        teta_dot_temp'=0
+        RN'=0
+        LT2'=0
+        s'=0
+        Vx0'=0
+        v'=0
+      }
+   
+      inv
+      {
+        nRT>=error
+      }
+    }
+    
+    calcnRT
+    {
+      nonpoly ode
+      {
+        p_temp' = 1.38 * p_temp - 0.20 * p_dot_temp + 6.71 *teta_temp - 5.67 * teta_dot_temp 
+        p_dot_temp' = -0.58 * p_temp - 4.29 * p_dot_temp + 0.67 * teta_dot_temp + c2
+        teta_temp' = 1.067 * p_temp + 4.27 * p_dot_temp - 6.65 * teta_temp + 5.89 * teta_dot_temp + c3
+        teta_dot_temp'= 0.04 * p_temp + 4.27 * p_dot_temp + 1.34 * teta_temp - 2.10 * teta_dot_temp + c4
+        LT2'=1
+        nRT'=1
+        Vx0'=0
+        v'=-p_temp*p_temp-p_dot_temp*p_dot_temp-teta_temp*teta_temp-teta_dot_temp*teta_dot_temp-(4.0736*p_temp + 26.7644*p_dot_temp + 7.9792*teta_temp + 19.3356*teta_dot_temp)*c2 - (2.5902*p_temp + 19.3356*p_dot_temp + 5.404*teta_temp + 13.856*teta_dot_temp)*c4 - (1.6956*p_temp + 7.9792*p_dot_temp + 2.6494*teta_temp + 5.404*teta_dot_temp)*c3
+        s'=LM*Vx0*exp(LM*nRT)
+        p'=0
+        p_dot'=0
+        teta'=0
+        teta_dot'=0
+        u1'=0
+        u2'=0
+        c2'=0
+        c3'=0
+        c4'=0
+        RN'=0
+        GT'=0
+        v2'=0
+      }
+   
+      inv
+      {
+      	v-s<=0
+      	LT2<=Tmin
+        nRT<=Tmax
+      }
+    }
+ }
+ 
+  jumps
+  {
+    Sys -> calcnRT 
+    guard { nRT <= error } 
+    reset { RN' := RN + 1   u1' := 0.76*p - 0.45*p_dot + 0.70*teta - 1.02*teta_dot  u2':= 1.11*p + 0.41*p_dot - 0.18*teta + 0.64*teta_dot   c2':= 5.67*u1   c3':= 1.13*u1 - 3.14*u2   c4':= 1.13*u1  p_temp' := p  p_dot_temp' := p_dot  teta_temp' := teta  teta_dot_temp' := teta_dot   Vx0':= v2   v':= v2  s':= v2   nRT':=0}
+    parallelotope aggregation {}
+
+    calcnRT -> calcnRT 
+    guard { LT2 >= Tmin  v-s<= 0 } 
+    reset { LT2' := 0 }
+    parallelotope aggregation {}
+  
+    calcnRT -> Sys 
+    guard { LT2 >= Tmin  	v-s >= 0 } 
+    reset { nRT' := nRT-Tmin  v2':=v}
+    parallelotope aggregation {}
+
+    calcnRT -> Sys 
+    guard { nRT = Tmax } 
+    reset { nRT':= Tmax   v2':=v}
+    parallelotope aggregation {}
+ 
+  }
+ 
+  init
+  {
+    Sys
+    {
+        p_dot in [0,0]
+        p in [20,20]
+        teta_dot in [0,0]
+        teta in [10,10]
+        u1 in [0,0]
+        u2 in [0,0]
+        c2 in [0,0]
+        c3 in [0,0]
+        c4 in [0,0]
+        GT in [0,0]
+
+        p_temp in [0.01,0.01]
+        p_dot_temp in [0.01,0.01]
+        teta_temp in [0.01,0.01]
+        teta_dot_temp in [0.01,0.01]
+
+        RN in [0,0]
+        nRT in [0.1,0.1]
+        LT2 in [0,0]
+        s in [0.01,0.01]
+        Vx0 in [0.01,0.01]
+        v2 in [659.46,659.46]
+    }
+  }
+}

@@ -1,0 +1,157 @@
+hybrid reachability
+{
+  state var x1, x2, x3, x4, u1, u2, c2, c3, c4, x1_tmp, x2_tmp, x3_tmp, x4_tmp, RN, nRT, nRT_tmp, LT2, GT, Vx0, v, v2, s, tmp
+
+  par{
+    Tmin = 0.05     Tmax = 0.3       L = 0.046       LLM = -0.092       LM= -0.046  
+    error=0.01
+    
+  }
+  setting
+  {
+    fixed steps 0.001
+    time 2
+    remainder estimation 1e-12
+    QR precondition
+    gnuplot octagon GT,nRT
+    adaptive orders {min 100,max 1000}
+    cutoff 1e-12
+    precision 128
+    output stc16_1 
+    max jumps 5
+    print on
+  }
+ 
+ modes
+ {
+    Sys
+    {
+      nonpoly ode
+      {
+        x1' = 1.38 * x1 - 0.20 * x2 + 6.71 *x3 - 5.67 * x4 
+        x2' = -0.58 * x1 - 4.29 * x2 + 0.67 * x4 + c2
+        x3' = 1.067 * x1 + 4.27 * x2 - 6.65 * x3 + 5.89 * x4 + c3
+        x4'= 0.04 * x1 + 4.27 * x2 + 1.34 * x3 - 2.10 * x4 + c4
+        GT'=1
+        nRT'=-1
+        v2'= x1 * (3.5663 * x1 + 0.7326 * x2 + 3.673 * x3 - 1.3706 * x4) + x2 * (-0.0584 * x2 + 1.2934 * x3 + 1.3654 * x4) + x3 * ( -2.8033 * x3 + 4.251 * x4) + x4 * (-1.7199 * x4) + c2*(-0.0324*x1+0.2678*x2) +
+        c3*(1.3292*x1+1.5738*x3) + c4*(1.2002*x4 - 1.097*x1) + 0.1044 * (c3*x2 + c2*x3) + 0.1494*(c4*x2+c2*x4) - 0.9372 * (c3*x4 + c4*x3)
+        u1'=0
+        u2'=0
+        c2'=0
+        c3'=0
+        c4'=0
+        x1_tmp'=0
+        x2_tmp'=0
+        x3_tmp'=0
+        x4_tmp'=0
+        RN'=0
+        LT2'=0
+        s'=0
+        Vx0'=0
+        v'=0
+        tmp'=0
+      }
+   
+      inv
+      {
+        nRT>=error
+	  }
+    }
+    
+    
+    calcnRT
+    {
+      nonpoly ode
+      {
+        x1_tmp' = 1.38 * x1_tmp - 0.20 * x2_tmp + 6.71 *x3_tmp - 5.67 * x4_tmp 
+        x2_tmp' = -0.58 * x1_tmp - 4.29 * x2_tmp + 0.67 * x4_tmp + c2
+        x3_tmp' = 1.067 * x1_tmp + 4.27 * x2_tmp - 6.65 * x3_tmp + 5.89 * x4_tmp + c3
+        x4_tmp'= 0.04 * x1_tmp + 4.27 * x2_tmp + 1.34 * x3_tmp - 2.10 * x4_tmp + c4
+        LT2'=1
+        nRT'=0
+        nRT_tmp'=0
+        Vx0'=0
+        v'= x1_tmp * (3.5663 * x1_tmp + 0.7326 * x2_tmp + 3.673 * x3_tmp - 1.3706 * x4_tmp) + x2_tmp * (-0.0584 * x2_tmp + 1.2934 * x3_tmp + 1.3654 * x4_tmp) + x3_tmp * ( -2.8033 * x3_tmp + 4.251 * x4_tmp) + x4_tmp * (-1.7199 * x4_tmp)
+         + c2*(-0.0324 * x1_tmp + 0.2678 * x2_tmp) + c3*(1.3292 * x1_tmp + 1.5738 * x3_tmp) + c4*(1.2002 * x4_tmp - 1.097 * x1_tmp) + 0.1044 * (c3 * x2_tmp + c2 * x3_tmp)
+         + 0.1494*(c4 * x2_tmp + c2 * x4_tmp) - 0.9372 * (c3 * x4_tmp + c4 * x3_tmp)
+        s'= LM*Vx0*exp(LM*nRT_tmp)
+        x1'=0
+        x2'=0
+        x3'=0
+        x4'=0
+        u1'=0
+        u2'=0
+        c2'=0
+        c3'=0
+        c4'=0
+        RN'=0
+        GT'=0
+        v2'=0
+        tmp'=0
+      }
+   
+      inv
+      {
+      	LT2<=Tmin
+        nRT_tmp<=Tmax
+      }
+    }
+ }
+ 
+  jumps
+  {
+    Sys -> calcnRT 
+    guard { nRT <= error } 
+    reset { RN' := RN + 1 u1' := 0.76*x1 - 0.45*x2 + 0.70*x3 - 1.02*x4  u2':= 1.11*x1 + 0.41*x2 - 0.18*x3 + 0.64*x4   c2':= 5.67*(0.76*x1 - 0.45*x2 + 0.70*x3 - 1.02*x4)   c3':= 1.13*(0.76*x1 - 0.45*x2 + 0.70*x3 - 1.02*x4) - 3.14*(1.11*x1 + 0.41*x2 - 0.18*x3 + 0.64*x4)   c4':= 1.13*(0.76*x1 - 0.45*x2 + 0.70*x3 - 1.02*x4)  x1_tmp' := x1  x2_tmp' := x2  x3_tmp' := x3  x4_tmp' := x4   Vx0':= v2   v':= v2  s':= v2 LT2':=0 nRT_tmp':=0}
+    parallelotope aggregation {}
+
+    calcnRT -> calcnRT 
+    guard { LT2 >= Tmin  v-s<= 0 } 
+    reset { LT2' := 0 }
+    parallelotope aggregation {}
+  
+    calcnRT -> Sys 
+    guard { LT2 >= Tmin  	v-s >= 0 } 
+    reset { nRT' := nRT_tmp-Tmin  v2':=v}
+    parallelotope aggregation {}
+
+    calcnRT -> Sys 
+    guard { nRT_tmp = Tmax } 
+    reset { nRT':= Tmax   v2':=v}
+    parallelotope aggregation {}
+ 
+  }
+ 
+  init
+  {
+    Sys
+    {
+        x2 in [0,0]
+        x1 in [20,20]
+        x4 in [0,0]
+        x3 in [10,10]
+        u1 in [0,0]
+        u2 in [0,0]
+        c2 in [0,0]
+        c3 in [0,0]
+        c4 in [0,0]
+        GT in [0,0]
+
+        x1_tmp in [0.01,0.01]
+        x2_tmp in [0.01,0.01]
+        x3_tmp in [0.01,0.01]
+        x4_tmp in [0.01,0.01]
+
+        RN in [0,0]
+        nRT in [0.05,0.05]
+        nRT_tmp in [0.0,0.0]
+        LT2 in [0,0]
+        s in [0.01,0.01]
+        Vx0 in [0.01,0.01]
+        v2 in [659.46,659.46]
+        
+        tmp in [0,0]
+    }
+  }
+}

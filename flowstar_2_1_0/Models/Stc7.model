@@ -1,0 +1,140 @@
+hybrid reachability
+{
+  state var p,p_dot,teta,teta_dot,u,p_temp,p_dot_temp,teta_temp,teta_dot_temp,RN,nRT,LT2,GT , Vx0,v,v2,s
+
+  par{
+    Tmin = 0.05     Tmax = 0.3       L = 0.046       LLM = -0.092       LM= -0.046  
+    q11 = 1.666     q12 = 0.768      q13 = -1.859    q14 = -0.248
+    q21 = 0.768     q22 = 0.991      q23 = -2.642    q24 = -0.361
+    q31 = -1.859    q32 = -2.642     q33 = 9.623     q34 = 1.139
+    q41 = -0.248    q42 = -0.361     q43 = 1.139     q44 = 0.202
+    error=0.01
+    
+  }
+  setting
+  {
+    fixed steps 0.001
+    time 2
+    remainder estimation 1e-12
+    QR precondition
+    gnuplot octagon GT,p_temp
+    adaptive orders {min 100,max 1000}
+    cutoff 1e-12
+    precision 128
+    output stc07
+    max jumps 5
+    print on
+  }
+ 
+ modes
+ {
+    Sys
+    {
+      nonpoly ode
+      {
+        p_dot' = -0.01 * p + 1.02 * teta + 0.1 * u
+        p' = p_dot
+        teta_dot'= -0.038 * p_dot + 41.3 * teta + 0.38 * u
+        teta' = teta_dot
+        GT'=1
+        nRT'=-1
+        v2'=-(p*p)-(p_dot*p_dot)-(teta*teta)-(teta_dot*teta_dot)
+        u'=0
+        p_temp'=0
+        p_dot_temp'=0
+        teta_temp'=0
+        teta_dot_temp'=0
+        RN'=0
+        LT2'=0
+        s'=0
+        Vx0'=0
+        v'=0
+      }
+   
+      inv
+      {
+        nRT>=error
+      }
+    }
+    
+    calcnRT
+    {
+      nonpoly ode
+      {
+        p_dot_temp' = -0.01 * p_temp + 1.02 * teta_temp + 0.1 * u
+        p_temp' = p_dot_temp
+        teta_dot_temp'= -0.038 * p_dot_temp + 41.3 * teta_temp + 0.38 * u
+        teta_temp' = teta_dot_temp
+        LT2'=1
+        nRT'=1
+        Vx0'=0
+        v'=-(p_temp*p_temp)-(p_dot_temp*p_dot_temp)-(teta_temp*teta_temp)-(teta_dot_temp*teta_dot_temp)
+        s'=LM*Vx0*exp(LM*nRT)
+        p'=0
+        p_dot'=0
+        teta'=0
+        teta_dot'=0
+        u'=0
+        RN'=0
+        GT'=0
+        v2'=0
+      }
+   
+      inv
+      {
+      	v-s<=0
+      	LT2<=Tmin
+        nRT<=Tmax
+      }
+    }
+ }
+ 
+  jumps
+  {
+    Sys -> calcnRT 
+    guard { nRT <= error } 
+    reset { RN' := RN + 1   u' := 28.32*p + 33.37*p_dot - 267.56*teta - 40.66*teta_dot  p_temp' := p  p_dot_temp' := p_dot  teta_temp' := teta  teta_dot_temp' := teta_dot   Vx0':= v2   v':= v2  s':= v2   nRT':=0}
+    parallelotope aggregation {}
+
+    calcnRT -> calcnRT 
+    guard { LT2 >= Tmin  v-s<= 0 } 
+    reset { LT2' := 0 }
+    parallelotope aggregation {}
+  
+    calcnRT -> Sys 
+    guard { LT2 >= Tmin  	v-s >= 0 } 
+    reset { nRT' := nRT-Tmin  v2':=v}
+    parallelotope aggregation {}
+
+    calcnRT -> Sys 
+    guard { nRT = Tmax } 
+    reset { nRT':= Tmax   v2':=v}
+    parallelotope aggregation {}
+ 
+  }
+ 
+  init
+  {
+    Sys
+    {
+        p_dot in [0,0]
+        p in [20,20]
+        teta_dot in [0,0]
+        teta in [10,10]
+        u in [0,0]
+        GT in [0,0]
+
+        p_temp in [0.01,0.01]
+        p_dot_temp in [0.01,0.01]
+        teta_temp in [0.01,0.01]
+        teta_dot_temp in [0.01,0.01]
+
+        RN in [0,0]
+        nRT in [0.1,0.1]
+        LT2 in [0,0]
+        s in [0.01,0.01]
+        Vx0 in [0.01,0.01]
+        v2 in [885.100,885.100]
+    }
+  }
+}

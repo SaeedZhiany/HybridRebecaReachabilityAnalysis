@@ -1,0 +1,218 @@
+mode: l,	time = 0.100000,	step = 0.100000,	order = 5
+mode: l,	time = 0.200000,	step = 0.100000,	order = 5
+mode: l,	time = 0.300000,	step = 0.100000,	order = 5
+mode: l,	time = 0.400000,	step = 0.100000,	order = 5
+mode: l,	time = 0.500000,	step = 0.100000,	order = 5
+mode: l,	time = 0.600000,	step = 0.100000,	order = 5
+mode: l,	time = 0.700000,	step = 0.100000,	order = 5
+mode: l,	time = 0.800000,	step = 0.100000,	order = 5
+mode: l,	time = 0.900000,	step = 0.100000,	order = 5
+mode: l,	time = 1.000000,	step = 0.100000,	order = 5
+mode: l,	time = 1.100000,	step = 0.100000,	order = 5
+mode: l,	time = 1.200000,	step = 0.100000,	order = 5
+mode: l,	time = 1.300000,	step = 0.100000,	order = 5
+mode: l,	time = 1.400000,	step = 0.100000,	order = 5
+mode: l,	time = 1.442051,	step = 0.042051,	order = 5
+Dealing with the jump from l to l ...
+Done.
+mode: l,	time = 0.100000,	step = 0.100000,	order = 5
+mode: l,	time = 0.200000,	step = 0.100000,	order = 5
+mode: l,	time = 0.300000,	step = 0.100000,	order = 5
+mode: l,	time = 0.400000,	step = 0.100000,	order = 5
+mode: l,	time = 0.500000,	step = 0.100000,	order = 5
+mode: l,	time = 0.600000,	step = 0.100000,	order = 5
+mode: l,	time = 0.700000,	step = 0.100000,	order = 5
+mode: l,	time = 0.800000,	step = 0.100000,	order = 5
+mode: l,	time = 0.900000,	step = 0.100000,	order = 5
+mode: l,	time = 1.000000,	step = 0.100000,	order = 5
+mode: l,	time = 1.100000,	step = 0.100000,	order = 5
+mode: l,	time = 1.200000,	step = 0.100000,	order = 5
+mode: l,	time = 1.300000,	step = 0.100000,	order = 5
+mode: l,	time = 1.400000,	step = 0.100000,	order = 5
+mode: l,	time = 1.500000,	step = 0.100000,	order = 5
+mode: l,	time = 1.600000,	step = 0.100000,	order = 5
+mode: l,	time = 1.700000,	step = 0.100000,	order = 5
+mode: l,	time = 1.800000,	step = 0.100000,	order = 5
+mode: l,	time = 1.900000,	step = 0.100000,	order = 5
+mode: l,	time = 2.000000,	step = 0.100000,	order = 5
+mode: l,	time = 2.100000,	step = 0.100000,	order = 5
+mode: l,	time = 2.181853,	step = 0.081853,	order = 5
+Dealing with the jump from l to l ...
+Done.
+mode: l,	time = 0.100000,	step = 0.100000,	order = 5
+mode: l,	time = 0.200000,	step = 0.100000,	order = 5
+mode: l,	time = 0.300000,	step = 0.100000,	order = 5
+mode: l,	time = 0.400000,	step = 0.100000,	order = 5
+mode: l,	time = 0.500000,	step = 0.100000,	order = 5
+mode: l,	time = 0.600000,	step = 0.100000,	order = 5
+mode: l,	time = 0.700000,	step = 0.100000,	order = 5
+mode: l,	time = 0.800000,	step = 0.100000,	order = 5
+mode: l,	time = 0.900000,	step = 0.100000,	order = 5
+mode: l,	time = 1.000000,	step = 0.100000,	order = 5
+mode: l,	time = 1.100000,	step = 0.100000,	order = 5
+mode: l,	time = 1.200000,	step = 0.100000,	order = 5
+mode: l,	time = 1.300000,	step = 0.100000,	order = 5
+mode: l,	time = 1.400000,	step = 0.100000,	order = 5
+mode: l,	time = 1.500000,	step = 0.100000,	order = 5
+mode: l,	time = 1.600000,	step = 0.100000,	order = 5
+mode: l,	time = 1.700000,	step = 0.100000,	order = 5
+mode: l,	time = 1.741947,	step = 0.041947,	order = 5
+Dealing with the jump from l to l ...
+Done.
+mode: l,	time = 0.100000,	step = 0.100000,	order = 5
+mode: l,	time = 0.200000,	step = 0.100000,	order = 5
+mode: l,	time = 0.300000,	step = 0.100000,	order = 5
+mode: l,	time = 0.400000,	step = 0.100000,	order = 5
+mode: l,	time = 0.500000,	step = 0.100000,	order = 5
+mode: l,	time = 0.600000,	step = 0.100000,	order = 5
+mode: l,	time = 0.700000,	step = 0.100000,	order = 5
+mode: l,	time = 0.800000,	step = 0.100000,	order = 5
+mode: l,	time = 0.900000,	step = 0.100000,	order = 5
+mode: l,	time = 1.000000,	step = 0.100000,	order = 5
+mode: l,	time = 1.100000,	step = 0.100000,	order = 5
+mode: l,	time = 1.200000,	step = 0.100000,	order = 5
+mode: l,	time = 1.300000,	step = 0.100000,	order = 5
+mode: l,	time = 1.400000,	step = 0.100000,	order = 5
+mode: l,	time = 1.442222,	step = 0.042222,	order = 5
+Dealing with the jump from l to l ...
+Done.
+mode: l,	time = 0.100000,	step = 0.100000,	order = 5
+mode: l,	time = 0.200000,	step = 0.100000,	order = 5
+mode: l,	time = 0.300000,	step = 0.100000,	order = 5
+mode: l,	time = 0.400000,	step = 0.100000,	order = 5
+mode: l,	time = 0.500000,	step = 0.100000,	order = 5
+mode: l,	time = 0.600000,	step = 0.100000,	order = 5
+mode: l,	time = 0.700000,	step = 0.100000,	order = 5
+mode: l,	time = 0.800000,	step = 0.100000,	order = 5
+mode: l,	time = 0.900000,	step = 0.100000,	order = 5
+mode: l,	time = 1.000000,	step = 0.100000,	order = 5
+mode: l,	time = 1.100000,	step = 0.100000,	order = 5
+mode: l,	time = 1.125001,	step = 0.025001,	order = 5
+Dealing with the jump from l to l ...
+Done.
+mode: l,	time = 0.100000,	step = 0.100000,	order = 5
+mode: l,	time = 0.200000,	step = 0.100000,	order = 5
+mode: l,	time = 0.300000,	step = 0.100000,	order = 5
+mode: l,	time = 0.400000,	step = 0.100000,	order = 5
+mode: l,	time = 0.500000,	step = 0.100000,	order = 5
+mode: l,	time = 0.600000,	step = 0.100000,	order = 5
+mode: l,	time = 0.700000,	step = 0.100000,	order = 5
+mode: l,	time = 0.800000,	step = 0.100000,	order = 5
+mode: l,	time = 0.900000,	step = 0.100000,	order = 5
+mode: l,	time = 0.900001,	step = 0.000001,	order = 5
+Dealing with the jump from l to l ...
+Done.
+mode: l,	time = 0.100000,	step = 0.100000,	order = 5
+mode: l,	time = 0.200000,	step = 0.100000,	order = 5
+mode: l,	time = 0.300000,	step = 0.100000,	order = 5
+mode: l,	time = 0.400000,	step = 0.100000,	order = 5
+mode: l,	time = 0.500000,	step = 0.100000,	order = 5
+mode: l,	time = 0.600000,	step = 0.100000,	order = 5
+mode: l,	time = 0.700000,	step = 0.100000,	order = 5
+mode: l,	time = 0.750001,	step = 0.050001,	order = 5
+Dealing with the jump from l to l ...
+Done.
+mode: l,	time = 0.100000,	step = 0.100000,	order = 5
+mode: l,	time = 0.200000,	step = 0.100000,	order = 5
+mode: l,	time = 0.300000,	step = 0.100000,	order = 5
+mode: l,	time = 0.400000,	step = 0.100000,	order = 5
+mode: l,	time = 0.500000,	step = 0.100000,	order = 5
+mode: l,	time = 0.600000,	step = 0.100000,	order = 5
+mode: l,	time = 0.600002,	step = 0.000002,	order = 5
+Dealing with the jump from l to l ...
+Done.
+mode: l,	time = 0.100000,	step = 0.100000,	order = 5
+mode: l,	time = 0.200000,	step = 0.100000,	order = 5
+mode: l,	time = 0.300000,	step = 0.100000,	order = 5
+mode: l,	time = 0.400000,	step = 0.100000,	order = 5
+mode: l,	time = 0.500000,	step = 0.100000,	order = 5
+mode: l,	time = 0.525001,	step = 0.025001,	order = 5
+Dealing with the jump from l to l ...
+Done.
+mode: l,	time = 0.100000,	step = 0.100000,	order = 5
+mode: l,	time = 0.200000,	step = 0.100000,	order = 5
+mode: l,	time = 0.300000,	step = 0.100000,	order = 5
+mode: l,	time = 0.400000,	step = 0.100000,	order = 5
+mode: l,	time = 0.450001,	step = 0.050001,	order = 5
+Dealing with the jump from l to l ...
+Done.
+mode: l,	time = 0.100000,	step = 0.100000,	order = 5
+mode: l,	time = 0.200000,	step = 0.100000,	order = 5
+mode: l,	time = 0.300000,	step = 0.100000,	order = 5
+mode: l,	time = 0.375002,	step = 0.075002,	order = 5
+Dealing with the jump from l to l ...
+Done.
+mode: l,	time = 0.100000,	step = 0.100000,	order = 5
+mode: l,	time = 0.200000,	step = 0.100000,	order = 5
+mode: l,	time = 0.300000,	step = 0.100000,	order = 5
+mode: l,	time = 0.337502,	step = 0.037502,	order = 5
+Dealing with the jump from l to l ...
+Done.
+mode: l,	time = 0.100000,	step = 0.100000,	order = 5
+mode: l,	time = 0.200000,	step = 0.100000,	order = 5
+mode: l,	time = 0.300000,	step = 0.100000,	order = 5
+mode: l,	time = 0.300001,	step = 0.000001,	order = 5
+Dealing with the jump from l to l ...
+Done.
+mode: l,	time = 0.100000,	step = 0.100000,	order = 5
+mode: l,	time = 0.200000,	step = 0.100000,	order = 5
+mode: l,	time = 0.300000,	step = 0.100000,	order = 5
+mode: l,	time = 0.300001,	step = 0.000001,	order = 5
+Dealing with the jump from l to l ...
+Done.
+mode: l,	time = 0.100000,	step = 0.100000,	order = 5
+mode: l,	time = 0.200000,	step = 0.100000,	order = 5
+mode: l,	time = 0.300000,	step = 0.100000,	order = 5
+mode: l,	time = 0.300001,	step = 0.000001,	order = 5
+Dealing with the jump from l to l ...
+Done.
+mode: l,	time = 0.100000,	step = 0.100000,	order = 5
+mode: l,	time = 0.200000,	step = 0.100000,	order = 5
+mode: l,	time = 0.300000,	step = 0.100000,	order = 5
+mode: l,	time = 0.300001,	step = 0.000001,	order = 5
+Dealing with the jump from l to l ...
+Done.
+mode: l,	time = 0.100000,	step = 0.100000,	order = 5
+mode: l,	time = 0.200000,	step = 0.100000,	order = 5
+mode: l,	time = 0.300000,	step = 0.100000,	order = 5
+mode: l,	time = 0.300001,	step = 0.000001,	order = 5
+Dealing with the jump from l to l ...
+Done.
+mode: l,	time = 0.100000,	step = 0.100000,	order = 5
+mode: l,	time = 0.200000,	step = 0.100000,	order = 5
+mode: l,	time = 0.300000,	step = 0.100000,	order = 5
+mode: l,	time = 0.300001,	step = 0.000001,	order = 5
+Dealing with the jump from l to l ...
+Done.
+mode: l,	time = 0.100000,	step = 0.100000,	order = 5
+mode: l,	time = 0.200000,	step = 0.100000,	order = 5
+mode: l,	time = 0.300000,	step = 0.100000,	order = 5
+mode: l,	time = 0.300001,	step = 0.000001,	order = 5
+Dealing with the jump from l to l ...
+Done.
+mode: l,	time = 0.100000,	step = 0.100000,	order = 5
+mode: l,	time = 0.200000,	step = 0.100000,	order = 5
+mode: l,	time = 0.300000,	step = 0.100000,	order = 5
+mode: l,	time = 0.300001,	step = 0.000001,	order = 5
+Dealing with the jump from l to l ...
+Done.
+mode: l,	time = 0.100000,	step = 0.100000,	order = 5
+mode: l,	time = 0.200000,	step = 0.100000,	order = 5
+mode: l,	time = 0.300000,	step = 0.100000,	order = 5
+mode: l,	time = 0.300001,	step = 0.000001,	order = 5
+Maximum jump depth is reached.
+
+Computation completed: 162 flowpipe(s) computed.
+
+Result of the safety verification on the computed flowpipes: SAFE
+
+Total time cost: 0.214176 seconds.
+
+Preparing for plotting and dumping...
+%100
+Done.
+Generating the plotting file...
+%100
+Done.
+Writing the flowpipe(s)...
+Done.

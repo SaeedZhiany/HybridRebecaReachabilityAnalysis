@@ -1,0 +1,70 @@
+hybrid reachability
+{
+ state var T
+
+ setting
+ {
+  fixed steps 0.2
+  time 100
+  remainder estimation 1e-5
+  identity precondition
+  gnuplot octagon T,T
+  fixed orders 5
+  cutoff 1e-15
+  precision 128
+  output myE
+  max jumps 20
+  print on
+ }
+ 
+ modes
+ {
+  off
+  {
+   nonpoly ode
+   {
+    T' = -0.5
+   }
+   
+   inv
+   {
+    T >= 18
+   }
+  }
+
+  on
+  {
+   nonpoly ode
+   {
+    T' = 0.6
+   }
+   
+   inv
+   {
+    T <= 22
+   }
+  }
+ }
+  
+ jumps
+ {
+  off -> on
+  guard { T = 18}
+  reset { }
+  parallelotope aggregation {}
+
+  on -> off
+  guard { T = 22}
+  reset { }
+  parallelotope aggregation {}
+ }
+ 
+ init
+ {
+  off
+  {
+   T in [20,22]
+  }
+ }
+  
+}

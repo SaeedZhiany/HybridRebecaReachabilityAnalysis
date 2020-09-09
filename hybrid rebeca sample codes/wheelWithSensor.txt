@@ -1,0 +1,148 @@
+physicalclass Wheel {
+	knownrebecs {WCtlr ctlr;}
+	statevars {float trq; @Real float spd; @Real float t;}
+	msgsrv initial(float spd_){
+		spd = spd_;
+		setmode(Rolling);
+	}
+	msgsrv setTrq(float trq_){
+		trq = trq_;	
+	}
+	mode Rolling{
+		inv(t <= 0.05){
+			t' = 1;
+			spd' = -0.1-trq;
+		}
+		guard(t == 0.05){
+            t = 0;
+			ctlr.setWspd(spd);
+			if(spd > 0)
+				setmode(Rolling);
+        }
+    }
+}
+	
+reactiveclass WCtlr(3) {
+	knownrebecs {Wheel w; BrakeCtlr bctlr;}
+	statevars {int id; float wspd; float slprt;}
+	msgsrv initial(int id_){
+		id = id_;
+	}
+	msgsrv setWspd(float wspd_){
+		wspd = wspd_;
+		bctlr.setWspd(id,wspd);
+	}
+	msgsrv applyTrq(float reqTrq, float vspd){
+		if(vspd == 0)
+			slprt = 0;
+		else
+			slprt = (vspd - wspd * WRAD)/vspd;
+		if(slprt > 0.2)
+			w.setTrq(0);
+		else
+			w.setTrq(reqTrq);
+    }
+}
+
+physicalclass Brake{
+	knownrebecs {BrakeCtlr bctlr;}
+	statevars {@Real float bprcnt; @Real float t; float mxprcnt; float r}
+	msgsrv initial(float bprcnt_, float mxprcnt_){
+		bprcnt = bprcnt_;
+		mxprcnt = mxprcnt_;
+		r = 1;
+		setmode(Braking);
+	}
+	mode Braking{
+		inv(t <= 0.05){
+			t' = 1;
+			bprcnt' = r;
+		}
+		guard(t == 0.05){
+			t = 0;
+			bctrl.setBprcnt(bprcnt);
+			if(bprcnt>=mxprcnt)
+				r = 0;
+			setmode(Braking);
+        }
+    }
+}
+
+reactiveclass BrakeCtlr(3){
+	knownrebecs{
+		WCtlr wctlrR;WCtlr wctlrL;}
+	statevars {float wspdR;float wspdL;float bprcnt;float gtrq;float espd;}
+	msgsrv control(){
+		espd = (wspdR + wspdL)/2;
+		gtrq = bprcnt;
+		wctlrR.applyTrq(gtrq, espd);
+		wctlrL.applyTrq(gtrq, espd);
+	}
+	// Setters for wspdR, wspdL and bprcnt
+	...
+}
+
+physicalclass Clock{
+	knownrebecs {BrakeCtlr bctlr;}
+	statevars {real t;}
+	msgsrv initial(){
+		setmode(Running)
+	}
+	mode Running(){
+		inv(t <= 0.05){
+			t' = 1;
+		}
+		guard(t == 0.05){
+			t = 0;
+			bctlr.control();
+			setmode(Running);
+        }
+    }
+}
+
+physicalclass Monitor{
+	knownrebecs {}
+	statevars {real t; float r;}
+	msgsrv initial(){
+		setMode(Running);
+	}
+	msgsrv start(){
+		t = 0;
+		r = 1;
+	}
+	msgsrv stop(){
+		r = 0;
+	}
+	mode Running{
+		inv(true){
+			t' = r;
+		}
+		guard(false){
+        }
+    }
+}
+
+main {
+	Wheel wR (@Wire wctlrR):(1);
+	Wheel wL (@Wire wctlrL):(1);
+	WCtlr wctlrR (@Wire wR, @CAN bctlr):(0);
+	WCtlr wctlrL (@Wire wL, @CAN bctlr):(1);
+	BrakeCtlr bctlr (@CAN wctlrR, @CAN wctlrL):();
+	Brake brake(@Wire bctlr):(60,65);
+	Clock clock(@Wire bctlr):();
+	
+	CAN{
+		priorities{
+			bctlr	wctlrR.applyTrq		1;
+			bctlr	wctlrL.applyTrq		2;
+			wctlrR	bctlr.setWspd		3;
+			wctlrL	bctlr.setWspd		4;
+		}
+		delays{
+			bctlr	wctlrR.applyTrq		0.01;
+			bctlr	wctlrL.applyTrq		0.01;
+			wctlrR	bctlr.setWspd		0.01;
+			wctlrL	bctlr.setWspd		0.01;
+        }
+    }
+}

@@ -1,0 +1,105 @@
+hybrid reachability
+{
+ state var p1,p1_dot,teta1,teta1_dot,p1_s,p1_dot_s,
+		teta1_s,teta1_dot_s,u1,GT,LT,g1,g2
+
+ par
+ {
+	period = 0.2 gran = 0.01
+ }
+ 
+ setting
+ {
+  fixed steps 0.001
+  time 5
+  remainder estimation 1e-5
+  identity precondition
+  gnuplot octagon teta1,GT
+  fixed orders 5
+  cutoff 1e-15
+  precision 128
+  output test6
+  max jumps 20
+  print on
+ }
+
+ modes
+ {
+  TE
+  {
+   lti ode
+   {
+    p1' = p1_dot
+    p1_dot' = -0.091*p1_dot + 0.0291*teta1 + 0.9098*u1
+    teta1' = teta1_dot
+    teta1_dot' = -0.0856*p1_dot + 9.655*teta1 +0.8563*u1
+		
+    LT' = -1
+    GT' =1
+   }
+   
+   inv
+   {
+   }
+  }
+
+  TMP
+  {
+   lti ode
+   {
+   }
+   
+   inv
+   {
+   }
+  }
+}
+
+ jumps
+ {
+
+  TE -> TE 
+  guard { LT = 0.1 g2=0} 
+  reset { p1_s':= p1   p1_dot_s':=p1_dot   teta1_s':=teta1   teta1_dot_s':=teta1_dot g2':=1}
+  parallelotope aggregation {}
+
+  TE -> TMP
+  guard { LT = 0 } 
+  reset { g1' := 0}
+  parallelotope aggregation {}
+
+  TMP -> TMP
+  guard { g1 = 0 } 
+  reset { u1':= 0.3*p1_s + 1.47*p1_dot_s - 27.22*teta1_s - 5.02*teta1_dot_s g1':=1}
+  parallelotope aggregation {}
+
+  TMP -> TE
+  guard { g1 = 1 } 
+  reset { LT':=period g2':=0}
+  parallelotope aggregation {}
+ }
+ 
+ init
+ {
+  TE
+  {
+   p1 in [0.5,0.5]
+   p1_dot in [0,0]
+   teta1 in [0.2,0.2]
+   teta1_dot in [0,0]
+   u1 in [0,0]
+   LT in [0.2,0.2]
+   GT in [0,0]
+   g2 in [0,0]
+  }
+ }
+}
+
+ unsafe
+ {
+  TE
+   {
+    GT >= 3
+    teta1 >= 0.1
+   }
+ }

@@ -1,0 +1,159 @@
+hybrid reachability
+{
+  state var x1, x2, u, y1, y2, RN, nRT, nRT_tmp, GT, Vx0, v, s, tmpTime,tmpTime2
+
+  par{
+    Tmin = 0.4     Tmax = 3       L = 0.046    LM= -0.081  
+    error=0.001
+    
+  }
+  setting
+  {
+    fixed steps 0.01
+    time 2
+    remainder estimation 1e-5
+    identity precondition
+    gnuplot octagon GT,s
+    fixed orders 30
+    cutoff 1e-5
+    precision 128
+    output stc16_1 
+    max jumps 10
+    print on
+  }
+ 
+ modes
+ {
+    Sys
+    {
+      nonpoly ode
+      {
+        x1' = 0.55 * x1 - 0.4 * x2 + u
+        x2' = 0.3 * x1 - 0.7 * x2 + u
+        GT'=1
+        nRT'=-1
+        u'=0
+        y1'=0
+        y2'=0
+        RN'=0
+        s'=0
+        Vx0'=0
+        v'=0
+        nRT_tmp'=0
+        tmpTime'=0
+        tmpTime2'=0
+      }
+   
+      inv
+      {
+        nRT>=error
+	  }
+    }
+       
+    calcnRT1
+    {
+      nonpoly ode
+      {
+        y1' = 0
+        y2' = 0
+        nRT'=0
+        nRT_tmp'=0
+        Vx0'=0
+        v'=  0
+        s'= 0
+        x1'=0
+        x2'=0
+        u'=0
+        RN'=0
+        GT'=0
+        tmpTime'=1
+        tmpTime2'=0
+      }
+   
+      inv
+      {
+      	tmpTime<=0.05
+        nRT_tmp<=Tmax
+	  }
+    }
+    
+	calcnRT2
+    {
+      nonpoly ode
+      {
+        y1' = 0
+        y2' = 0
+        nRT'=0
+        nRT_tmp'=1
+        Vx0'=0
+        v'=  0
+        s'= LM*Vx0*exp(LM*tmpTime2)
+        x1'=0
+        x2'=0
+        u'=0
+        RN'=0
+        GT'=0
+        tmpTime'=1
+        tmpTime2'=1
+      }
+   
+      inv
+      {
+      	tmpTime<=0.4
+	  }
+    }
+ }
+  
+  jumps
+  {
+    
+    Sys -> calcnRT1 
+    guard { nRT <= error } 
+    reset { RN':=RN+1 Vx0':=(4.2001*x1)*x1+(2.2772*x2)*x2-(5.4478*x1)*x2 s':=(4.2001*x1)*x1+(2.2772*x2)*x2-(5.4478*x1)*x2 u':=-1.35*x1-(0.01*x2) y1':=x1 y2':=x2 s':=1 v':=0 tmpTime2':=0}    
+    parallelotope aggregation {}
+
+    calcnRT1 -> calcnRT2 
+    guard { tmpTime >= 0.01 } 
+    reset { y1':= 1.24*y1-(0.16*y2)+(0.42*u) y2':=0.12*y1+(0.75*y2)+(0.37*u) tmpTime':=0 }
+    parallelotope aggregation {}
+    
+	calcnRT2 -> calcnRT1 
+    guard { tmpTime >= 0.4 } 
+    reset { v':=(4.2001*y1)*y1+((2.2772*y2)*y2)-((5.4478*y1 )*y2) tmpTime':=0 nRT' := nRT_tmp-Tmin}
+    parallelotope aggregation {}
+  
+    calcnRT1 -> Sys 
+    guard { v-s >= 0 } 
+    reset { nRT' := nRT_tmp-Tmin}
+    parallelotope aggregation {}
+
+    calcnRT1 -> Sys 
+    guard { nRT_tmp >= Tmax } 
+    reset { nRT':= Tmax }
+    parallelotope aggregation {}
+ 
+  }
+ 
+  init
+  {
+    Sys
+    {
+        x1 in [-1,-1]
+        x2 in [2,2]
+
+        u in [0,0]
+        GT in [0,0]
+
+        y1 in [0.01,0.01]
+        y2 in [0.01,0.01]
+
+        RN in [0,0]
+        nRT in [0.4,0.4]
+        nRT_tmp in [0.0,0.0]
+        s in [0.0,0.0]
+        Vx0 in [0.01,0.01]
+        tmpTime in [0,0]
+        tmpTime2 in [0,0]
+    }
+  }
+}

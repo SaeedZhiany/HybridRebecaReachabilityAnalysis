@@ -1,0 +1,8 @@
+.idea
+*.iml
+*.o
+*.a
+target/*
+outputs/*
+counterexamples/*
+images/*

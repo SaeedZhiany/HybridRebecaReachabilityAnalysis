@@ -1,0 +1,82 @@
+hybrid reachability
+{
+ state var i,j
+
+ 
+ setting
+ {
+  fixed steps 0.001
+  time 5
+  remainder estimation 1e-5
+  identity precondition
+  gnuplot octagon i,j
+  fixed orders 5
+  cutoff 1e-15
+  precision 128
+  output disc1
+  max jumps 20
+  print on
+ }
+
+ modes
+ {
+  l1
+  {
+   lti ode
+   {    
+   }
+   
+   inv
+   {
+    i<=5
+   }
+  }
+
+  l2
+  {
+   lti ode
+   {
+   }
+   
+   inv
+   {
+    j<=5
+   }
+  }
+}
+
+ jumps
+ {
+
+  l1 -> l1 
+  guard { i<=5 } 
+  reset { i':= i+1 }
+  parallelotope aggregation {}
+
+  l1 -> l2
+  guard { i>=6 } 
+  reset { j' := 1}
+  parallelotope aggregation {}
+
+  l2 -> l2 
+  guard { j<=5 } 
+  reset { j':= j+1 }
+  parallelotope aggregation {}
+
+  l2 -> l1
+  guard { j >= 6 } 
+  reset { i' := 1}
+  parallelotope aggregation {}
+
+
+ }
+ 
+ init
+ {
+  l1
+  {
+   i in [1,1]
+  }
+ }
+}
+

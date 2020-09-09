@@ -1,0 +1,188 @@
+hybrid reachability
+{
+ state var p1,p1_dot,teta1,teta1_dot,p2,p2_dot,teta2,teta2_dot,p3,p3_dot,teta3,teta3_dot,p1_s,p1_dot_s,
+		teta1_s,teta1_dot_s,p2_s,p2_dot_s,teta2_s,teta2_dot_s,p3_s,p3_dot_s,teta3_s,teta3_dot_s,u1,u2,u3,RET1,RET2,RET3,CEL,CTI,BI,GT,CRET,Ov,Os,tmp
+
+ par
+ {
+	C1 = 0.1 C2 = 0.1 C3 = 0.1 LB1 = 0.1 LB2 = 0.1 LB3 = 0.1 gran = 0.001
+ }
+ 
+ setting
+ {
+  fixed steps 0.01
+  time 2
+  remainder estimation 1e-5
+  identity precondition
+  gnuplot octagon teta1,GT
+  fixed orders 5
+  cutoff 1e-15
+  precision 128
+  output e2
+  max jumps 20
+  print on
+ }
+
+ modes
+ {
+  TE
+  {
+   lti ode
+   {
+    p1' = p1_dot
+    p1_dot' = -0.091*p1_dot + 0.0291*teta1 + 0.9098*u1
+    teta1' = teta1_dot
+    teta1_dot' = -0.0856*p1_dot + 9.655*teta1 +0.8563*u1
+	
+    p2' = p2_dot
+    p2_dot' = -0.091*p2_dot + 0.0291*teta2 + 0.9098*u2
+    teta2' = teta2_dot
+    teta2_dot' = -0.0856*p2_dot + 9.655*teta2 +0.8563*u2
+	
+    p3' = p3_dot
+    p3_dot' = -0.091*p3_dot + 0.0291*teta3 + 0.9098*u3
+    teta3' = teta3_dot
+    teta3_dot' = -0.0856*p3_dot + 9.655*teta3 +0.8563*u3	
+	
+    CRET' = 1
+    GT' =1
+   }
+   
+   inv
+   {
+    CRET <=0.1
+   }
+  }
+  
+  VF
+  {
+   lti ode
+   {
+    tmp'=1
+GT'=1
+   }
+   
+   inv
+   {
+    tmp <= 0.1
+   }
+  }  
+
+  Schd
+  {
+   lti ode
+   { 
+   }
+   
+   inv
+   {
+
+   }
+  }  
+}
+
+ jumps
+ {
+  TE -> VF 
+  guard { CRET >= 0.1 } 
+  reset { Ov':=0 RET1':=0}
+  parallelotope aggregation {}
+  
+
+  
+  VF -> Schd
+  guard { tmp >= 0.1} 
+  reset { u1':= 0.3*p1_s + 1.47*p1_dot_s - 27.22*teta1_s - 5.02*teta1_dot_s   RET1':= C1 Ov':=1}
+  parallelotope aggregation {}
+
+  VF -> VF 
+  guard { RET2 <= 0   CTI = 2 } 
+  reset { u2':= 0.3*p2_s + 1.47*p2_dot_s - 27.22*teta2_s - 5.02*teta2_dot_s   RET2':= C2 Ov':=1}
+  parallelotope aggregation {}
+
+  VF -> VF 
+  guard { RET3 <= 0   CTI = 3 } 
+  reset { u3':= 0.3*p3_s + 1.47*p3_dot_s - 27.22*teta3_s - 5.02*teta3_dot_s   RET3':= C3 Ov':=1}
+  parallelotope aggregation {}
+  
+  Schd -> Schd 
+  guard { BI >= 4 } 
+  reset { BI':=1 Os':=1}
+  parallelotope aggregation {}
+
+  Schd -> TE 
+  guard { BI = 1 Os>=1  C1-RET1 >= gran } 
+  reset { CRET':=LB1   CEL':=LB1   CTI':= 1}
+  parallelotope aggregation {}
+
+  Schd -> TE 
+  guard { BI = 1  Os>=1  RET1 = C1 } 
+  reset { CRET':=LB1   CEL':=LB1   CTI':= 1   p1_s':= p1   p1_dot_s':=p1_dot   teta1_s':=teta1   teta1_dot_s':=teta1_dot }
+  parallelotope aggregation {}
+
+  Schd -> TE 
+  guard { BI = 2  Os>=1  C2-RET2 >= gran } 
+  reset { CRET':=LB2   CEL':=LB2   CTI':= 2}
+  parallelotope aggregation {}
+
+  Schd -> TE 
+  guard { BI = 2  Os>=1  RET2 = C2 } 
+  reset { CRET':=LB2   CEL':=LB2   CTI':= 2   p2_s':= p2   p2_dot_s':=p2_dot   teta2_s':=teta2   teta2_dot_s':=teta2_dot }
+  parallelotope aggregation {}
+
+  Schd -> TE 
+  guard { BI = 3  Os>=1  C3-RET3 >= gran } 
+  reset { CRET':=LB3   CEL':=LB3   CTI':= 3}
+  parallelotope aggregation {}
+
+  Schd -> TE 
+  guard { BI = 3  Os>=1  RET3 = C3 } 
+  reset { CRET':=LB3   CEL':=LB3   CTI':= 3   p3_s':= p3   p3_dot_s':=p3_dot   teta3_s':=teta3   teta3_dot_s':=teta3_dot }
+  parallelotope aggregation {}
+  
+ }
+ 
+ init
+ {
+  TE
+  {
+   BI in [1,1]
+   CTI in [1,1]
+   CEL in [0.1,0.1]
+   CRET in [0, 0] 
+   Ov in [0,0]
+   p1 in [0.5,0.5]
+   p1_dot in [0,0]
+   teta1 in [0.2,0.2]
+   teta1_dot in [0,0]
+   p1_s in [0.5,0.5]
+   p1_dot_s in [0,0]
+   teta1_s in [0.2,0.2]
+   teta1_dot_s in [0,0]
+   p2 in [0.5,0.5]
+   p2_dot in [0,0]
+   teta2 in [0.2,0.2]
+   teta2_dot in [0,0]
+   p3 in [0.5,0.5]
+   p3_dot in [0,0]
+   teta3 in [0.2,0.2]
+   teta3_dot in [0,0]
+   u1 in [0,0]
+   u2 in [0,0]
+   u3 in [0,0]
+   RET1 in [0.1,0.1]
+   RET2 in [0.1,0.1]	
+   RET3 in [0.1,0.1]
+   GT in [0,0]
+   tmp in [0,0]
+  }
+ }
+}
+
+ unsafe
+ {
+  TE
+   {
+    GT >= 3
+   }
+ }
