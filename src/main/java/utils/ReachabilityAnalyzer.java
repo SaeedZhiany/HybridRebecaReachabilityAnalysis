@@ -30,12 +30,15 @@ public class ReachabilityAnalyzer {
             }
             processedStates.add(curHybridState);
         } while (!unprocessedStates.isEmpty());
-        return new AnalysisResult(AnalysisSafetyResult.UNKNOWN, 0, new HashMap<>()); // TODO
+        // TODO: return the result of analysis
+        return new AnalysisResult(AnalysisSafetyResult.UNKNOWN, 0, new HashMap<>());
     }
 
     private static boolean isStateSpaceDuplicated(HybridState newHybridState) {
         for (HybridState processedHybridState : processedStates) {
-            // TODO check if it's generated before
+            if (newHybridState.equals(processedHybridState)) {
+                return true;
+            }
         }
         return false;
     }
