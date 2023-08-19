@@ -37,4 +37,37 @@ public class SoftwareState extends ActorState {
             this.resumeTime = resumeTime;
         }
     }
+
+    @Override
+    public String toString() {
+        // CHECKME: which variables should be included in the string?
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("Actor: ").append(getActorName()).append("\n");
+        stringBuilder.append("Resume Time: ").append(getResumeTime()).append("\n");
+        stringBuilder.append("Local Time: ").append(getLocalTime()).append("\n");
+
+        stringBuilder.append("Discrete Variable Valuation: ").append("\n");
+        // CHECKME: order of the variables is not guaranteed, is it a problem?
+        for (Map.Entry<String, DiscreteVariable> entry : getDiscreteVariableValuation().entrySet()) {
+            stringBuilder.append(entry.getKey()).append(": ").append(entry.getValue().toString()).append("\n");
+        }
+
+        stringBuilder.append("Queue: ").append("\n");
+        // CHECKME: order of the messages is not guaranteed, is it a problem?
+        for (Map.Entry<String, HashMap<String, Number>> entry : getQueue().entrySet()) {
+            stringBuilder.append(entry.getKey()).append(": ").append("\n");
+            for (Map.Entry<String, Number> entry1 : entry.getValue().entrySet()) {
+                // CHECKME: entry1.getValue() is Number, is it a problem?
+                stringBuilder.append(entry1.getKey()).append(": ").append(entry1.getValue()).append("\n");
+            }
+        }
+
+        stringBuilder.append("Sigma: ").append("\n");
+        // CHECKME: order of the statements is not guaranteed, is it a problem?
+        for (Statement statement : getSigma()) {
+            stringBuilder.append(statement.toString()).append("\n");
+        }
+
+        return stringBuilder.toString();
+    }
 }
