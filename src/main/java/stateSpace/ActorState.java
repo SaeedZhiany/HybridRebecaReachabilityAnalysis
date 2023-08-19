@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import java.lang.StringBuilder;
 
 public abstract class ActorState {
 
@@ -28,9 +29,12 @@ public abstract class ActorState {
      * key: parameter name
      * value: parameter value
      */
+
+    // CHECKME: 
     @Nonnull
     protected Queue<Map.Entry<String, HashMap<String, Number>>> queue;
 
+    // CHECKME: what exactly are statements? how to implement toString()?
     /**
      * list of statements that must be executed
      */
@@ -91,6 +95,14 @@ public abstract class ActorState {
 
     public void setSigma(@Nonnull List<Statement> sigma) {
         this.sigma = sigma;
+    }
+
+    @Nullable
+    public Statement nextStatement() {
+        if (sigma.size() > 0) {
+            return sigma.remove(0);
+        }
+        return null;
     }
 
     public float getLocalTime() {
