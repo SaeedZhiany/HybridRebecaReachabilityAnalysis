@@ -62,4 +62,42 @@ public class PhysicalState extends ActorState {
     public void updateContinuousVariable(ContinuousVariable continuousVariable) {
         this.continuousVariableValuation.put(continuousVariable.getName(), continuousVariable);
     }
+
+    @Override
+    public String toString() {
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("Actor: ").append(actorName).append("\n");
+        stringBuilder.append("Mode: ").append(mode).append("\n");
+        stringBuilder.append("Discrete Variables: ").append("\n");
+        // CHECKME: order of the variables is not guaranteed, is it a problem?
+        for (Map.Entry<String, DiscreteVariable> entry : discreteVariableValuation.entrySet()) {
+            stringBuilder.append(entry.getKey()).append(": ").append(entry.getValue().toString()).append("\n");
+        }
+
+        stringBuilder.append("Continuous Variables: ").append("\n");
+        // CHECKME: order of the variables is not guaranteed, is it a problem?
+        for (Map.Entry<String, ContinuousVariable> entry : continuousVariableValuation.entrySet()) {
+            stringBuilder.append(entry.getKey()).append(": ").append(entry.getValue().toString()).append("\n");
+        }
+
+        stringBuilder.append("Queue: ").append("\n");
+        // CHECKME: order of the messages is not guaranteed, is it a problem?
+        for (Map.Entry<String, HashMap<String, Number>> entry : queue) {
+            stringBuilder.append(entry.getKey()).append(": ").append("\n");
+            for (Map.Entry<String, Number> entry1 : entry.getValue().entrySet()) {
+                // CHECKME: entry1.getValue() is Number, is it a problem?
+                stringBuilder.append(entry1.getKey()).append(": ").append(entry1.getValue()).append("\n");
+            }
+        }
+
+        stringBuilder.append("Sigma: ").append("\n");
+        // CHECKME: order of the statements is not guaranteed, is it a problem?
+        for (Statement statement : sigma) {
+            stringBuilder.append(statement.toString()).append("\n");
+        }
+
+        stringBuilder.append("Local Time: ").append(localTime).append("\n");
+        
+        return stringBuilder.toString();
+    }
 }
