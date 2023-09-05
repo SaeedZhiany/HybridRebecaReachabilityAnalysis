@@ -1,9 +1,11 @@
 package stateSpace;
 
 import dataStructure.DiscreteVariable;
+import dataStructure.ContinuousVariable;
 import org.rebecalang.compiler.modelcompiler.corerebeca.objectmodel.Statement;
 
 import javax.annotation.Nonnull;
+import java.lang.StringBuilder;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,26 +16,26 @@ public class SoftwareState extends ActorState {
     /**
      * resume time of actor
      */
-    private float resumeTime;
+    private ContinuousVariable resumeTime;
 
     public SoftwareState(
             @Nonnull String actorName,
             @Nonnull HashMap<String, DiscreteVariable> discreteVariableValuation,
-            @Nonnull Queue<Map.Entry<String, HashMap<String, Number>>> queue,
+            @Nonnull Queue<Message> queue,
             @Nonnull List<Statement> sigma,
             float localTime,
-            float resumeTime
+            ContinuousVariable resumeTime
     ) {
         super(actorName, discreteVariableValuation, queue, sigma, localTime);
         this.resumeTime = resumeTime;
     }
 
-    public float getResumeTime() {
+    public ContinuousVariable getResumeTime() {
         return resumeTime;
     }
 
-    public void setResumeTime(float resumeTime) {
-        if (resumeTime >= 0) {
+    public void setResumeTime(ContinuousVariable resumeTime) {
+        if (resumeTime.isValid()) {
             this.resumeTime = resumeTime;
         }
     }
@@ -43,7 +45,7 @@ public class SoftwareState extends ActorState {
         // CHECKME: which variables should be included in the string?
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("Actor: ").append(getActorName()).append("\n");
-        stringBuilder.append("Resume Time: ").append(getResumeTime()).append("\n");
+        stringBuilder.append("Resume Time: ").append(getResumeTime().toString()).append("\n");
         stringBuilder.append("Local Time: ").append(getLocalTime()).append("\n");
 
         stringBuilder.append("Discrete Variable Valuation: ").append("\n");
@@ -54,12 +56,8 @@ public class SoftwareState extends ActorState {
 
         stringBuilder.append("Queue: ").append("\n");
         // CHECKME: order of the messages is not guaranteed, is it a problem?
-        for (Map.Entry<String, HashMap<String, Number>> entry : getQueue().entrySet()) {
-            stringBuilder.append(entry.getKey()).append(": ").append("\n");
-            for (Map.Entry<String, Number> entry1 : entry.getValue().entrySet()) {
-                // CHECKME: entry1.getValue() is Number, is it a problem?
-                stringBuilder.append(entry1.getKey()).append(": ").append(entry1.getValue()).append("\n");
-            }
+        for (Message message : getQueue()) {
+            stringBuilder.append(message.toString()).append("\n");
         }
 
         stringBuilder.append("Sigma: ").append("\n");
