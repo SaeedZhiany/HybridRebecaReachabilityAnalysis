@@ -24,15 +24,10 @@ public abstract class ActorState {
     protected HashMap<String, DiscreteVariable> discreteVariablesValuation;
 
     /**
-     * key: message server name
-     * value: a hashMap of parameters values
-     * key: parameter name
-     * value: parameter value
+     * queue of messages that must be taken care of
      */
-
-    // CHECKME: 
     @Nonnull
-    protected Queue<Map.Entry<String, HashMap<String, Number>>> queue;
+    protected Queue<Message> queue;
 
     // CHECKME: what exactly are statements? how to implement toString()?
     /**
@@ -44,12 +39,13 @@ public abstract class ActorState {
     /**
      * local time of actor
      */
+    // CHECKME: what does local time used for?
     protected float localTime;
 
     public ActorState(
             @Nonnull String actorName,
             @Nonnull HashMap<String, DiscreteVariable> discreteVariablesValuation,
-            @Nonnull Queue<Map.Entry<String, HashMap<String, Number>>> queue,
+            @Nonnull Queue<Message> queue,
             @Nonnull List<Statement> sigma,
             float localTime
     ) {
@@ -79,12 +75,17 @@ public abstract class ActorState {
         this.discreteVariablesValuation.put(discreteVariable.getName(), discreteVariable);
     }
 
+    @Nonnull
+    public Queue<Message> getQueue() {
+        return queue;
+    }
+
     @Nullable
-    public Map.Entry<String, HashMap<String, Number>> nextMessage() {
+    public Message nextMessage() {
         return queue.poll();
     }
 
-    public void addMessage(Map.Entry<String, HashMap<String, Number>> message) {
+    public void addMessage(Message message) {
         this.queue.add(message);
     }
 
