@@ -1,13 +1,16 @@
 package stateSpace;
 
 import javax.annotation.Nonnull;
+import java.lang.StringBuilder;
 import java.util.HashMap;
 import utils.StringSHA256;
+import dataStructure.ContinuousVariable;
 
 public class HybridState {
 
-    // CHECKME: should we add global time to this class?
-
+    // CHECKME: should global time be non-null?
+    @Nonnull
+    private ContinuousVariable globalTime;
     @Nonnull
     private HashMap<String, SoftwareState> softwareStates;
     @Nonnull
@@ -18,11 +21,27 @@ public class HybridState {
     private String hashString;
 
     public HybridState() {
-        this(new HashMap<>(), new HashMap<>(), new CANNetworkState());
+        // FIXME: is this the correct way to initialize globalTime?
+        ContinuousVariable globalTime = new ContinuousVariable("globalTime");
+        this(globalTime, new HashMap<>(), new HashMap<>(), new CANNetworkState());
     }
 
     public HybridState(HybridState hybridState) {
-        this(hybridState.softwareStates, hybridState.physicalStates, hybridState.CANNetworkState);
+        // CHECKME: aren't this attributes private?
+        this(hybridState.globalTime, hybridState.softwareStates, hybridState.physicalStates, hybridState.CANNetworkState);
+    }
+
+    private HybridState(
+            @Nonnull ContinuousVariable globalTime,
+            @Nonnull HashMap<String, SoftwareState> softwareStates,
+            @Nonnull HashMap<String, PhysicalState> physicalStates,
+            @Nonnull stateSpace.CANNetworkState CANNetworkState
+    ) {
+        this.globalTime = globalTime;
+        this.softwareStates = softwareStates;
+        this.physicalStates = physicalStates;
+        this.CANNetworkState = CANNetworkState;
+        this.hashString = updateHash();
     }
 
     public boolean equals(HybridState state) {
@@ -32,29 +51,23 @@ public class HybridState {
             return false;
         }
         // TODO: make sure that the 2 states are actually equal
-        // CHECKME: should we compare global time?
         return true;
-    }
-
-    private HybridState(
-            @Nonnull HashMap<String, SoftwareState> softwareStates,
-            @Nonnull HashMap<String, PhysicalState> physicalStates,
-            @Nonnull stateSpace.CANNetworkState CANNetworkState
-    ) {
-        this.softwareStates = softwareStates;
-        this.physicalStates = physicalStates;
-        this.CANNetworkState = CANNetworkState;
     }
 
     private void replaceActorState(SoftwareState softwareState) {
         softwareStates.replace(softwareState.actorName, softwareState);
     }
 
+    private void replaceActorState(PhysicalState physicalState) {
+        physicalStates.replace(physicalState.actorName, physicalState);
+    }
+
     @Override
     public String toString() {
         // CHECKME: the order of the states is not guaranteed, is it a problem?
-        // CHECKME: should we add global time to this string?
         StringBuilder stringBuilder = new StringBuilder();
+
+        stringBuilder.append(globalTime.toString());
 
         for (SoftwareState softwareState : softwareStates.values()) {
             stringBuilder.append(softwareState.toString());
@@ -77,7 +90,4 @@ public class HybridState {
         return this.hashString;
     }
 
-    private void replaceActorState(PhysicalState physicalState) {
-        physicalStates.replace(physicalState.actorName, physicalState);
-    }
 }
