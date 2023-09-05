@@ -68,4 +68,18 @@ public class SoftwareState extends ActorState {
 
         return stringBuilder.toString();
     }
+
+    public boolean hasStatement() {
+        return !getSigma().isEmpty();
+    }
+
+    public boolean messageCanBeTaken(ContinuousVariable globalTime) {
+        for (Message message : getQueue()) {
+            if (message.messageCheckBounds(globalTime)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 }

@@ -90,4 +90,21 @@ public class HybridState {
         return this.hashString;
     }
 
+    public HashMap<String, PhysicalState> getPhysicalStates() {
+        return this.physicalStates;
+    }
+
+    public HashMap<String, SoftwareState> getSoftwareStates() {
+        return this.softwareStates;
+    }
+
+    // CHECKME: check conditions
+    public boolean isSuspended(ContinuousVariable resumeTime) {
+        if ((resumeTime.getLowerBound().compareTo(this.globalTime.getLowerBound()) == 0) &&
+                (resumeTime.getUpperBound().compareTo(this.globalTime.getUpperBound()) >= 0)) {
+            return false;
+        }
+        return true;
+    }
+
 }

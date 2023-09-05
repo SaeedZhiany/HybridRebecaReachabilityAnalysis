@@ -69,4 +69,10 @@ public class Message {
         return stringBuilder.toString();
     }
 
+    public boolean checkBounds(ContinuousVariable globalTime) {
+        if (this.arrivalTime.getLowerBound().compareTo(globalTime.getLowerBound()) <= 0) {
+            return true;
+        }
+        return false;
+    }
 }
