@@ -7,6 +7,7 @@ import org.rebecalang.compiler.modelcompiler.corerebeca.objectmodel.Statement;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.HashMap;
+import java.lang.StringBuilder;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
@@ -31,7 +32,7 @@ public class PhysicalState extends ActorState {
             @Nullable String mode,
             @Nonnull HashMap<String, DiscreteVariable> discreteVariableValuation,
             @Nonnull HashMap<String, ContinuousVariable> continuousVariableValuation,
-            @Nonnull Queue<Map.Entry<String, HashMap<String, Number>>> queue,
+            @Nonnull Queue<Message> queue,
             @Nonnull List<Statement> sigma,
             float localTime
     ) {
@@ -82,12 +83,8 @@ public class PhysicalState extends ActorState {
 
         stringBuilder.append("Queue: ").append("\n");
         // CHECKME: order of the messages is not guaranteed, is it a problem?
-        for (Map.Entry<String, HashMap<String, Number>> entry : queue) {
-            stringBuilder.append(entry.getKey()).append(": ").append("\n");
-            for (Map.Entry<String, Number> entry1 : entry.getValue().entrySet()) {
-                // CHECKME: entry1.getValue() is Number, is it a problem?
-                stringBuilder.append(entry1.getKey()).append(": ").append(entry1.getValue()).append("\n");
-            }
+        for (Message message : queue) {
+            stringBuilder.append(message.toString()).append("\n");
         }
 
         stringBuilder.append("Sigma: ").append("\n");
