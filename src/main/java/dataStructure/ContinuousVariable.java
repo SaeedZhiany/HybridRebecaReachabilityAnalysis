@@ -80,4 +80,15 @@ public class ContinuousVariable extends Variable implements Comparable<Continuou
                 upperBound.toPlainString()
         );
     }
+
+    public boolean isSubsetOf(ContinuousVariable other) {
+        return this.lowerBound.compareTo(other.lowerBound) >= 0
+                && this.upperBound.compareTo(other.upperBound) <= 0;
+    }
+
+    public boolean isValid() {
+        return (this.lowerBound.compareTo(this.upperBound) <= 0) &&
+                (this.lowerBound.compareTo(new BigDecimal(0)) >= 0) &&
+                (this.upperBound.compareTo(new BigDecimal(0)) >= 0);
+    }
 }

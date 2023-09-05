@@ -1,6 +1,7 @@
 package utils;
 
 import java.security.MessageDigest;
+import java.lang.StringBuilder;
 
 public class StringSHA256 {
 
