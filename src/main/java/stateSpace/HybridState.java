@@ -3,6 +3,8 @@ package stateSpace;
 import javax.annotation.Nonnull;
 import java.lang.StringBuilder;
 import java.util.HashMap;
+import java.util.List;
+
 import utils.StringSHA256;
 import dataStructure.ContinuousVariable;
 
@@ -22,8 +24,8 @@ public class HybridState {
 
     public HybridState() {
         // FIXME: is this the correct way to initialize globalTime?
-        ContinuousVariable globalTime = new ContinuousVariable("globalTime");
-        this(globalTime, new HashMap<>(), new HashMap<>(), new CANNetworkState());
+        // ContinuousVariable globalTime = new ContinuousVariable("globalTime");
+        this(new ContinuousVariable("globalTime"), new HashMap<>(), new HashMap<>(), new CANNetworkState());
     }
 
     public HybridState(HybridState hybridState) {
@@ -41,7 +43,12 @@ public class HybridState {
         this.softwareStates = softwareStates;
         this.physicalStates = physicalStates;
         this.CANNetworkState = CANNetworkState;
-        this.hashString = updateHash();
+        // CHECKME: is this the correct way to handle hashString exception?
+        try {
+            this.hashString = updateHash();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public boolean equals(HybridState state) {
@@ -54,14 +61,28 @@ public class HybridState {
         return true;
     }
 
-    private void replaceActorState(SoftwareState softwareState) {
+    private void replaceSoftwareState(SoftwareState softwareState) {
         softwareStates.replace(softwareState.actorName, softwareState);
     }
 
-    private void replaceActorState(PhysicalState physicalState) {
+    private void replacePhysicalState(PhysicalState physicalState) {
         physicalStates.replace(physicalState.actorName, physicalState);
     }
 
+    public void replaceActorState(ActorState actorState) {
+        if (actorState instanceof SoftwareState) {
+            replaceSoftwareState((SoftwareState) actorState);
+        } else if (actorState instanceof PhysicalState) {
+            replacePhysicalState((PhysicalState) actorState);
+        }
+        // CHECKME: else
+        try {
+            this.updateHash();
+        } catch (Exception e) {
+            // FIXME: is this the correct way to handle this exception?
+            throw new RuntimeException(e);
+        }
+    }
     @Override
     public String toString() {
         // CHECKME: the order of the states is not guaranteed, is it a problem?
@@ -82,7 +103,7 @@ public class HybridState {
     }
 
     // CHECKME: when should we call this method?
-    private String updateHash() {
+    private String updateHash() throws Exception {
         return StringSHA256.hashString(this.toString());
     }
 
@@ -107,4 +128,14 @@ public class HybridState {
         return true;
     }
 
+    public List<ActorState> takeMessage(ActorState actorState) {
+        // TODO: call takeMessage method on actorState and retrieve the new actorStates
+        // TODO: takeMessage method of SoftwareState can and should return multiple (at most 2?!) newSoftwareStates
+        // CHECKME: does it call on correct class? (software and physical)
+        return actorState.takeMessage(globalTime);
+    }
+
+    public ContinuousVariable getGlobalTime() {
+        return this.globalTime;
+    }
 }
