@@ -1,5 +1,6 @@
 package stateSpace;
 
+import dataStructure.ContinuousVariable;
 import dataStructure.DiscreteVariable;
 import org.rebecalang.compiler.modelcompiler.corerebeca.objectmodel.Statement;
 
@@ -115,4 +116,13 @@ public abstract class ActorState {
             this.localTime = localTime;
         }
     }
+
+    public HashMap<String, DiscreteVariable> getDiscreteVariableValuation() {
+        return discreteVariablesValuation;
+    }
+
+    public List<ActorState> takeMessage (ContinuousVariable globalTime) {
+        return null;
+    }
+
 }
