@@ -38,7 +38,7 @@ public class Message {
     }
 
     public String getServerName() {
-        return ServerName;
+        return serverName;
     }
 
     public HashMap<String, Variable> getParameters() {
