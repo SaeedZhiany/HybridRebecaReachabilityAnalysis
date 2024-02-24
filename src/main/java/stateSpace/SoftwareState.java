@@ -1,5 +1,6 @@
 package stateSpace;
 
+import org.apache.commons.lang3.SerializationUtils;
 import dataStructure.DiscreteVariable;
 import dataStructure.ContinuousVariable;
 import dataStructure.Variable;
@@ -20,14 +21,41 @@ public class SoftwareState extends ActorState {
 
     public SoftwareState(
             @Nonnull String actorName,
-            @Nonnull HashMap<String, DiscreteVariable> discreteVariableValuation,
-            @Nonnull Queue<Message> queue,
+            @Nonnull HashMap<String, Variable> variableValuation,
+            @Nonnull Set<Message> messageBag,
             @Nonnull List<Statement> sigma,
             float localTime,
             ContinuousVariable resumeTime
     ) {
-        super(actorName, discreteVariableValuation, queue, sigma, localTime);
+        super(actorName, variableValuation, messageBag, sigma, localTime);
         this.resumeTime = resumeTime;
+    }
+
+    public SoftwareState(SoftwareState softwareState) {
+        super("init", new HashMap<>(), new HashSet<>(), new ArrayList<>(), 0);
+        this.actorName = softwareState.getActorName();
+        HashMap<String, Variable> newVariableValuation = new HashMap<>();
+        for (Map.Entry<String, Variable> entry : softwareState.getVariableValuation().entrySet()) {
+            if (entry.getValue() instanceof DiscreteVariable) {
+                newVariableValuation.put(entry.getKey(), new DiscreteVariable((DiscreteVariable) entry.getValue()));
+            } else if (entry.getValue() instanceof ContinuousVariable) {
+                newVariableValuation.put(entry.getKey(), new ContinuousVariable((ContinuousVariable) entry.getValue()));
+            }
+        }
+        this.variablesValuation = newVariableValuation;
+        Set<Message> newMessageBag = new HashSet<>();
+        for (Message message : softwareState.getMessageBag()) {
+            newMessageBag.add(new Message(message));
+        }
+        this.messageBag = newMessageBag;
+        List<Statement> newSigma = new ArrayList<>();
+        for (Statement statement : softwareState.getSigma()) {
+            Statement copiedStatement = SerializationUtils.clone(statement);
+            newSigma.add(copiedStatement);
+        }
+        this.sigma = newSigma;
+        this.localTime = softwareState.getLocalTime();
+        this.resumeTime = new ContinuousVariable(softwareState.getResumeTime());
     }
 
     public ContinuousVariable getResumeTime() {
@@ -48,15 +76,15 @@ public class SoftwareState extends ActorState {
         stringBuilder.append("Resume Time: ").append(getResumeTime().toString()).append("\n");
         stringBuilder.append("Local Time: ").append(getLocalTime()).append("\n");
 
-        stringBuilder.append("Discrete Variable Valuation: ").append("\n");
+        stringBuilder.append("Variable Valuation: ").append("\n");
         // CHECKME: order of the variables is not guaranteed, is it a problem?
-        for (Map.Entry<String, DiscreteVariable> entry : getDiscreteVariableValuation().entrySet()) {
+        for (Map.Entry<String, Variable> entry : getVariableValuation().entrySet()) {
             stringBuilder.append(entry.getKey()).append(": ").append(entry.getValue().toString()).append("\n");
         }
 
-        stringBuilder.append("Queue: ").append("\n");
+        stringBuilder.append("Message Bag: ").append("\n");
         // CHECKME: order of the messages is not guaranteed, is it a problem?
-        for (Message message : getQueue()) {
+        for (Message message : getMessageBag()) {
             stringBuilder.append(message.toString()).append("\n");
         }
 
@@ -69,12 +97,8 @@ public class SoftwareState extends ActorState {
         return stringBuilder.toString();
     }
 
-    public boolean hasStatement() {
-        return !getSigma().isEmpty();
-    }
-
     public boolean messageCanBeTaken(ContinuousVariable globalTime) {
-        for (Message message : getQueue()) {
+        for (Message message : getMessageBag()) {
             if (message.checkBounds(globalTime)) {
                 return true;
             }
@@ -82,65 +106,73 @@ public class SoftwareState extends ActorState {
         return false;
     }
 
+    public List<Message> getMessagesToBeTaken(ContinuousVariable globalTime) {
+        List<Message> result = new ArrayList<>();
+        for (Message message : getMessageBag()) {
+            if (message.checkBounds(globalTime)) {
+                result.add(message);
+            }
+        }
+        return result;
+    }
+
     @Override
     public List<ActorState> takeMessage(ContinuousVariable globalTime) {
         List<ActorState> result = new ArrayList<>();
-        SoftwareState newSoftwareState = new SoftwareState(
-                getActorName(),
-                getDiscreteVariableValuation(),
-                getQueue(),
-                getSigma(),
-                getLocalTime(),
-                getResumeTime()
-        );
-        // TODO: !!!START FROM HERE!!!
-        // FIXME: what should we do if we have more than one message that can be taken?
-        Message message = newSoftwareState.queue.poll();
-        BigDecimal tMin = globalTime.getUpperBound().min(message.getArrivalTime().getUpperBound());
-        // TODO: update sigma(not the sigma in code, the evaluation function which is sigma in paper)
-        // TODO: add message's parameter evaluation to discrete variable valuation (which is sigma in paper)
-        // FIXME: message parameters are variables, not discrete variables. what should we about intervals?
-        Map<String, Variable> parameters = message.getParameters();
-        for (Map.Entry<String, Variable> entry : parameters.entrySet()) {
-            if (entry.getValue() instanceof DiscreteVariable) {
-                newSoftwareState.getDiscreteVariableValuation().put(entry.getKey(), (DiscreteVariable) entry.getValue());
-            }
-        }
-        // TODO: remove the proper message from message bag
-        // TODO: add body of the message to list of statement to be executed
-        // FIXME: implement getMessageBody method
-        CompilerUtil.getMessageBody(newSoftwareState.getActorName(), message.getServerName());
-        // TODO: update resume time
-        // CHECKME: why we should update resume time?
-        // FIXME: what should be the name of the ContinuousVariable?
-        this.setResumeTime(new ContinuousVariable("resumeTime", globalTime.getLowerBound(), globalTime.getUpperBound()));
-
-        result.add(newSoftwareState);
-
-        // CHECKME: shouldn't it be <= instead of <?
-        if (globalTime.getUpperBound().compareTo(message.getArrivalTime().getUpperBound()) < 0) {
-            newSoftwareState = new SoftwareState(
+        List<Message> messagesToBeTaken = getMessagesToBeTaken(globalTime);
+        for (Message message : messagesToBeTaken) {
+            SoftwareState newSoftwareState = new SoftwareState(
                     getActorName(),
-                    getDiscreteVariableValuation(),
-                    getQueue(),
+                    getVariableValuation(),
+                    getMessageBag(),
                     getSigma(),
                     getLocalTime(),
                     getResumeTime()
             );
-            message = newSoftwareState.queue.poll();
-            Message newMessage = new Message(
-                    message.getSenderActor(),
-                    message.getReceiverActor(),
-                    message.getServerName(),
-                    message.getParameters(),
-                    new ContinuousVariable("arrivalTime", globalTime.getUpperBound(), message.getArrivalTime().getUpperBound())
-            );
-            newSoftwareState.addMessage(newMessage);
-            // FIXME: what epsilon means for sigma? should we set it to null? or should we set it to empty list?
-            newSoftwareState.setSigma(new ArrayList<>());
-            // FIXME: what epsilon means for resumeTime?
-            newSoftwareState.setResumeTime(new ContinuousVariable("resumeTime", globalTime.getLowerBound(), globalTime.getUpperBound()));
+            // TODO: !!!START FROM HERE!!!
+            BigDecimal tMin = globalTime.getUpperBound().min(message.getArrivalTime().getUpperBound());
+            // updating actor valuation function
+            // CHECKME: what should we do if parameters have same name as a valuation variable? we are overwriting them here
+            // CHECKME: shouldn't we get a copy of parameters and then add them to variable valuation? (to avoid overwriting)
+            newSoftwareState.addVariables(message.getParameters());
+            // removing message from message bag
+            newSoftwareState.removeMessage(message);
+            // TODO: add body of the message to list of statement to be executed
+            // FIXME: implement getMessageBody method
+            List<Statement> messageBody = CompilerUtil.getMessageBody(newSoftwareState.getActorName(), message.getServerName());
+            this.addStatements(messageBody);
+            // TODO: update resume time
+            // CHECKME: why we should update resume time?
+            // FIXME: what should be the name of the ContinuousVariable?
+            this.setResumeTime(new ContinuousVariable("resumeTime", globalTime.getLowerBound(), globalTime.getUpperBound()));
 
+            result.add(newSoftwareState);
+
+
+            // CHECKME: shouldn't it be <= instead of <?
+            if (globalTime.getUpperBound().compareTo(message.getArrivalTime().getUpperBound()) < 0) {
+                newSoftwareState = new SoftwareState(
+                        getActorName(),
+                        getVariableValuation(),
+                        getMessageBag(),
+                        getSigma(),
+                        getLocalTime(),
+                        getResumeTime()
+                );
+                Message newMessage = new Message(
+                        message.getSenderActor(),
+                        message.getReceiverActor(),
+                        message.getServerName(),
+                        message.getParameters(),
+                        new ContinuousVariable("arrivalTime", globalTime.getUpperBound(), message.getArrivalTime().getUpperBound())
+                );
+                newSoftwareState.removeMessage(message);
+                newSoftwareState.addMessage(newMessage);
+                // FIXME: what epsilon means for sigma? should we set it to null? or should we set it to empty list?
+                // newSoftwareState.setSigma(new ArrayList<>());
+                // FIXME: what epsilon means for resumeTime?
+                // newSoftwareState.setResumeTime(new ContinuousVariable("resumeTime", globalTime.getLowerBound(), globalTime.getUpperBound()));
+            }
         }
 
         return result;
