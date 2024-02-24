@@ -154,44 +154,4 @@ public abstract class ActorState {
     public void addStatements(List<Statement> statements) {
         this.sigma.addAll(statements);
     }
-
-    public void addChildState(String actorName, ActorState childState) {
-        this.childStates.put(actorName, childState);
-    }
-
-    public void addParentState(String actorName, ActorState parentState) {
-        this.parentStates.put(actorName, parentState);
-    }
-
-    public HashMap<String, ActorState> getChildStates() {
-        return childStates;
-    }
-
-    public HashMap<String, ActorState> getParentStates() {
-        return parentStates;
-    }
-
-    public void setChildStates(HashMap<String, ActorState> childStates) {
-        this.childStates = childStates;
-    }
-
-    public void setParentStates(HashMap<String, ActorState> parentStates) {
-        this.parentStates = parentStates;
-    }
-
-    public void clearLinks() {
-        childStates = new HashMap<String, ActorState>();
-        parentStates = new HashMap<String, ActorState>();
-    }
-
-    public ActorState cloneState() {
-        this.cloner = new Cloner();
-        HashMap<String, ActorState> parentActorStates = this.getChildStates();
-        HashMap<String, ActorState> childActorStates = this.getParentStates();
-        this.clearLinks();
-        ActorState clonedState = this.cloner.deepClone(this);
-        this.setChildStates(childActorStates);
-        this.setParentStates(parentActorStates);
-        return clonedState;
-    }
 }
