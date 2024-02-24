@@ -2,14 +2,15 @@ package stateSpace;
 
 import dataStructure.ContinuousVariable;
 import dataStructure.DiscreteVariable;
+import dataStructure.Variable;
+import jdk.internal.net.http.common.Pair;
+import org.checkerframework.checker.units.qual.A;
 import org.rebecalang.compiler.modelcompiler.corerebeca.objectmodel.Statement;
+import com.rits.cloning.Cloner;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
+import java.util.*;
 import java.lang.StringBuilder;
 
 public abstract class ActorState {
@@ -22,13 +23,13 @@ public abstract class ActorState {
      * value: variable current value
      */
     @Nonnull
-    protected HashMap<String, DiscreteVariable> discreteVariablesValuation;
+    protected HashMap<String, Variable> variablesValuation;
 
     /**
      * queue of messages that must be taken care of
      */
     @Nonnull
-    protected Queue<Message> queue;
+    protected Set<Message> messageBag;
 
     // CHECKME: what exactly are statements? how to implement toString()?
     /**
@@ -43,16 +44,23 @@ public abstract class ActorState {
     // CHECKME: what does local time used for?
     protected float localTime;
 
+    private Cloner cloner;
+
+    @Nonnull
+    protected HashMap<String, ActorState> childStates;
+    @Nonnull
+    protected HashMap<String, ActorState> parentStates;
+
     public ActorState(
             @Nonnull String actorName,
-            @Nonnull HashMap<String, DiscreteVariable> discreteVariablesValuation,
-            @Nonnull Queue<Message> queue,
+            @Nonnull HashMap<String, Variable> variablesValuation,
+            @Nonnull Set<Message> messageBag,
             @Nonnull List<Statement> sigma,
             float localTime
     ) {
         this.actorName = actorName;
-        this.discreteVariablesValuation = discreteVariablesValuation;
-        this.queue = queue;
+        this.variablesValuation = variablesValuation;
+        this.messageBag = messageBag;
         this.sigma = sigma;
         this.localTime = localTime;
     }
@@ -63,31 +71,32 @@ public abstract class ActorState {
     }
 
     @Nonnull
-    public HashMap<String, DiscreteVariable> getDiscreteVariablesValuation() {
-        return discreteVariablesValuation;
+    public HashMap<String, Variable> getVariablesValuation() {
+        return variablesValuation;
     }
 
     @Nullable
-    public DiscreteVariable getVariable(String name) {
-        return this.discreteVariablesValuation.get(name);
+    public Variable getVariable(String name) {
+        return this.variablesValuation.get(name);
     }
 
-    public void updateVariable(DiscreteVariable discreteVariable) {
-        this.discreteVariablesValuation.put(discreteVariable.getName(), discreteVariable);
+    public void updateVariable(Variable variable) {
+        this.variablesValuation.put(variable.getName(), variable);
     }
 
     @Nonnull
-    public Queue<Message> getQueue() {
-        return queue;
+    public Set<Message> getMessageBag() {
+        return messageBag;
     }
 
     @Nullable
+    // CHECKME: is this the correct way to write this method?
     public Message nextMessage() {
-        return queue.poll();
+        return messageBag.iterator().next();
     }
 
     public void addMessage(Message message) {
-        this.queue.add(message);
+        this.messageBag.add(message);
     }
 
     @Nonnull
@@ -117,12 +126,72 @@ public abstract class ActorState {
         }
     }
 
-    public HashMap<String, DiscreteVariable> getDiscreteVariableValuation() {
-        return discreteVariablesValuation;
+    public HashMap<String, Variable> getVariableValuation() {
+        return variablesValuation;
     }
 
     public List<ActorState> takeMessage (ContinuousVariable globalTime) {
         return null;
     }
 
+    // CHECKME: should put it here?
+    public boolean hasStatement() {
+        return !getSigma().isEmpty();
+    }
+
+    public void addVariable(Variable variable) {
+        this.variablesValuation.put(variable.getName(), variable);
+    }
+
+    public void addVariables(HashMap<String, Variable> variables) {
+        this.variablesValuation.putAll(variables);
+    }
+
+    public void removeMessage(Message message) {
+        this.messageBag.remove(message);
+    }
+
+    public void addStatements(List<Statement> statements) {
+        this.sigma.addAll(statements);
+    }
+
+    public void addChildState(String actorName, ActorState childState) {
+        this.childStates.put(actorName, childState);
+    }
+
+    public void addParentState(String actorName, ActorState parentState) {
+        this.parentStates.put(actorName, parentState);
+    }
+
+    public HashMap<String, ActorState> getChildStates() {
+        return childStates;
+    }
+
+    public HashMap<String, ActorState> getParentStates() {
+        return parentStates;
+    }
+
+    public void setChildStates(HashMap<String, ActorState> childStates) {
+        this.childStates = childStates;
+    }
+
+    public void setParentStates(HashMap<String, ActorState> parentStates) {
+        this.parentStates = parentStates;
+    }
+
+    public void clearLinks() {
+        childStates = new HashMap<String, ActorState>();
+        parentStates = new HashMap<String, ActorState>();
+    }
+
+    public ActorState cloneState() {
+        this.cloner = new Cloner();
+        HashMap<String, ActorState> parentActorStates = this.getChildStates();
+        HashMap<String, ActorState> childActorStates = this.getParentStates();
+        this.clearLinks();
+        ActorState clonedState = this.cloner.deepClone(this);
+        this.setChildStates(childActorStates);
+        this.setParentStates(parentActorStates);
+        return clonedState;
+    }
 }
