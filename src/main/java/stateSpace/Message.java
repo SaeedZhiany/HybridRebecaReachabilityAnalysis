@@ -29,6 +29,22 @@ public class Message {
         this.arrivalTime = arrivalTime;
     }
 
+    public Message(Message message) {
+        this.senderActor = message.getSenderActor();
+        this.receiverActor = message.getReceiverActor();
+        this.serverName = message.getServerName();
+        HashMap<String, Variable> newParameters = new HashMap<>();
+        for (Map.Entry<String, Variable> entry : message.getParameters().entrySet()) {
+            if (entry.getValue() instanceof DiscreteVariable) {
+                newParameters.put(entry.getKey(), new DiscreteVariable((DiscreteVariable) entry.getValue()));
+            } else if (entry.getValue() instanceof ContinuousVariable) {
+                newParameters.put(entry.getKey(), new ContinuousVariable((ContinuousVariable) entry.getValue()));
+            }
+        }
+        this.parameters = newParameters;
+        this.arrivalTime = new ContinuousVariable(message.getArrivalTime());
+    }
+
     public String getSenderActor() {
         return senderActor;
     }
