@@ -17,6 +17,11 @@ public class DiscreteVariable extends Variable implements Comparable<DiscreteVar
         this.value = value;
     }
 
+    public DiscreteVariable(@Nonnull DiscreteVariable discreteVariable) {
+        super(discreteVariable.name);
+        this.value = discreteVariable.value;
+    }
+
     @Nonnull
     public BigDecimal getValue() {
         return value;

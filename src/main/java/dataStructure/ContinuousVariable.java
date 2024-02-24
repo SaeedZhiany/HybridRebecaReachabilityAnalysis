@@ -29,6 +29,12 @@ public class ContinuousVariable extends Variable implements Comparable<Continuou
         }
     }
 
+    public ContinuousVariable(@Nonnull ContinuousVariable continuousVariable) {
+        super(continuousVariable.name);
+        this.lowerBound = continuousVariable.lowerBound;
+        this.upperBound = continuousVariable.upperBound;
+    }
+
     @Nonnull
     public BigDecimal getLowerBound() {
         return lowerBound;
