@@ -30,7 +30,18 @@ public class HybridState {
 
     public HybridState(HybridState hybridState) {
         // CHECKME: aren't this attributes private?
-        this(hybridState.globalTime, hybridState.softwareStates, hybridState.physicalStates, hybridState.CANNetworkState);
+        this.globalTime = new ContinuousVariable(hybridState.globalTime);
+        HashMap<String, SoftwareState> newSoftwareStates = new HashMap<>();
+        for (SoftwareState softwareState : hybridState.softwareStates.values()) {
+            newSoftwareStates.put(softwareState.actorName, new SoftwareState(softwareState));
+        }
+        this.softwareStates = newSoftwareStates;
+        HashMap<String, PhysicalState> newPhysicalStates = new HashMap<>();
+        for (PhysicalState physicalState : hybridState.physicalStates.values()) {
+            newPhysicalStates.put(physicalState.actorName, new PhysicalState(physicalState));
+        }
+        this.physicalStates = newPhysicalStates;
+        this.CANNetworkState = new CANNetworkState(hybridState.CANNetworkState);
     }
 
     private HybridState(
