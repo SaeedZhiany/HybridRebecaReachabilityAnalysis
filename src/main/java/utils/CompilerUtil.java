@@ -152,20 +152,22 @@ public class CompilerUtil {
         return continuesVariables;
     }
 
-    // FIXME: this doesn't work but we need something like this
     @Nonnull
     public static List<Statement> getMessageBody(@Nonnull String actorName, @Nonnull String messageName) {
-        final PhysicalClassDeclaration physicalClassDeclaration = getPhysicalClassDeclaration(actorName);
-        final List<Statement> messageBody = new ArrayList<>();
-        if (physicalClassDeclaration != null) {
-            for (MethodDeclaration methodDeclaration : physicalClassDeclaration.getMethodDeclarations()) {
-                if (methodDeclaration.getName().equals(messageName)) {
-                    messageBody.addAll(methodDeclaration.getStatements());
-                    break;
+        List<ReactiveClassDeclaration> reactiveClassDeclarations = getHybridRebecaCode().getReactiveClassDeclaration();
+        for (ReactiveClassDeclaration reactiveClassDeclaration : reactiveClassDeclarations) {
+            if (reactiveClassDeclaration.getName().equals(actorName)) {
+                List<MsgsrvDeclaration> msgsrvs = reactiveClassDeclaration.getMsgsrvs();
+                for (MsgsrvDeclaration msgsrv : msgsrvs) {
+                    if (msgsrv.getName().equals(messageName)) {
+                        BlockStatement body = msgsrv.getBlock();
+                        List<Statement> statements = body.getStatements();
+                        return statements;
+                    }
                 }
             }
         }
-        return messageBody;
+        // CHECKME: is this the correct way to handle this?
+        return new ArrayList<>();
     }
-
 }
