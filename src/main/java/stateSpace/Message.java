@@ -3,12 +3,13 @@ package stateSpace;
 import java.util.HashMap;
 import java.util.Map;
 import java.lang.StringBuilder;
-import dataStructure.Variable;
-import dataStructure.DiscreteVariable;
-import dataStructure.ContinuousVariable;
+import java.util.Objects;
+
+import dataStructure.*;
+import org.apache.commons.lang3.RandomStringUtils;
 
 public class Message {
-
+    private String id;
     private String senderActor;
     private String receiverActor;
     private String serverName;            // name of the handler in the receiver actor
@@ -27,6 +28,7 @@ public class Message {
         this.serverName = serverName;
         this.parameters = parameters;
         this.arrivalTime = arrivalTime;
+        this.id = RandomStringUtils.randomAlphanumeric(15);
     }
 
     public Message(Message message) {
@@ -35,10 +37,14 @@ public class Message {
         this.serverName = message.getServerName();
         HashMap<String, Variable> newParameters = new HashMap<>();
         for (Map.Entry<String, Variable> entry : message.getParameters().entrySet()) {
-            if (entry.getValue() instanceof DiscreteVariable) {
-                newParameters.put(entry.getKey(), new DiscreteVariable((DiscreteVariable) entry.getValue()));
+            if (entry.getValue() instanceof DiscreteDecimalVariable) {
+                newParameters.put(entry.getKey(), new DiscreteDecimalVariable((DiscreteDecimalVariable) entry.getValue()));
             } else if (entry.getValue() instanceof ContinuousVariable) {
                 newParameters.put(entry.getKey(), new ContinuousVariable((ContinuousVariable) entry.getValue()));
+            } else if (entry.getValue() instanceof IntervalRealVariable) {
+                newParameters.put(entry.getKey(), new IntervalRealVariable((IntervalRealVariable) entry.getValue()));
+            } else if (entry.getValue() instanceof DiscreteBoolVariable) {
+                newParameters.put(entry.getKey(), new DiscreteBoolVariable((DiscreteBoolVariable) entry.getValue()));
             }
         }
         this.parameters = newParameters;
@@ -90,5 +96,23 @@ public class Message {
             return true;
         }
         return false;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof Message)) {
+            return false;
+        }
+        Message objMessage = (Message) obj;
+        return this.id.equals(objMessage.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 }

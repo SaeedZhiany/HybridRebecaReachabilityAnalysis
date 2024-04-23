@@ -1,17 +1,15 @@
 package stateSpace;
 
-import dataStructure.ContinuousVariable;
-import dataStructure.DiscreteVariable;
-import dataStructure.Variable;
-import jdk.internal.net.http.common.Pair;
-import org.checkerframework.checker.units.qual.A;
-import org.rebecalang.compiler.modelcompiler.corerebeca.objectmodel.Statement;
 import com.rits.cloning.Cloner;
+import dataStructure.ContinuousVariable;
+import dataStructure.Variable;
+import org.rebecalang.compiler.modelcompiler.corerebeca.objectmodel.Statement;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.*;
-import java.lang.StringBuilder;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Set;
 
 public abstract class ActorState {
 
@@ -43,13 +41,6 @@ public abstract class ActorState {
      */
     // CHECKME: what does local time used for?
     protected float localTime;
-
-    private Cloner cloner;
-
-    @Nonnull
-    protected HashMap<String, ActorState> childStates;
-    @Nonnull
-    protected HashMap<String, ActorState> parentStates;
 
     public ActorState(
             @Nonnull String actorName,
@@ -148,6 +139,7 @@ public abstract class ActorState {
     }
 
     public void removeMessage(Message message) {
+//        Message messageToBeRemoved = messageBag.stream().filter(e -> e.equals(message)).findFirst().orElse(null);
         this.messageBag.remove(message);
     }
 

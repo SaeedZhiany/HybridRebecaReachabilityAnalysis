@@ -44,7 +44,7 @@ public class HybridState {
         this.CANNetworkState = new CANNetworkState(hybridState.CANNetworkState);
     }
 
-    private HybridState(
+    public HybridState(
             @Nonnull ContinuousVariable globalTime,
             @Nonnull HashMap<String, SoftwareState> softwareStates,
             @Nonnull HashMap<String, PhysicalState> physicalStates,
@@ -134,9 +134,9 @@ public class HybridState {
     public boolean isSuspended(ContinuousVariable resumeTime) {
         if ((resumeTime.getLowerBound().compareTo(this.globalTime.getLowerBound()) == 0) &&
                 (resumeTime.getUpperBound().compareTo(this.globalTime.getUpperBound()) >= 0)) {
-            return false;
+            return true;
         }
-        return true;
+        return false;
     }
 
     public List<ActorState> takeMessage(ActorState actorState) {
@@ -148,5 +148,10 @@ public class HybridState {
 
     public ContinuousVariable getGlobalTime() {
         return this.globalTime;
+    }
+
+    public ActorState getActorState(String actorName) {
+        SoftwareState softwareState = softwareStates.get(actorName);
+        return softwareState != null ? softwareState : physicalStates.get(actorName);
     }
 }
