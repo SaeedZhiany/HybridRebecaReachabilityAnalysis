@@ -2,7 +2,6 @@ package converters.modelConverters;
 
 import converters.templates.FlowstarDataModel;
 import dataStructure.ContinuousVariable;
-import dataStructure.DiscreteVariable;
 import freemarker.template.*;
 
 public class FlowstarModelAdapter extends WrappingTemplateModel implements AdapterTemplateModel, TemplateHashModel {

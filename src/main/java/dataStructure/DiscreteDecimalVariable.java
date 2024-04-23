@@ -3,23 +3,23 @@ package dataStructure;
 import javax.annotation.Nonnull;
 import java.math.BigDecimal;
 
-public class DiscreteVariable extends Variable implements Comparable<DiscreteVariable> {
+public class DiscreteDecimalVariable extends Variable implements Comparable<DiscreteDecimalVariable> {
 
     @Nonnull
     private BigDecimal value;
 
-    public DiscreteVariable(@Nonnull String name) {
+    public DiscreteDecimalVariable(@Nonnull String name) {
         this(name, new BigDecimal(0));
     }
 
-    public DiscreteVariable(@Nonnull String name, @Nonnull BigDecimal value) {
+    public DiscreteDecimalVariable(@Nonnull String name, @Nonnull BigDecimal value) {
         super(name);
         this.value = value;
     }
 
-    public DiscreteVariable(@Nonnull DiscreteVariable discreteVariable) {
-        super(discreteVariable.name);
-        this.value = discreteVariable.value;
+    public DiscreteDecimalVariable(@Nonnull DiscreteDecimalVariable discreteDecimalVariable) {
+        super(discreteDecimalVariable.name);
+        this.value = discreteDecimalVariable.value;
     }
 
     @Nonnull
@@ -32,14 +32,14 @@ public class DiscreteVariable extends Variable implements Comparable<DiscreteVar
     }
 
     @Override
-    public int compareTo(@Nonnull DiscreteVariable other) {
+    public int compareTo(@Nonnull DiscreteDecimalVariable other) {
         return this.value.compareTo(other.value);
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof DiscreteVariable) {
-            DiscreteVariable castedObject = ((DiscreteVariable) obj);
+        if (obj instanceof DiscreteDecimalVariable) {
+            DiscreteDecimalVariable castedObject = ((DiscreteDecimalVariable) obj);
             return this.name.equals(castedObject.name) && this.value.equals(castedObject.value);
         } else {
             return false;
@@ -48,6 +48,6 @@ public class DiscreteVariable extends Variable implements Comparable<DiscreteVar
 
     @Override
     public String toString() {
-        return String.format("DiscreteVariable{ %s = %s }", name, value.toPlainString());
+        return String.format("DiscreteDecimalVariable{ %s = %s }", name, value.toPlainString());
     }
 }

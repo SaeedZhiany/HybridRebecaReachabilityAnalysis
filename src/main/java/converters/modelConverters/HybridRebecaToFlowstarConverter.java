@@ -2,14 +2,12 @@ package converters.modelConverters;
 
 import converters.templates.FlowstarDataModel;
 import converters.translator.*;
-import dataStructure.DiscreteVariable;
+import dataStructure.DiscreteDecimalVariable;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import freemarker.template.TemplateExceptionHandler;
 import org.rebecalang.compiler.modelcompiler.corerebeca.objectmodel.*;
-import org.rebecalang.compiler.modelcompiler.hybridrebeca.objectmodel.ModeDeclaration;
-import stateSpace.PhysicalState;
 import utils.CompilerUtil;
 
 import javax.annotation.Nonnull;
@@ -19,9 +17,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Locale;
 
 import static utils.Constants.DIRECTORY_OUTPUTS;
@@ -64,72 +60,72 @@ public class HybridRebecaToFlowstarConverter {
         }
         return outputPath;
     }
-
-    /**
-     * @param state physical state that must be converts to flowstar model
-     * @return output file path
-     * @throws ExpressionTranslationException
-     * @throws IOException
-     * @throws TemplateException
-     */
-    public static String generateFlowstarModelOutputFile(PhysicalState state)
-            throws ExpressionTranslationException, IOException, TemplateException {
-
-        final ModeDeclaration modeDeclaration = CompilerUtil.getModeDeclaration(state.getActorName(), state.getMode());
-
-        final List<FlowstarDataModel.AssignmentExp> modeVariableAssignments = new ArrayList<>();
-        final List<FlowstarDataModel.AssignmentExp> jumpVariableAssignments = new ArrayList<>();
-        if (modeDeclaration != null) {
-            for (Statement statement : modeDeclaration.getInvariantDeclaration().getBlock().getStatements()) {
-                BinaryExpression binaryExpression = ((BinaryExpression) statement);
-                modeVariableAssignments.add(new FlowstarDataModel.AssignmentExp(
-                        ((TermPrimary) binaryExpression.getLeft()).getName(),
-                        ExpressionTranslatorContainer.translate(binaryExpression.getRight(), state.getDiscreteVariablesValuation())
-                ));
-            }
-
-            for (Statement statement : modeDeclaration.getGuardDeclaration().getBlock().getStatements()) {
-                if (statement instanceof BinaryExpression) {
-                    BinaryExpression binaryExpression = ((BinaryExpression) statement);
-                    jumpVariableAssignments.add(new FlowstarDataModel.AssignmentExp(
-                            ((TermPrimary) binaryExpression.getLeft()).getName(),
-                            ExpressionTranslatorContainer.translate(binaryExpression.getRight(), state.getDiscreteVariablesValuation())
-                    ));
-                }
-            }
-        }
-        final FlowstarDataModel.ModeDefinition modeDefinition = new FlowstarDataModel.ModeDefinition(
-                getEvaluatedInvariantCondition(state.getActorName(), state.getMode(), state.getDiscreteVariablesValuation()),
-                modeVariableAssignments
-        );
-        final FlowstarDataModel.JumpDefinition jumpDefinition = new FlowstarDataModel.JumpDefinition(
-                getEvaluatedGuardCondition(state.getActorName(), state.getMode(), state.getDiscreteVariablesValuation()),
-                jumpVariableAssignments
-        );
-        final FlowstarDataModel flowstarDataModel = new FlowstarDataModel(
-                new ArrayList<>(state.getContinuousVariableValuation().values()),
-                new FlowstarDataModel.SettingBlock( // TODO revise setting block
-                        100,
-                        0.5f,
-                        8,
-                        new String[]{"s", "d"},
-                        new Integer[]{1, 9},
-                        6,
-                        7,
-                        1
-                ),
-                modeDefinition,
-                jumpDefinition,
-                state.getActorName() + state.getMode()
-        );
-        return generateFlowstarModelOutputFile(flowstarDataModel);
-    }
+//
+//    /**
+//     * @param state physical state that must be converts to flowstar model
+//     * @return output file path
+//     * @throws ExpressionTranslationException
+//     * @throws IOException
+//     * @throws TemplateException
+//     */
+//    public static String generateFlowstarModelOutputFile(PhysicalState state)
+//            throws ExpressionTranslationException, IOException, TemplateException {
+//
+//        final ModeDeclaration modeDeclaration = CompilerUtil.getModeDeclaration(state.getActorName(), state.getMode());
+//
+//        final List<FlowstarDataModel.AssignmentExp> modeVariableAssignments = new ArrayList<>();
+//        final List<FlowstarDataModel.AssignmentExp> jumpVariableAssignments = new ArrayList<>();
+//        if (modeDeclaration != null) {
+//            for (Statement statement : modeDeclaration.getInvariantDeclaration().getBlock().getStatements()) {
+//                BinaryExpression binaryExpression = ((BinaryExpression) statement);
+//                modeVariableAssignments.add(new FlowstarDataModel.AssignmentExp(
+//                        ((TermPrimary) binaryExpression.getLeft()).getName(),
+//                        ExpressionTranslatorContainer.translate(binaryExpression.getRight(), state.getDiscreteVariablesValuation())
+//                ));
+//            }
+//
+//            for (Statement statement : modeDeclaration.getGuardDeclaration().getBlock().getStatements()) {
+//                if (statement instanceof BinaryExpression) {
+//                    BinaryExpression binaryExpression = ((BinaryExpression) statement);
+//                    jumpVariableAssignments.add(new FlowstarDataModel.AssignmentExp(
+//                            ((TermPrimary) binaryExpression.getLeft()).getName(),
+//                            ExpressionTranslatorContainer.translate(binaryExpression.getRight(), state.getDiscreteVariablesValuation())
+//                    ));
+//                }
+//            }
+//        }
+//        final FlowstarDataModel.ModeDefinition modeDefinition = new FlowstarDataModel.ModeDefinition(
+//                getEvaluatedInvariantCondition(state.getActorName(), state.getMode(), state.getDiscreteVariablesValuation()),
+//                modeVariableAssignments
+//        );
+//        final FlowstarDataModel.JumpDefinition jumpDefinition = new FlowstarDataModel.JumpDefinition(
+//                getEvaluatedGuardCondition(state.getActorName(), state.getMode(), state.getDiscreteVariablesValuation()),
+//                jumpVariableAssignments
+//        );
+//        final FlowstarDataModel flowstarDataModel = new FlowstarDataModel(
+//                new ArrayList<>(state.getContinuousVariableValuation().values()),
+//                new FlowstarDataModel.SettingBlock( // TODO revise setting block
+//                        100,
+//                        0.5f,
+//                        8,
+//                        new String[]{"s", "d"},
+//                        new Integer[]{1, 9},
+//                        6,
+//                        7,
+//                        1
+//                ),
+//                modeDefinition,
+//                jumpDefinition,
+//                state.getActorName() + state.getMode()
+//        );
+//        return generateFlowstarModelOutputFile(flowstarDataModel);
+//    }
 
     @Nullable
     public static String getEvaluatedInvariantCondition(
             @Nonnull String actorName,
             @Nullable String modeName,
-            @Nonnull HashMap<String, DiscreteVariable> discreteVariables
+            @Nonnull HashMap<String, DiscreteDecimalVariable> discreteVariables
     ) throws ExpressionTranslationException {
         final Expression invariantCondition = CompilerUtil.getInvariantCondition(actorName, modeName);
 
@@ -142,7 +138,7 @@ public class HybridRebecaToFlowstarConverter {
     public static String getEvaluatedGuardCondition(
             @Nonnull String actorName,
             @Nullable String modeName,
-            @Nonnull HashMap<String, DiscreteVariable> discreteVariables
+            @Nonnull HashMap<String, DiscreteDecimalVariable> discreteVariables
     ) throws ExpressionTranslationException {
         final Expression guardCondition = CompilerUtil.getGuardCondition(actorName, modeName);
 

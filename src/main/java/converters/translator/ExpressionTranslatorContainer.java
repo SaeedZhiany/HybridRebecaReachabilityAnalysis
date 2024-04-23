@@ -1,6 +1,6 @@
 package converters.translator;
 
-import dataStructure.DiscreteVariable;
+import dataStructure.DiscreteDecimalVariable;
 import org.rebecalang.compiler.modelcompiler.corerebeca.objectmodel.Expression;
 import org.rebecalang.compiler.modelcompiler.corerebeca.objectmodel.TermPrimary;
 import org.rebecalang.compiler.utils.ExceptionContainer;
@@ -57,7 +57,7 @@ public class ExpressionTranslatorContainer {
         }
     }
 
-    public static String translate(Expression expression, HashMap<String, DiscreteVariable> discreteVariables)
+    public static String translate(Expression expression, HashMap<String, DiscreteDecimalVariable> discreteVariables)
             throws ExpressionTranslationException {
         if (translatorsRepository.containsKey(TermPrimary.class)) {
             ((TermPrimaryExpressionTranslator) translatorsRepository.get(TermPrimary.class)).initialize(discreteVariables);

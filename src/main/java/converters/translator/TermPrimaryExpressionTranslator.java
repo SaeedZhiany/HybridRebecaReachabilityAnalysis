@@ -1,6 +1,6 @@
 package converters.translator;
 
-import dataStructure.DiscreteVariable;
+import dataStructure.DiscreteDecimalVariable;
 import org.rebecalang.compiler.modelcompiler.corerebeca.objectmodel.Expression;
 import org.rebecalang.compiler.modelcompiler.corerebeca.objectmodel.TermPrimary;
 
@@ -10,9 +10,9 @@ import java.util.HashMap;
 public class TermPrimaryExpressionTranslator extends AbstractExpressionTranslator {
 
     @Nonnull
-    HashMap<String, DiscreteVariable> discreteVariables = new HashMap<>();
+    HashMap<String, DiscreteDecimalVariable> discreteVariables = new HashMap<>();
 
-    public void initialize(@Nonnull HashMap<String, DiscreteVariable> discreteVariables) {
+    public void initialize(@Nonnull HashMap<String, DiscreteDecimalVariable> discreteVariables) {
         this.discreteVariables = discreteVariables;
     }
 
