@@ -5,8 +5,15 @@ import java.lang.StringBuilder;
 import java.util.HashMap;
 import java.util.List;
 
+import com.rits.cloning.Cloner;
+import dataStructure.Variable;
+import org.rebecalang.compiler.modelcompiler.corerebeca.objectmodel.DotPrimary;
+import org.rebecalang.compiler.modelcompiler.corerebeca.objectmodel.FormalParameterDeclaration;
+import org.rebecalang.compiler.modelcompiler.corerebeca.objectmodel.TermPrimary;
+import utils.CompilerUtil;
 import utils.StringSHA256;
 import dataStructure.ContinuousVariable;
+import visitors.ExpressionEvaluatorVisitor;
 
 public class HybridState {
 
@@ -144,6 +151,40 @@ public class HybridState {
         // TODO: takeMessage method of SoftwareState can and should return multiple (at most 2?!) newSoftwareStates
         // CHECKME: does it call on correct class? (software and physical)
         return actorState.takeMessage(globalTime);
+    }
+
+    public HybridState sendStatement(ActorState actorState) {
+        Cloner cloner = new Cloner();
+        HybridState newHybridState = cloner.deepClone(this);
+//        RunUnchangeableStatementsVisitors runner = new RunUnchangeableStatementsVisitors(actorState);
+        // TODO: do it better for another type og statements
+        ActorState newActorState = cloner.deepClone(actorState);
+        // CHECKME: maybe shouldn't delete
+        DotPrimary sendStatement = (DotPrimary) actorState.nextStatement();
+
+        String sender = actorState.actorName;
+        String receiver = RebecInstantiationMapping.getInstance().getKnownRebecBinding(sender, ((TermPrimary) sendStatement.getLeft()).getName());
+        String serverName = ((TermPrimary) sendStatement.getRight()).getName();
+        List<FormalParameterDeclaration> serverParams = CompilerUtil.getServerParameters(
+                RebecInstantiationMapping.getInstance().getRebecReactiveClassType(receiver),
+                serverName
+        );
+        HashMap<String, Variable > callParameters = new HashMap<>();
+        ExpressionEvaluatorVisitor evaluatorVisitor = new ExpressionEvaluatorVisitor(actorState.getVariableValuation());
+        for (int i = 0; i < serverParams.size(); i++) {
+            Variable paramValue = evaluatorVisitor.visit(((TermPrimary) sendStatement.getRight()).getParentSuffixPrimary().getArguments().get(i));
+            paramValue.setName(serverParams.get(i).getName());
+            callParameters.put(
+                    serverParams.get(i).getName(),
+                    paramValue
+            );
+        }
+        Message message = new Message(actorState.actorName, receiver, serverName, callParameters, globalTime);
+        ActorState receiverActorState = getActorState(receiver);
+        receiverActorState.addMessage(message);
+        newHybridState.replaceActorState(newActorState);
+        newHybridState.replaceActorState(receiverActorState);
+        return newHybridState;
     }
 
     public ContinuousVariable getGlobalTime() {

@@ -1,6 +1,5 @@
 package sos;
 
-import stateSpace.ActorState;
 import stateSpace.HybridState;
 import stateSpace.PhysicalState;
 import stateSpace.SoftwareState;
@@ -38,24 +37,15 @@ public class SendStatementSOSExecuter extends AbstractSOSExecutor {
     protected List<HybridState> execute(HybridState hybridState) {
         List<HybridState> result = new ArrayList<>();
         for (SoftwareState softwareState : applicableSoftwareStates(hybridState)) {
-            // TODO: takeMessage method of HybridState can and should return multiple (at most 2?!) newHybridStates
-            List<ActorState> generatedActorStates = hybridState.takeMessage(softwareState);
-            for (ActorState actorState : generatedActorStates) {
-                // FIXME: make a copy of this software state
-                HybridState newHybridState = new HybridState(hybridState);
-                newHybridState.replaceActorState(actorState);
-                result.add(newHybridState);
-            }
+            HybridState newHybridState = hybridState.sendStatement(softwareState);
+            result.add(newHybridState);
         }
-        // TODO: do the same thing for physical states
+
         for (PhysicalState physicalState : applicablePhysicalStates(hybridState)) {
-            List<ActorState> generatedActorStates = hybridState.takeMessage(physicalState);
-            for (ActorState actorState : generatedActorStates) {
-                HybridState newHybridState = new HybridState(hybridState);
-                newHybridState.replaceActorState(actorState);
-                result.add(newHybridState);
-            }
+            HybridState newHybridState = hybridState.sendStatement(physicalState);
+            result.add(newHybridState);
         }
+
         return result;
     }
 
