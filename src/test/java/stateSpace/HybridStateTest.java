@@ -86,8 +86,9 @@ class HybridStateTest {
             when(parentSuffixPrimaryMock.getArguments()).thenReturn(parentSuffixPrimaryArguments);
             right.setParentSuffixPrimary(parentSuffixPrimaryMock);
             Cloner cloner = new Cloner();
+            HybridState newHybridState1 = cloner.deepClone(hybridState);
 
-            HybridState newHybridState = hybridState.sendStatement(physicalState1);
+            HybridState newHybridState = hybridState.sendStatement(physicalState1, newHybridState1);
             assertEquals(physicalState2.getMessageBag().size(), 1);
 
         }

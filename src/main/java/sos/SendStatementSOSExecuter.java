@@ -1,6 +1,5 @@
 package sos;
 
-import com.rits.cloning.Cloner;
 import stateSpace.HybridState;
 import stateSpace.PhysicalState;
 import stateSpace.SoftwareState;
@@ -38,12 +37,12 @@ public class SendStatementSOSExecuter extends AbstractSOSExecutor {
     protected List<HybridState> execute(HybridState hybridState) {
         List<HybridState> result = new ArrayList<>();
         for (SoftwareState softwareState : applicableSoftwareStates(hybridState)) {
-            HybridState newHybridState = hybridState.assignStatement(softwareState);
+            HybridState newHybridState = hybridState.sendStatement(softwareState);
             result.add(newHybridState);
         }
 
         for (PhysicalState physicalState : applicablePhysicalStates(hybridState)) {
-            HybridState newHybridState = hybridState.assignStatement(physicalState);
+            HybridState newHybridState = hybridState.sendStatement(physicalState);
             result.add(newHybridState);
         }
 
