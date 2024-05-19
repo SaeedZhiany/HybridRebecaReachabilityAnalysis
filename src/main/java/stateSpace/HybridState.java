@@ -18,15 +18,15 @@ import visitors.ExpressionEvaluatorVisitor;
 public class HybridState {
 
     // CHECKME: should global time be non-null?
-    @Nonnull
+//    @Nonnull
     private ContinuousVariable globalTime;
-    @Nonnull
+//    @Nonnull
     private HashMap<String, SoftwareState> softwareStates;
-    @Nonnull
+//    @Nonnull
     private HashMap<String, PhysicalState> physicalStates;
-    @Nonnull
+//    @Nonnull
     private CANNetworkState CANNetworkState;
-    @Nonnull
+//    @Nonnull
     private String hashString;
 
     public HybridState() {
@@ -48,7 +48,7 @@ public class HybridState {
             newPhysicalStates.put(physicalState.actorName, new PhysicalState(physicalState));
         }
         this.physicalStates = newPhysicalStates;
-        this.CANNetworkState = new CANNetworkState(hybridState.CANNetworkState);
+//        this.CANNetworkState = new CANNetworkState(hybridState.CANNetworkState);
     }
 
     public HybridState(
@@ -60,7 +60,7 @@ public class HybridState {
         this.globalTime = globalTime;
         this.softwareStates = softwareStates;
         this.physicalStates = physicalStates;
-        this.CANNetworkState = CANNetworkState;
+//        this.CANNetworkState = CANNetworkState;
         // CHECKME: is this the correct way to handle hashString exception?
         try {
             this.hashString = updateHash();
@@ -106,7 +106,7 @@ public class HybridState {
         // CHECKME: the order of the states is not guaranteed, is it a problem?
         StringBuilder stringBuilder = new StringBuilder();
 
-        stringBuilder.append(globalTime.toString());
+        stringBuilder.append(globalTime);
 
         for (SoftwareState softwareState : softwareStates.values()) {
             stringBuilder.append(softwareState.toString());
