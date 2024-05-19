@@ -115,6 +115,30 @@ public class CompilerUtil {
         return null;
     }
 
+    public static ReactiveClassDeclaration getReactiveClassDeclaration(@Nonnull String actorDeclaration) {
+        for (ReactiveClassDeclaration reactiveClassDeclaration : getHybridRebecaCode().getReactiveClassDeclaration()) {
+            if (reactiveClassDeclaration.getName().equals(actorDeclaration)) {
+                return reactiveClassDeclaration;
+            }
+        }
+        return null;
+    }
+
+    public static List<FormalParameterDeclaration> getServerParameters(@Nonnull String actorDeclaration, @Nonnull String serverName) {
+        ReactiveClassDeclaration reactiveClassDeclaration = getReactiveClassDeclaration(actorDeclaration);
+        if (reactiveClassDeclaration == null) {
+            reactiveClassDeclaration = getPhysicalClassDeclaration(actorDeclaration);
+        }
+        if (reactiveClassDeclaration != null) {
+            for (MsgsrvDeclaration msgsrvDeclaration : reactiveClassDeclaration.getMsgsrvs()) {
+                if (msgsrvDeclaration.getName().equals(serverName)) {
+                    return msgsrvDeclaration.getFormalParameters();
+                }
+            }
+        }
+        return new ArrayList<>();
+    }
+
     @Nullable
     public static ModeDeclaration getModeDeclaration(@Nonnull String actorName, @Nullable String modeName) {
         if (modeName != null) {

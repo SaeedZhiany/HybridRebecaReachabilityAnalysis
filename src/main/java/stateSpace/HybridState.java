@@ -5,21 +5,29 @@ import java.lang.StringBuilder;
 import java.util.HashMap;
 import java.util.List;
 
+import com.rits.cloning.Cloner;
+import dataStructure.Variable;
+import org.rebecalang.compiler.modelcompiler.corerebeca.objectmodel.BinaryExpression;
+import org.rebecalang.compiler.modelcompiler.corerebeca.objectmodel.DotPrimary;
+import org.rebecalang.compiler.modelcompiler.corerebeca.objectmodel.FormalParameterDeclaration;
+import org.rebecalang.compiler.modelcompiler.corerebeca.objectmodel.TermPrimary;
+import utils.CompilerUtil;
 import utils.StringSHA256;
 import dataStructure.ContinuousVariable;
+import visitors.ExpressionEvaluatorVisitor;
 
 public class HybridState {
 
     // CHECKME: should global time be non-null?
-    @Nonnull
+//    @Nonnull
     private ContinuousVariable globalTime;
-    @Nonnull
+//    @Nonnull
     private HashMap<String, SoftwareState> softwareStates;
-    @Nonnull
+//    @Nonnull
     private HashMap<String, PhysicalState> physicalStates;
-    @Nonnull
+//    @Nonnull
     private CANNetworkState CANNetworkState;
-    @Nonnull
+//    @Nonnull
     private String hashString;
 
     public HybridState() {
@@ -41,7 +49,7 @@ public class HybridState {
             newPhysicalStates.put(physicalState.actorName, new PhysicalState(physicalState));
         }
         this.physicalStates = newPhysicalStates;
-        this.CANNetworkState = new CANNetworkState(hybridState.CANNetworkState);
+//        this.CANNetworkState = new CANNetworkState(hybridState.CANNetworkState);
     }
 
     public HybridState(
@@ -53,7 +61,7 @@ public class HybridState {
         this.globalTime = globalTime;
         this.softwareStates = softwareStates;
         this.physicalStates = physicalStates;
-        this.CANNetworkState = CANNetworkState;
+//        this.CANNetworkState = CANNetworkState;
         // CHECKME: is this the correct way to handle hashString exception?
         try {
             this.hashString = updateHash();
@@ -99,7 +107,7 @@ public class HybridState {
         // CHECKME: the order of the states is not guaranteed, is it a problem?
         StringBuilder stringBuilder = new StringBuilder();
 
-        stringBuilder.append(globalTime.toString());
+        stringBuilder.append(globalTime);
 
         for (SoftwareState softwareState : softwareStates.values()) {
             stringBuilder.append(softwareState.toString());
@@ -144,6 +152,57 @@ public class HybridState {
         // TODO: takeMessage method of SoftwareState can and should return multiple (at most 2?!) newSoftwareStates
         // CHECKME: does it call on correct class? (software and physical)
         return actorState.takeMessage(globalTime);
+    }
+
+    public HybridState sendStatement(ActorState actorState) {
+        Cloner cloner = new Cloner();
+        HybridState newHybridState = cloner.deepClone(this);
+//        RunUnchangeableStatementsVisitors runner = new RunUnchangeableStatementsVisitors(actorState);
+        // TODO: do it better for another type og statements
+        ActorState newActorState = cloner.deepClone(actorState);
+        // CHECKME: maybe shouldn't delete
+        DotPrimary sendStatement = (DotPrimary) newActorState.nextStatement();
+
+        String sender = actorState.actorName;
+        String receiver = RebecInstantiationMapping.getInstance().getKnownRebecBinding(sender, ((TermPrimary) sendStatement.getLeft()).getName());
+        String serverName = ((TermPrimary) sendStatement.getRight()).getName();
+        List<FormalParameterDeclaration> serverParams = CompilerUtil.getServerParameters(
+                RebecInstantiationMapping.getInstance().getRebecReactiveClassType(receiver),
+                serverName
+        );
+        HashMap<String, Variable > callParameters = new HashMap<>();
+        ExpressionEvaluatorVisitor evaluatorVisitor = new ExpressionEvaluatorVisitor(actorState.getVariableValuation());
+        for (int i = 0; i < serverParams.size(); i++) {
+            Variable paramValue = evaluatorVisitor.visit(((TermPrimary) sendStatement.getRight()).getParentSuffixPrimary().getArguments().get(i));
+            paramValue.setName(serverParams.get(i).getName());
+            callParameters.put(
+                    serverParams.get(i).getName(),
+                    paramValue
+            );
+        }
+        Message message = new Message(actorState.actorName, receiver, serverName, callParameters, globalTime);
+        ActorState receiverActorState = getActorState(receiver);
+        receiverActorState.addMessage(message);
+        newHybridState.replaceActorState(newActorState);
+        newHybridState.replaceActorState(receiverActorState);
+        return newHybridState;
+    }
+
+    public HybridState assignStatement(ActorState actorState) {
+        Cloner cloner = new Cloner();
+        HybridState newHybridState = cloner.deepClone(this);
+        ActorState newActorState = cloner.deepClone(actorState);
+        // CHECKME: maybe shouldn't delete
+        BinaryExpression assignStatement = (BinaryExpression) newActorState.nextStatement();
+
+        String variableName = ((TermPrimary) assignStatement.getLeft()).getName();
+        Variable variableValue = new ExpressionEvaluatorVisitor(actorState.getVariableValuation()).visit(assignStatement.getRight());
+        variableValue.setName(variableName);
+
+        newActorState.updateVariable(variableValue);
+
+        newHybridState.replaceActorState(newActorState);
+        return newHybridState;
     }
 
     public ContinuousVariable getGlobalTime() {

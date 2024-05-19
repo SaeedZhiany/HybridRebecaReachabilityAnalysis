@@ -4,21 +4,22 @@ import com.rits.cloning.Cloner;
 import stateSpace.HybridState;
 import stateSpace.PhysicalState;
 import stateSpace.SoftwareState;
+import visitors.AssignmentStatementApplicableVisitor;
 import visitors.SendStatementApplicableVisitor;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SendStatementSOSExecuter extends AbstractSOSExecutor {
-    private SendStatementApplicableVisitor sendStatementApplicableVisitor = new SendStatementApplicableVisitor();
+public class AssignmentStatementSOSExecutor extends AbstractSOSExecutor{
+    private AssignmentStatementApplicableVisitor applicableVisitor = new AssignmentStatementApplicableVisitor();
 
     @Override
     public boolean isApplicable(HybridState hybridState) {
         for (SoftwareState softwareState : hybridState.getSoftwareStates().values()) {
             if (softwareState.hasStatement()) {
                 if (!hybridState.isSuspended(softwareState.getResumeTime())) {
-                    return sendStatementApplicableVisitor.checkStatementApplicability(softwareState);
+                    return applicableVisitor.checkStatementApplicability(softwareState);
                 }
             }
         }
@@ -26,7 +27,7 @@ public class SendStatementSOSExecuter extends AbstractSOSExecutor {
             if (physicalState.hasStatement()) {
                 // CHECKME: isIdle is same as isSuspended?
                 if (!physicalState.isIdle()) {
-                    return sendStatementApplicableVisitor.checkStatementApplicability(physicalState);
+                    return applicableVisitor.checkStatementApplicability(physicalState);
                 }
             }
         }
@@ -38,12 +39,14 @@ public class SendStatementSOSExecuter extends AbstractSOSExecutor {
     protected List<HybridState> execute(HybridState hybridState) {
         List<HybridState> result = new ArrayList<>();
         for (SoftwareState softwareState : applicableSoftwareStates(hybridState)) {
-            HybridState newHybridState = hybridState.assignStatement(softwareState);
+            Cloner cloner = new Cloner();
+            HybridState newHybridState = hybridState.sendStatement(softwareState);
             result.add(newHybridState);
         }
 
         for (PhysicalState physicalState : applicablePhysicalStates(hybridState)) {
-            HybridState newHybridState = hybridState.assignStatement(physicalState);
+            Cloner cloner = new Cloner();
+            HybridState newHybridState = hybridState.sendStatement(physicalState);
             result.add(newHybridState);
         }
 
@@ -56,7 +59,7 @@ public class SendStatementSOSExecuter extends AbstractSOSExecutor {
         for (SoftwareState softwareState : hybridState.getSoftwareStates().values()) {
             if (softwareState.hasStatement()) {
                 if (!hybridState.isSuspended(softwareState.getResumeTime())) {
-                    if(sendStatementApplicableVisitor.checkStatementApplicability(softwareState)) {
+                    if(applicableVisitor.checkStatementApplicability(softwareState)) {
                         applicableStates.add(softwareState);
                     }
                 }
@@ -72,7 +75,7 @@ public class SendStatementSOSExecuter extends AbstractSOSExecutor {
             if (physicalState.hasStatement()) {
                 // CHECKME: isIdle is same as isSuspended?
                 if (!physicalState.isIdle()) {
-                    if(sendStatementApplicableVisitor.checkStatementApplicability(physicalState)) {
+                    if(applicableVisitor.checkStatementApplicability(physicalState)) {
                         applicableStates.add(physicalState);
                     }
                 }
@@ -80,4 +83,5 @@ public class SendStatementSOSExecuter extends AbstractSOSExecutor {
         }
         return applicableStates;
     }
+
 }
