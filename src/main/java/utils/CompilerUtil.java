@@ -1,15 +1,21 @@
 package utils;
 
+import configs.SpringConfig;
 import dataStructure.ConnectionType;
-import org.rebecalang.compiler.modelcompiler.RebecaCompiler;
+import org.rebecalang.compiler.modelcompiler.RebecaModelCompiler;
 import org.rebecalang.compiler.modelcompiler.SymbolTable;
 import org.rebecalang.compiler.modelcompiler.corerebeca.objectmodel.*;
 import org.rebecalang.compiler.modelcompiler.hybridrebeca.objectmodel.HybridRebecaCode;
 import org.rebecalang.compiler.modelcompiler.hybridrebeca.objectmodel.ModeDeclaration;
 import org.rebecalang.compiler.modelcompiler.hybridrebeca.objectmodel.PhysicalClassDeclaration;
-import org.rebecalang.compiler.utils.CompilerFeature;
+import org.rebecalang.compiler.utils.CompilerExtension;
+import org.rebecalang.compiler.utils.CoreVersion;
 import org.rebecalang.compiler.utils.ExceptionContainer;
 import org.rebecalang.compiler.utils.Pair;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.stereotype.Component;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -21,26 +27,48 @@ import java.util.List;
 
 import static dataStructure.ConnectionType.WIRE;
 
+@Component
 public class CompilerUtil {
 
     @Nonnull
+//    @Autowired
     private static Pair<RebecaModel, SymbolTable> pair;
 
     static {
         pair = new Pair<>();
     }
 
+    @Autowired
+    private RebecaModelCompiler rebecaModelCompiler;
+
+    @Autowired
+    private ExceptionContainer exceptionContainer;
+
+    private static ApplicationContext context;
+
+    static {
+        initializeSpring();
+    }
+
+    private static void initializeSpring() {
+        context = new AnnotationConfigApplicationContext(SpringConfig.class);
+    }
+
     private CompilerUtil() {
     }
 
     public static void compile(@Nonnull String fileName) throws Exception {
-        RebecaCompiler compiler = new RebecaCompiler();
-        pair = compiler.compileRebecaFile(
-                Paths.get(Constants.DIRECTORY_SAMPLES, fileName).toFile(),
-                new HashSet<>(Arrays.asList(CompilerFeature.CORE_2_3, CompilerFeature.HYBRID_REBECA))
-        );
+        CompilerUtil compilerUtil = context.getBean(CompilerUtil.class);
+        compilerUtil.doCompile(fileName);
+    }
 
-        final ExceptionContainer exceptionContainer = compiler.getExceptionContainer();
+    private void doCompile(@Nonnull String fileName) throws Exception {
+        pair = rebecaModelCompiler.compileRebecaFile(
+                Paths.get(Constants.DIRECTORY_SAMPLES, fileName).toFile(),
+                new HashSet<>(Arrays.asList(CompilerExtension.HYBRID_REBECA
+                )), CoreVersion.CORE_2_3);
+
+//        final ExceptionContainer exceptionContainer = rebecaModelCompiler.getExceptionContainer();g
         if (!exceptionContainer.exceptionsIsEmpty()) {
             System.err.println(exceptionContainer.getExceptions());
             pair = new Pair<>();
@@ -51,6 +79,7 @@ public class CompilerUtil {
             System.out.println(Constants.Green + exceptionContainer.getWarnings() + Constants.DefaultColor);
         }
     }
+
 
     @Nonnull
     public static RebecaModel getRebecaModel() {
