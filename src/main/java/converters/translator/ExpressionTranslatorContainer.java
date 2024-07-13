@@ -26,15 +26,15 @@ public class ExpressionTranslatorContainer {
         translatorsRepository.put(Expression.class, getEmptyTranslator());
     }
 
-    public static ExceptionContainer getExceptions() {
-        ExceptionContainer container = new ExceptionContainer();
-
-        for (AbstractExpressionTranslator translator : translatorsRepository.values()) {
-            translator.fillExceptionContainer(container);
-        }
-
-        return container;
-    }
+//    public static ExceptionContainer getExceptions() {
+//        ExceptionContainer container = new ExceptionContainer();
+//
+//        for (AbstractExpressionTranslator translator : translatorsRepository.values()) {
+//            translator.fillExceptionContainer(container);
+//        }
+//
+//        return container;
+//    }
 
     public static void registerTranslator(Class<? extends Expression> type, AbstractExpressionTranslator translator) {
         translatorsRepository.put(type, translator);

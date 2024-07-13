@@ -1,6 +1,7 @@
 package sos;
 
 import com.rits.cloning.Cloner;
+import stateSpace.ActorState;
 import stateSpace.HybridState;
 import stateSpace.PhysicalState;
 import stateSpace.SoftwareState;
@@ -38,18 +39,14 @@ public class AssignmentStatementSOSExecutor extends AbstractSOSExecutor{
     @Override
     protected List<HybridState> execute(HybridState hybridState) {
         List<HybridState> result = new ArrayList<>();
-        for (SoftwareState softwareState : applicableSoftwareStates(hybridState)) {
-            Cloner cloner = new Cloner();
-            HybridState newHybridState = hybridState.sendStatement(softwareState);
-            result.add(newHybridState);
+        List<ActorState> actorStates = new ArrayList<>();
+        actorStates.addAll(applicableSoftwareStates(hybridState));
+        actorStates.addAll(applicablePhysicalStates(hybridState));
+        for (ActorState actorState : actorStates) {
+            // TODO: takeMessage method of HybridState can and should return multiple (at most 2?!) newHybridStates
+            List<HybridState> newHybridStates = hybridState.assignStatement(actorState);
+            result.addAll(newHybridStates);
         }
-
-        for (PhysicalState physicalState : applicablePhysicalStates(hybridState)) {
-            Cloner cloner = new Cloner();
-            HybridState newHybridState = hybridState.sendStatement(physicalState);
-            result.add(newHybridState);
-        }
-
         return result;
     }
 
