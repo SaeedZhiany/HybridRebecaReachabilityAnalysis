@@ -146,7 +146,7 @@ class TakeMessageSOSExecutorTest {
                 messageParams,
                 messageArrivalTime);
         softwareState.addMessage(message);
-        softwareState.setResumeTime(new ContinuousVariable("resumeTime", new BigDecimal(0), new BigDecimal(6)));
+        softwareState.setResumeTime(new ContinuousVariable("resumeTime", new BigDecimal(5), new BigDecimal(6)));
         HashMap<String, SoftwareState> softwareStateMap = new HashMap<>();
         softwareStateMap.put("init", softwareState);
         HybridState hybridState = new HybridState(globalTime, softwareStateMap, new HashMap<>(), new CANNetworkState());
