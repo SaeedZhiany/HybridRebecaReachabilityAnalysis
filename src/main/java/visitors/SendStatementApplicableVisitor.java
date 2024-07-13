@@ -9,9 +9,9 @@ import java.util.List;
 
 public class SendStatementApplicableVisitor extends Visitor<Boolean> {
     public Boolean checkStatementApplicability(ActorState actorState) {
-        List<Statement> statements = actorState.getSigma();
-        if (statements instanceof DotPrimary) {
-            return this.visit((DotPrimary) statements);
+        Statement statement = actorState.getSigma().get(0);
+        if (statement instanceof DotPrimary) {
+            return this.visit((DotPrimary) statement);
         }
         return false;
     }

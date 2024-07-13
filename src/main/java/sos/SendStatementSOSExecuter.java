@@ -1,5 +1,6 @@
 package sos;
 
+import stateSpace.ActorState;
 import stateSpace.HybridState;
 import stateSpace.PhysicalState;
 import stateSpace.SoftwareState;
@@ -36,16 +37,13 @@ public class SendStatementSOSExecuter extends AbstractSOSExecutor {
     @Override
     protected List<HybridState> execute(HybridState hybridState) {
         List<HybridState> result = new ArrayList<>();
-        for (SoftwareState softwareState : applicableSoftwareStates(hybridState)) {
-            HybridState newHybridState = hybridState.sendStatement(softwareState);
-            result.add(newHybridState);
+        List<ActorState> actorStates = new ArrayList<>();
+        actorStates.addAll(applicableSoftwareStates(hybridState));
+        actorStates.addAll(applicablePhysicalStates(hybridState));
+        for (ActorState actorState : actorStates) {
+            List<HybridState> newHybridStates = hybridState.sendStatement(actorState);
+            result.addAll(newHybridStates);
         }
-
-        for (PhysicalState physicalState : applicablePhysicalStates(hybridState)) {
-            HybridState newHybridState = hybridState.sendStatement(physicalState);
-            result.add(newHybridState);
-        }
-
         return result;
     }
 
