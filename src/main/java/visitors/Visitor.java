@@ -28,4 +28,14 @@ public class Visitor<T> implements IVisitor<T>{
     public T visit(Literal literal) {
         return null;
     }
+
+    @Override
+    public T visit(BlockStatement blockStatement) {
+        return null;
+    }
+
+    @Override
+    public T visit(FieldDeclaration fieldDeclaration) {
+        return null;
+    }
 }

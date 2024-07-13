@@ -1,33 +1,34 @@
 package stateSpace;
 
-import javax.annotation.Nonnull;
-import java.lang.StringBuilder;
-import java.util.HashMap;
-import java.util.List;
-
 import com.rits.cloning.Cloner;
+import dataStructure.ContinuousVariable;
+import dataStructure.DiscreteDecimalVariable;
+import dataStructure.IntervalRealVariable;
 import dataStructure.Variable;
-import org.rebecalang.compiler.modelcompiler.corerebeca.objectmodel.BinaryExpression;
-import org.rebecalang.compiler.modelcompiler.corerebeca.objectmodel.DotPrimary;
-import org.rebecalang.compiler.modelcompiler.corerebeca.objectmodel.FormalParameterDeclaration;
-import org.rebecalang.compiler.modelcompiler.corerebeca.objectmodel.TermPrimary;
+import org.rebecalang.compiler.modelcompiler.corerebeca.objectmodel.*;
+import org.rebecalang.compiler.modelcompiler.timedrebeca.objectmodel.TimedRebecaParentSuffixPrimary;
 import utils.CompilerUtil;
 import utils.StringSHA256;
-import dataStructure.ContinuousVariable;
 import visitors.ExpressionEvaluatorVisitor;
+
+import javax.annotation.Nonnull;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 public class HybridState {
 
     // CHECKME: should global time be non-null?
 //    @Nonnull
     private ContinuousVariable globalTime;
-//    @Nonnull
+    //    @Nonnull
     private HashMap<String, SoftwareState> softwareStates;
-//    @Nonnull
+    //    @Nonnull
     private HashMap<String, PhysicalState> physicalStates;
-//    @Nonnull
+    //    @Nonnull
     private CANNetworkState CANNetworkState;
-//    @Nonnull
+    //    @Nonnull
     private String hashString;
 
     public HybridState() {
@@ -102,6 +103,7 @@ public class HybridState {
             throw new RuntimeException(e);
         }
     }
+
     @Override
     public String toString() {
         // CHECKME: the order of the states is not guaranteed, is it a problem?
@@ -138,40 +140,104 @@ public class HybridState {
         return this.softwareStates;
     }
 
-    // CHECKME: check conditions
+    private void resetResumeTime(ActorState actorState) {
+        if (actorState instanceof SoftwareState) {
+            ((SoftwareState) actorState).setResumeTime(new ContinuousVariable("resume time"));
+        }
+    }
+
+    private HybridState createSuspendedState(ActorState actorState) {
+        if (actorState instanceof SoftwareState) {
+            Cloner cloner = new Cloner();
+            ActorState newActorState = cloner.deepClone(actorState);
+            HybridState newHybridState = cloner.deepClone(this);
+            if (isNonDeterministicInResumeTime(((SoftwareState) newActorState).getResumeTime())) {
+                ContinuousVariable resumeTime = ((SoftwareState) newActorState).getResumeTime();
+                ((SoftwareState) newActorState).setResumeTime(new ContinuousVariable("resume time", globalTime.getUpperBound(), resumeTime.getUpperBound()));
+                newHybridState.replaceActorState(newActorState);
+                return newHybridState;
+            }
+        }
+        return null;
+    }
+
     public boolean isSuspended(ContinuousVariable resumeTime) {
-        if ((resumeTime.getLowerBound().compareTo(this.globalTime.getLowerBound()) == 0) &&
-                (resumeTime.getUpperBound().compareTo(this.globalTime.getUpperBound()) >= 0)) {
+        if ((resumeTime.getLowerBound().compareTo(this.globalTime.getLowerBound()) <= 0)) { // the less than never happens, just for the sake of completeness
+            return false;
+        }
+        return true;
+    }
+
+    private boolean isNonDeterministicInResumeTime(ContinuousVariable resumeTime) {
+        if ((resumeTime.getLowerBound().compareTo(this.globalTime.getLowerBound()) <= 0) &&
+                (resumeTime.getUpperBound().compareTo(this.globalTime.getUpperBound())) > 0) {
             return true;
         }
         return false;
     }
 
-    public List<ActorState> takeMessage(ActorState actorState) {
+    public List<HybridState> takeMessage(ActorState actorState) {
         // TODO: call takeMessage method on actorState and retrieve the new actorStates
         // TODO: takeMessage method of SoftwareState can and should return multiple (at most 2?!) newSoftwareStates
         // CHECKME: does it call on correct class? (software and physical)
-        return actorState.takeMessage(globalTime);
+        List<HybridState> result = new ArrayList<>();
+        List<ActorState> generatedActorStates = actorState.takeMessage(globalTime);
+        for (ActorState actorStateItr : generatedActorStates) {
+            Cloner cloner = new Cloner();
+            HybridState newHybridState = cloner.deepClone(this);
+            ActorState newActorState = cloner.deepClone(actorStateItr);
+            resetResumeTime(newActorState);
+            newHybridState.replaceActorState(newActorState);
+            result.add(newHybridState);
+        }
+        HybridState suspendedState = createSuspendedState(actorState);
+        if (suspendedState != null) {
+            result.add(suspendedState);
+        }
+        return result;
     }
 
-    public HybridState sendStatement(ActorState actorState) {
-        Cloner cloner = new Cloner();
-        HybridState newHybridState = cloner.deepClone(this);
-//        RunUnchangeableStatementsVisitors runner = new RunUnchangeableStatementsVisitors(actorState);
-        // TODO: do it better for another type og statements
-        ActorState newActorState = cloner.deepClone(actorState);
-        // CHECKME: maybe shouldn't delete
-        DotPrimary sendStatement = (DotPrimary) newActorState.nextStatement();
+    private ContinuousVariable getDelayAfterTime(Expression lowerBoundExp, Expression upperBoundExp, Expression exp, ExpressionEvaluatorVisitor evaluatorVisitor) {
+        Variable lowerBound = (lowerBoundExp != null) ? evaluatorVisitor.visit(lowerBoundExp) : null;
+        Variable upperBound = (upperBoundExp != null) ? evaluatorVisitor.visit(upperBoundExp) : null;
+        Variable after = (exp != null) ? evaluatorVisitor.visit(exp) : null;
 
-        String sender = actorState.actorName;
-        String receiver = RebecInstantiationMapping.getInstance().getKnownRebecBinding(sender, ((TermPrimary) sendStatement.getLeft()).getName());
-        String serverName = ((TermPrimary) sendStatement.getRight()).getName();
+        ContinuousVariable messageArrivalTime = new ContinuousVariable(globalTime);
+        if (after != null) {
+            if (after instanceof IntervalRealVariable) {
+                messageArrivalTime.setLowerBound(globalTime.getLowerBound().add(BigDecimal.valueOf(((IntervalRealVariable) after).getLowerBound())));
+                messageArrivalTime.setUpperBound(globalTime.getUpperBound().add(BigDecimal.valueOf(((IntervalRealVariable) after).getUpperBound())));
+            } else {
+                messageArrivalTime.setLowerBound(globalTime.getLowerBound().add(((DiscreteDecimalVariable) after).getValue()));
+                messageArrivalTime.setUpperBound(globalTime.getUpperBound().add(((DiscreteDecimalVariable) after).getValue()));
+            }
+        }
+
+        if (lowerBound != null) {
+            if (after instanceof IntervalRealVariable) {
+                messageArrivalTime.setLowerBound(globalTime.getLowerBound().add(BigDecimal.valueOf(((IntervalRealVariable) lowerBound).getLowerBound())));
+            } else {
+                messageArrivalTime.setLowerBound(globalTime.getLowerBound().add(((DiscreteDecimalVariable) lowerBound).getValue()));
+            }
+        }
+
+        if (upperBound != null) {
+            if (after instanceof IntervalRealVariable) {
+                messageArrivalTime.setUpperBound(globalTime.getUpperBound().add(BigDecimal.valueOf(((IntervalRealVariable) upperBound).getUpperBound())));
+            } else {
+                messageArrivalTime.setUpperBound(globalTime.getUpperBound().add(((DiscreteDecimalVariable) upperBound).getValue()));
+            }
+        }
+
+        return messageArrivalTime;
+    }
+
+    private HashMap<String, Variable> getMessageCallParameter(String receiver, String serverName, ExpressionEvaluatorVisitor evaluatorVisitor, DotPrimary sendStatement) {
         List<FormalParameterDeclaration> serverParams = CompilerUtil.getServerParameters(
                 RebecInstantiationMapping.getInstance().getRebecReactiveClassType(receiver),
                 serverName
         );
-        HashMap<String, Variable > callParameters = new HashMap<>();
-        ExpressionEvaluatorVisitor evaluatorVisitor = new ExpressionEvaluatorVisitor(actorState.getVariableValuation());
+        HashMap<String, Variable> callParameters = new HashMap<>();
         for (int i = 0; i < serverParams.size(); i++) {
             Variable paramValue = evaluatorVisitor.visit(((TermPrimary) sendStatement.getRight()).getParentSuffixPrimary().getArguments().get(i));
             paramValue.setName(serverParams.get(i).getName());
@@ -180,16 +246,53 @@ public class HybridState {
                     paramValue
             );
         }
-        Message message = new Message(actorState.actorName, receiver, serverName, callParameters, globalTime);
-        ActorState receiverActorState = getActorState(receiver);
-        receiverActorState.addMessage(message);
-        newHybridState.replaceActorState(newActorState);
-        newHybridState.replaceActorState(receiverActorState);
-        return newHybridState;
+        return callParameters;
     }
 
-    public HybridState assignStatement(ActorState actorState) {
+    public List<HybridState> sendStatement(ActorState actorState) {
         Cloner cloner = new Cloner();
+        List<HybridState> result = new ArrayList<>();
+        HybridState newHybridState = cloner.deepClone(this);
+//        RunUnchangeableStatementsVisitors runner = new RunUnchangeableStatementsVisitors(actorState);
+        // TODO: do it better for another type og statements
+        ActorState newActorState = cloner.deepClone(actorState);
+        // CHECKME: maybe shouldn't delete
+        final DotPrimary sendStatement = (DotPrimary) actorState.getSigma().get(0);
+        newActorState.nextStatement();
+
+        String sender = actorState.actorName;
+        String receiver = RebecInstantiationMapping.getInstance().getKnownRebecBinding(sender, ((TermPrimary) sendStatement.getLeft()).getName());
+        String serverName = ((TermPrimary) sendStatement.getRight()).getName();
+
+        ExpressionEvaluatorVisitor evaluatorVisitor = new ExpressionEvaluatorVisitor(newActorState.getVariableValuation());
+        HashMap<String, Variable> callParameters = getMessageCallParameter(receiver, serverName, evaluatorVisitor, sendStatement);
+
+        ContinuousVariable messageArrivalTime = getDelayAfterTime(
+                ((TimedRebecaParentSuffixPrimary) ((TermPrimary) sendStatement.getRight()).getParentSuffixPrimary()).getStartAfterExpression(),
+                ((TimedRebecaParentSuffixPrimary) ((TermPrimary) sendStatement.getRight()).getParentSuffixPrimary()).getEndAfterExpression(),
+                ((TimedRebecaParentSuffixPrimary) ((TermPrimary) sendStatement.getRight()).getParentSuffixPrimary()).getAfterExpression(),
+                evaluatorVisitor
+        );
+
+        Message message = new Message(actorState.actorName, receiver, serverName, callParameters, messageArrivalTime);
+        ActorState receiverActorState = newHybridState.getActorState(receiver);
+        receiverActorState.addMessage(message);
+        resetResumeTime(newActorState);
+        newHybridState.replaceActorState(newActorState);
+        newHybridState.replaceActorState(receiverActorState);
+        result.add(newHybridState);
+
+        HybridState suspendedState = createSuspendedState(actorState);
+        if (suspendedState != null) {
+            result.add(suspendedState);
+        }
+
+        return result;
+    }
+
+    public List<HybridState> assignStatement(ActorState actorState) {
+        Cloner cloner = new Cloner();
+        List<HybridState> result = new ArrayList<>();
         HybridState newHybridState = cloner.deepClone(this);
         ActorState newActorState = cloner.deepClone(actorState);
         // CHECKME: maybe shouldn't delete
@@ -198,11 +301,45 @@ public class HybridState {
         String variableName = ((TermPrimary) assignStatement.getLeft()).getName();
         Variable variableValue = new ExpressionEvaluatorVisitor(actorState.getVariableValuation()).visit(assignStatement.getRight());
         variableValue.setName(variableName);
-
         newActorState.updateVariable(variableValue);
-
+        resetResumeTime(newActorState);
         newHybridState.replaceActorState(newActorState);
-        return newHybridState;
+        result.add(newHybridState);
+
+        HybridState suspendedState = createSuspendedState(actorState);
+        if (suspendedState != null) {
+            result.add(suspendedState);
+        }
+
+        return result;
+    }
+
+    public List<HybridState> delayStatement(SoftwareState softwareState) {
+        Cloner cloner = new Cloner();
+        List<HybridState> result = new ArrayList<>();
+        HybridState newHybridState = cloner.deepClone(this);
+        SoftwareState newSoftwareState = cloner.deepClone(softwareState);
+        // CHECKME: maybe shouldn't delete
+        final TermPrimary delayStatement = (TermPrimary) softwareState.getSigma().get(0);
+        newSoftwareState.nextStatement();
+
+        ExpressionEvaluatorVisitor evaluatorVisitor = new ExpressionEvaluatorVisitor(newSoftwareState.getVariableValuation());
+        ContinuousVariable delayTime = getDelayAfterTime(
+                delayStatement.getParentSuffixPrimary().getArguments().get(0),
+                delayStatement.getParentSuffixPrimary().getArguments().get(1),
+                delayStatement.getParentSuffixPrimary().getArguments().get(0),
+                evaluatorVisitor
+        );
+
+        newSoftwareState.setResumeTime(delayTime);
+        newHybridState.replaceActorState(newSoftwareState);
+        result.add(newHybridState);
+
+        HybridState suspendedState = createSuspendedState(softwareState);
+        if (suspendedState != null) {
+            result.add(suspendedState);
+        }
+        return result;
     }
 
     public ContinuousVariable getGlobalTime() {
