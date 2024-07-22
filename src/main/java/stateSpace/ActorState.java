@@ -146,4 +146,8 @@ public abstract class ActorState {
     public void addStatements(List<Statement> statements) {
         this.sigma.addAll(statements);
     }
+
+    public void addStatementsToFront(List<Statement> statements) {
+        this.sigma.addAll(0, statements);
+    }
 }
