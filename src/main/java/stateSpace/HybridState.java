@@ -1,10 +1,7 @@
 package stateSpace;
 
 import com.rits.cloning.Cloner;
-import dataStructure.ContinuousVariable;
-import dataStructure.DiscreteDecimalVariable;
-import dataStructure.IntervalRealVariable;
-import dataStructure.Variable;
+import dataStructure.*;
 import org.rebecalang.compiler.modelcompiler.corerebeca.objectmodel.*;
 import org.rebecalang.compiler.modelcompiler.timedrebeca.objectmodel.TimedRebecaParentSuffixPrimary;
 import utils.CompilerUtil;
@@ -124,11 +121,12 @@ public class HybridState {
     }
 
     // CHECKME: when should we call this method?
-    private String updateHash() throws Exception {
-        return StringSHA256.hashString(this.toString());
+    public String updateHash() {
+        this.hashString = StringSHA256.hashString(this.toString());
+        return this.hashString;
     }
 
-    private String getHash() {
+    public String getHash() {
         return this.hashString;
     }
 
@@ -249,6 +247,15 @@ public class HybridState {
         return callParameters;
     }
 
+    private void addExtractedStatement(ActorState actorState, Statement statement) {
+        if (statement instanceof BlockStatement) {
+            actorState.addStatementsToFront(((BlockStatement) statement).getStatements());
+        }
+        else {
+            actorState.addStatementsToFront(List.of(statement));
+        }
+    }
+
     public List<HybridState> sendStatement(ActorState actorState) {
         Cloner cloner = new Cloner();
         List<HybridState> result = new ArrayList<>();
@@ -339,6 +346,49 @@ public class HybridState {
         if (suspendedState != null) {
             result.add(suspendedState);
         }
+        return result;
+    }
+
+    public List<HybridState> ifStatement(ActorState actorState) {
+        Cloner cloner = new Cloner();
+        List<HybridState> result = new ArrayList<>();
+        HybridState newHybridState = cloner.deepClone(this);
+        ActorState newActorState = cloner.deepClone(actorState);
+        // CHECKME: maybe shouldn't delete
+        ConditionalStatement conditionalStatement = (ConditionalStatement) actorState.getSigma().get(0);
+        newActorState.nextStatement();
+        ExpressionEvaluatorVisitor expressionEvaluatorVisitor = new ExpressionEvaluatorVisitor(actorState.getVariableValuation());
+        DiscreteBoolVariable conditionResult = (DiscreteBoolVariable) expressionEvaluatorVisitor.visit(conditionalStatement.getCondition());
+
+        if (conditionResult.getDefinite()) {
+            if (conditionResult.getValue()) {
+                addExtractedStatement(newActorState, conditionalStatement.getStatement());
+            }
+            else {
+                addExtractedStatement(newActorState, conditionalStatement.getElseStatement());
+            }
+            resetResumeTime(newActorState);
+            newHybridState.replaceActorState(newActorState);
+            result.add(newHybridState);
+        } else {
+            addExtractedStatement(newActorState, conditionalStatement.getStatement());
+            ActorState newActorState2 = cloner.deepClone(actorState);
+            newActorState2.nextStatement();
+            addExtractedStatement(newActorState2, conditionalStatement.getElseStatement());
+            resetResumeTime(newActorState);
+            resetResumeTime(newActorState2);
+            newHybridState.replaceActorState(newActorState);
+            HybridState newHybridState2 = cloner.deepClone(newHybridState);
+            newHybridState2.replaceActorState(newActorState2);
+            result.add(newHybridState);
+            result.add(newHybridState2);
+        }
+
+        HybridState suspendedState = createSuspendedState(actorState);
+        if (suspendedState != null) {
+            result.add(suspendedState);
+        }
+
         return result;
     }
 
