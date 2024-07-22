@@ -12,5 +12,6 @@ public interface IVisitor<T> {
     public T visit(Literal literal);
     public T visit(BlockStatement blockStatement);
     public T visit(FieldDeclaration fieldDeclaration);
+    public T visit(ConditionalStatement conditionalStatement);
 
 }

@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.lang.StringBuilder;
 import java.util.Objects;
+import java.util.TreeMap;
 
 import dataStructure.*;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -85,8 +86,9 @@ public class Message {
         stringBuilder.append("Server Name: ").append(getServerName()).append("\n");
         stringBuilder.append("Arrival Time: ").append(getArrivalTime().toString()).append("\n");
         stringBuilder.append("Parameters: ").append("\n");
-        for (Map.Entry<String, Variable> entry : getParameters().entrySet()) {
-            stringBuilder.append(entry.getKey()).append(": ").append(entry.getValue().toString()).append("\n");
+        TreeMap<String, Variable> treeVariableParameter = new TreeMap<>(getParameters());
+        for (Map.Entry<String, Variable> entry : treeVariableParameter.entrySet()) {
+            stringBuilder.append(entry.toString()).append("\n");
         }
         return stringBuilder.toString();
     }

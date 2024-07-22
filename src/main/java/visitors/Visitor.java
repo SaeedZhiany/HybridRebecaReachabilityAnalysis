@@ -38,4 +38,7 @@ public class Visitor<T> implements IVisitor<T>{
     public T visit(FieldDeclaration fieldDeclaration) {
         return null;
     }
+
+    @Override
+    public T visit(ConditionalStatement conditionalStatement) { return null; }
 }

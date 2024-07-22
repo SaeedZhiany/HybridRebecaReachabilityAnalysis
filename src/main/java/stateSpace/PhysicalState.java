@@ -86,19 +86,19 @@ public class PhysicalState extends ActorState {
         stringBuilder.append("Local Time: ").append(getLocalTime()).append("\n");
 
         stringBuilder.append("Variable Valuation: ").append("\n");
-        // CHECKME: order of the variables is not guaranteed, is it a problem?
-        for (Map.Entry<String, Variable> entry : getVariableValuation().entrySet()) {
-            stringBuilder.append(entry.getKey()).append(": ").append(entry.getValue().toString()).append("\n");
+        TreeMap<String, Variable> treeVariableValuation = new TreeMap<>(getVariablesValuation());
+        for (Map.Entry<String, Variable> entry : treeVariableValuation.entrySet()) {
+            stringBuilder.append(entry.toString()).append("\n");
         }
 
         stringBuilder.append("Message Bag: ").append("\n");
-        // CHECKME: order of the messages is not guaranteed, is it a problem?
-        for (Message message : getMessageBag()) {
+        List<Message> sortedMessageBag = new ArrayList<>(getMessageBag());
+        sortedMessageBag.sort(Comparator.comparing(Message::getId));
+        for (Message message : sortedMessageBag) {
             stringBuilder.append(message.toString()).append("\n");
         }
 
         stringBuilder.append("Sigma: ").append("\n");
-        // CHECKME: order of the statements is not guaranteed, is it a problem?
         for (Statement statement : getSigma()) {
             stringBuilder.append(statement.toString()).append("\n");
         }
