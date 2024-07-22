@@ -3,6 +3,7 @@ package stateSpace;
 import com.rits.cloning.Cloner;
 import dataStructure.ContinuousVariable;
 import dataStructure.DiscreteDecimalVariable;
+import dataStructure.IntervalRealVariable;
 import dataStructure.Variable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -182,5 +183,91 @@ class HybridStateTest {
         assertEquals(softwareStateLowerBound, new BigDecimal(3));
         assertEquals(softwareStateUpperBound, new BigDecimal(5));
 
+    }
+
+    @Test
+    @Tag("test if statement condition (true) is definite without nondeterminism in resumeTime")
+    void testIfStatementConditionTrueDefinite() {
+        BinaryExpression conditionExpr = creatBinaryExpression(">", createLiteral(3, "int"), createLiteral(2, "int"));
+        ConditionalStatement conditionalStatement = new ConditionalStatement();
+        Statement ifStatement = new Statement();
+        Statement elseStatement = new Statement();
+        conditionalStatement.setCondition(conditionExpr);
+        conditionalStatement.setStatement(ifStatement);
+        conditionalStatement.setElseStatement(elseStatement);
+        List<Statement> sigma = new ArrayList<>();
+        sigma.add(conditionalStatement);
+
+        ContinuousVariable globalTime = createContinuousVariable(new BigDecimal(0), new BigDecimal(2));
+        SoftwareState softwareState = new SoftwareState("softwareState", new HashMap<>(), new HashSet<>(), sigma, 0, new ContinuousVariable("resumeTime"));
+        HashMap<String, SoftwareState> softwareStateHashMap = new HashMap<>();
+        softwareStateHashMap.put(softwareState.getActorName(), softwareState);
+        HybridState hybridState = new HybridState(globalTime, softwareStateHashMap, new HashMap<>(), new CANNetworkState());
+
+        List<HybridState> newHybridStates = hybridState.ifStatement(softwareState);
+        assertEquals(1, newHybridStates.size());
+        assertEquals(1, newHybridStates.get(0).getActorState(softwareState.getActorName()).getSigma().size());
+        assertEquals(ifStatement, newHybridStates.get(0).getActorState(softwareState.getActorName()).getSigma().get(0));
+    }
+
+    @Test
+    @Tag("test if statement condition (false) is definite without nondeterminism in resumeTime")
+    void testIfStatementConditionFalseDefinite() {
+        BinaryExpression conditionExpr = creatBinaryExpression(">", createLiteral(1, "int"), createLiteral(2, "int"));
+        ConditionalStatement conditionalStatement = new ConditionalStatement();
+        Statement ifStatement = new Statement();
+        Statement elseStatement = new Statement();
+        conditionalStatement.setCondition(conditionExpr);
+        conditionalStatement.setStatement(ifStatement);
+        conditionalStatement.setElseStatement(elseStatement);
+        List<Statement> sigma = new ArrayList<>();
+        sigma.add(conditionalStatement);
+
+        ContinuousVariable globalTime = createContinuousVariable(new BigDecimal(0), new BigDecimal(2));
+        SoftwareState softwareState = new SoftwareState("softwareState", new HashMap<>(), new HashSet<>(), sigma, 0, new ContinuousVariable("resumeTime"));
+        HashMap<String, SoftwareState> softwareStateHashMap = new HashMap<>();
+        softwareStateHashMap.put(softwareState.getActorName(), softwareState);
+        HybridState hybridState = new HybridState(globalTime, softwareStateHashMap, new HashMap<>(), new CANNetworkState());
+
+        List<HybridState> newHybridStates = hybridState.ifStatement(softwareState);
+        assertEquals(1, newHybridStates.size());
+        assertEquals(1, newHybridStates.get(0).getActorState(softwareState.getActorName()).getSigma().size());
+        assertEquals(elseStatement, newHybridStates.get(0).getActorState(softwareState.getActorName()).getSigma().get(0));
+    }
+
+    @Test
+    @Tag("test if statement condition is indefinite without nondeterminism in resumeTime")
+    void testIfStatementConditionInDefinite() {
+        TermPrimary interval1TermPrimary = createTermPrimary("interval1");
+        TermPrimary interval2TermPrimary = createTermPrimary("interval2");
+        IntervalRealVariable interval1RealVariable = new IntervalRealVariable(interval1TermPrimary.getName(), 2.0, 4.0);
+        IntervalRealVariable interval2RealVariable = new IntervalRealVariable(interval2TermPrimary.getName(), 1.0, 3.0);
+        HashMap<String, Variable> variableValuation = new HashMap<>();
+        variableValuation.put(interval1RealVariable.getName(), interval1RealVariable);
+        variableValuation.put(interval2RealVariable.getName(), interval2RealVariable);
+
+        BinaryExpression conditionExpr = creatBinaryExpression(">", interval1TermPrimary, interval2TermPrimary);
+        ConditionalStatement conditionalStatement = new ConditionalStatement();
+        Statement ifStatement = new Statement();
+        Statement elseStatement = new Statement();
+        conditionalStatement.setCondition(conditionExpr);
+        conditionalStatement.setStatement(ifStatement);
+        conditionalStatement.setElseStatement(elseStatement);
+        List<Statement> sigma = new ArrayList<>();
+        sigma.add(conditionalStatement);
+
+        ContinuousVariable globalTime = createContinuousVariable(new BigDecimal(0), new BigDecimal(2));
+        SoftwareState softwareState = new SoftwareState("softwareState", variableValuation, new HashSet<>(), sigma, 0, new ContinuousVariable("resumeTime"));
+        HashMap<String, SoftwareState> softwareStateHashMap = new HashMap<>();
+        softwareStateHashMap.put(softwareState.getActorName(), softwareState);
+        HybridState hybridState = new HybridState(globalTime, softwareStateHashMap, new HashMap<>(), new CANNetworkState());
+
+        List<HybridState> newHybridStates = hybridState.ifStatement(softwareState);
+        assertEquals(2, newHybridStates.size());
+        assertEquals(1, newHybridStates.get(0).getActorState(softwareState.getActorName()).getSigma().size());
+        assertEquals(ifStatement, newHybridStates.get(0).getActorState(softwareState.getActorName()).getSigma().get(0));
+
+        assertEquals(1, newHybridStates.get(1).getActorState(softwareState.getActorName()).getSigma().size());
+        assertEquals(elseStatement, newHybridStates.get(1).getActorState(softwareState.getActorName()).getSigma().get(0));
     }
 }
