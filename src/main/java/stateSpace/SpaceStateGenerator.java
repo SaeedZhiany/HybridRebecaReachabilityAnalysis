@@ -21,7 +21,7 @@ public class SpaceStateGenerator {
 
     @FunctionalInterface
     public interface JoszefCaller {
-        void call(String[] ODEs, double [] intervals, double [] reachParams);
+        double[] call(String[] ODEs, double [] intervals, double [] reachParams);
     }
 
     public void analyzeReachability(JoszefCaller joszefCaller) {
@@ -42,7 +42,7 @@ public class SpaceStateGenerator {
             double [] intervals = new double [] {0.8, 1.2, 0.8, 1.2};
             double [] reachParams = new double [] {50.0, 0.99, 0.01, 7.0, 5};
 
-            joszefCaller.call(ODEs, intervals, reachParams);
+            double[] result = joszefCaller.call(ODEs, intervals, reachParams);
         }
 
 

@@ -1,17 +1,10 @@
-import dataStructure.ContinuousVariable;
-import org.rebecalang.compiler.modelcompiler.corerebeca.objectmodel.*;
 import org.rebecalang.compiler.modelcompiler.hybridrebeca.objectmodel.HybridRebecaCode;
 
-import stateSpace.SoftwareState;
 import stateSpace.SpaceStateGenerator;
 import utils.CompilerUtil;
 import utils.FlowstarExecutor;
-import visitors.ExpressionEvaluatorVisitor;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
 
 public class Main {
     public static void main(String[] args) {
@@ -54,7 +47,7 @@ public class Main {
         // This library contains a native method called sayHello()
     }
 
-    public static void callJoszef(String[] ODEs, double [] intervals, double [] reachParams) {
+    public static double[] callJoszef(String[] ODEs, double [] intervals, double [] reachParams) {
 //      String[] ODEs = {"x'=-0.5-y-1.5*x*x-0.5*x*x*x", "y'=3*x-y"};
 //      String[] ODEs = {"timer'=1", "tempr'=0.1"};
 //        double [] intervals = new double [] {0.8, 1.2, 0.8, 1.2};
@@ -70,13 +63,7 @@ public class Main {
         for (int i = 0; i<resultArray.length; i++)
             System.out.println(resultArray[i]);
 
+        return resultArray;
     }
-
-    @FunctionalInterface
-    public interface ODECallback {
-        void call(String[] ODEs);
-    }
-
-
 }
 
