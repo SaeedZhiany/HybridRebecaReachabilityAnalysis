@@ -15,6 +15,21 @@ import java.util.*;
 
 public class SpaceStateGenerator {
 
+    public void ReachablityAnalyser() {
+        // Queue<HybridState> states = new Queue(makeInitialState);
+        // while queue is not empty {
+        // state = queue.pop() -> hybridState
+        // odes = getCurrentFlows
+        // intervals = state->physicalstate->getvariablevaluation
+        // timeInterval = 0.1
+        // reachparams -> time = interval -> step_size = interval
+        // reault = computeFlowPipe(odes, intervals, timeInterval) -> calljuze
+        // update state with result
+        //
+        // }
+
+    }
+
     private HybridState makeInitialState() {
         final HybridRebecaCode hybridRebecaCode = CompilerUtil.getHybridRebecaCode();
         HashMap<String, SoftwareState> softwareStates = new HashMap<>();
