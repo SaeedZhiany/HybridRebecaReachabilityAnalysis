@@ -15,7 +15,37 @@ import java.util.*;
 
 public class SpaceStateGenerator {
 
-    public void ReachablityAnalyser() {
+    public SpaceStateGenerator() {
+
+    }
+
+    @FunctionalInterface
+    public interface JoszefCaller {
+        void call(String[] ODEs, double [] intervals, double [] reachParams);
+    }
+
+    public void analyzeReachability(JoszefCaller joszefCaller) {
+        Queue<HybridState> queue = new LinkedList<>();
+        Set<HybridState> visitedStates = new HashSet<>();
+        HybridState initialState = makeInitialState();
+        queue.add(initialState);
+        visitedStates.add(initialState);
+
+        while (!queue.isEmpty()) {
+            HybridState state = queue.poll();
+
+            GlobalState globalState = new GlobalState();
+            List<Set<String>> globalStateModes = globalState.getModes();
+
+            String[] ODEs = RebecInstantiationMapping.getInstance().getCurrentFlows(globalStateModes);
+
+            double [] intervals = new double [] {0.8, 1.2, 0.8, 1.2};
+            double [] reachParams = new double [] {50.0, 0.99, 0.01, 7.0, 5};
+
+            joszefCaller.call(ODEs, intervals, reachParams);
+        }
+
+
         // Queue<HybridState> states = new Queue(makeInitialState);
         // while queue is not empty {
         // state = queue.pop() -> hybridState
