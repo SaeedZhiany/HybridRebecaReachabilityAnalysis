@@ -42,7 +42,7 @@ public class SpaceStateGenerator {
             double [] intervals = new double [] {0.8, 1.2, 0.8, 1.2};
             double [] reachParams = new double [] {50.0, 0.99, 0.01, 7.0, 5};
 
-            double[] result = joszefCaller.call(ODEs, intervals, reachParams);
+//            double[] result = joszefCaller.call(ODEs, intervals, reachParams);
         }
 
 
