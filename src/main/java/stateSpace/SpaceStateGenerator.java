@@ -64,15 +64,18 @@ public class SpaceStateGenerator {
                     case "short": {
                         variableValuationInitial.put(variableDeclarator.getVariableName(),
                                 new DiscreteDecimalVariable(variableDeclarator.getVariableName(), new BigDecimal(0)));
+                        break;
                     }
                     case "float":
                     case "double": {
                         variableValuationInitial.put(variableDeclarator.getVariableName(),
                                 new IntervalRealVariable(variableDeclarator.getVariableName(), 0.0));
+                        break;        
                     }
                     case "boolean": {
                         variableValuationInitial.put(variableDeclarator.getVariableName(),
                                 new DiscreteBoolVariable(variableDeclarator.getVariableName(), false));
+                        break;
                     }
                 }
             }
