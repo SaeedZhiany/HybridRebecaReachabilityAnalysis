@@ -34,15 +34,23 @@ public class SpaceStateGenerator {
         while (!queue.isEmpty()) {
             HybridState state = queue.poll();
 
-            GlobalState globalState = new GlobalState();
-            List<Set<String>> globalStateModes = globalState.getModes();
+            List<Set<String>> globalStateModes = state.getGlobalStateModes();
 
             String[] ODEs = RebecInstantiationMapping.getInstance().getCurrentFlows(globalStateModes);
 
-            double [] intervals = new double [] {0.8, 1.2, 0.8, 1.2};
-            double [] reachParams = new double [] {50.0, 0.99, 0.01, 7.0, 5};
+            double[] intervals = state.getIntervals(ODEs);
+//            double[] intervals = new double[]{0.0, 0.0, 20.0, 20.0};
 
-//            double[] result = joszefCaller.call(ODEs, intervals, reachParams);
+            double timeInterval = 0.01;
+            // min from nearest lower bound resume bound and step_size
+
+            // step_size is fixed
+            double[] reachParams = new double[]{50.0, 0.99, 0.01, 7.0, timeInterval};
+
+            if (ODEs.length > 0) {
+                 double[] result = joszefCaller.call(ODEs, intervals, reachParams);
+                //update i
+            }
         }
 
 
@@ -55,6 +63,10 @@ public class SpaceStateGenerator {
         // reachparams -> time = interval -> step_size = interval
         // reault = computeFlowPipe(odes, intervals, timeInterval) -> calljuze
         // update state with result
+        // copy state
+        // loop for each updated physical
+        //    update local state physical
+        //    if guard holds execute statement
         //
         // }
 
@@ -109,15 +121,18 @@ public class SpaceStateGenerator {
                     case "short": {
                         variableValuationInitial.put(variableDeclarator.getVariableName(),
                                 new DiscreteDecimalVariable(variableDeclarator.getVariableName(), new BigDecimal(0)));
+                        break;
                     }
                     case "float":
                     case "double": {
                         variableValuationInitial.put(variableDeclarator.getVariableName(),
                                 new IntervalRealVariable(variableDeclarator.getVariableName(), 0.0));
+                        break;
                     }
                     case "boolean": {
                         variableValuationInitial.put(variableDeclarator.getVariableName(),
                                 new DiscreteBoolVariable(variableDeclarator.getVariableName(), false));
+                        break;
                     }
                 }
             }
@@ -158,15 +173,18 @@ public class SpaceStateGenerator {
                     case "short": {
                         variableValuationInitial.put(variableDeclarator.getVariableName(),
                                 new DiscreteDecimalVariable(variableDeclarator.getVariableName(), new BigDecimal(0)));
+                        break;
                     }
                     case "float":
                     case "double": {
                         variableValuationInitial.put(variableDeclarator.getVariableName(),
                                 new IntervalRealVariable(variableDeclarator.getVariableName(), 0.0));
+                        break;
                     }
                     case "boolean": {
                         variableValuationInitial.put(variableDeclarator.getVariableName(),
                                 new DiscreteBoolVariable(variableDeclarator.getVariableName(), false));
+                        break;
                     }
                 }
             }

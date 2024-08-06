@@ -97,7 +97,7 @@ public class RebecInstantiationMapping {
 
                     // add name of physical class
                     nameOfPhisicalVarible = mainRebecDefinition.getName();
-                    ODE += "_" + nameOfPhisicalVarible;
+                    ODE = nameOfPhisicalVarible + "_" + ODE;
 
                     int derivativeOrder = 0;
                     try {
