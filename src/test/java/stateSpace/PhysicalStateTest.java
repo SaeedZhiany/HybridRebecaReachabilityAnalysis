@@ -27,14 +27,14 @@ class PhysicalStateTest {
         physicalState = new PhysicalState("init", "mode1", new HashMap<>(), new HashSet<>(), new ArrayList<>(), 0);
     }
 
-    ContinuousVariable createContinuousVariable(BigDecimal lowerBound, BigDecimal upperBound) {
+    ContinuousVariable createContinuousVariable(Double lowerBound, Double upperBound) {
         return new ContinuousVariable("continuousVariable", lowerBound, upperBound);
     }
 
     @Test
     @Tag("messageCanBeTaken with 0 message in messageBag return false")
     void TestMessageCanBeTakenWithZeroMessage() {
-        assertFalse(this.physicalState.messageCanBeTaken(createContinuousVariable(new BigDecimal(0), new BigDecimal(10))));
+        assertFalse(this.physicalState.messageCanBeTaken(createContinuousVariable(Double.valueOf(0), Double.valueOf(10))));
     }
 
     @Test
@@ -48,12 +48,9 @@ class PhysicalStateTest {
                 "receiver",
                 "content",
                 new HashMap<>(),
-                createContinuousVariable(new BigDecimal(messageArrivalLowerBound), new BigDecimal(messageArrivalUpperBound)));
+                createContinuousVariable(Double.valueOf(messageArrivalLowerBound), Double.valueOf(messageArrivalUpperBound)));
         this.physicalState.getMessageBag().add(message);
-        assertTrue(this.physicalState.messageCanBeTaken(createContinuousVariable(
-                new BigDecimal(messageArrivalLowerBound + 1),
-                new BigDecimal(messageArrivalUpperBound
-                ))));
+        assertTrue(this.physicalState.messageCanBeTaken(createContinuousVariable(Double.valueOf(messageArrivalLowerBound + 1), Double.valueOf(messageArrivalUpperBound))));
     }
 
     @Test
@@ -67,12 +64,9 @@ class PhysicalStateTest {
                 "receiver",
                 "content",
                 new HashMap<>(),
-                createContinuousVariable(new BigDecimal(messageArrivalLowerBound), new BigDecimal(messageArrivalUpperBound)));
+                createContinuousVariable(Double.valueOf(messageArrivalLowerBound), Double.valueOf(messageArrivalUpperBound)));
         this.physicalState.getMessageBag().add(message);
-        assertFalse(this.physicalState.messageCanBeTaken(createContinuousVariable(
-                new BigDecimal(messageArrivalLowerBound - 1),
-                new BigDecimal(messageArrivalUpperBound
-                ))));
+        assertFalse(this.physicalState.messageCanBeTaken(createContinuousVariable(Double.valueOf(messageArrivalLowerBound - 1), Double.valueOf(messageArrivalUpperBound))));
     }
 
     @Test
@@ -92,19 +86,16 @@ class PhysicalStateTest {
                 "receiver",
                 "content",
                 new HashMap<>(),
-                createContinuousVariable(new BigDecimal(message1ArrivalLowerBound), new BigDecimal(message1ArrivalUpperBound)));
+                createContinuousVariable(Double.valueOf(message1ArrivalLowerBound), Double.valueOf(message1ArrivalUpperBound)));
         Message message2 = new Message(
                 "sender",
                 "receiver",
                 "content",
                 new HashMap<>(),
-                createContinuousVariable(new BigDecimal(message2ArrivalLowerBound), new BigDecimal(message2ArrivalUpperBound)));
+                createContinuousVariable(Double.valueOf(message2ArrivalLowerBound), Double.valueOf(message2ArrivalUpperBound)));
         this.physicalState.getMessageBag().add(message1);
         this.physicalState.getMessageBag().add(message2);
-        assertTrue(this.physicalState.messageCanBeTaken(createContinuousVariable(
-                new BigDecimal(globalTimeLowerBound),
-                new BigDecimal(globalTimeUpperBound)
-        )));
+        assertTrue(this.physicalState.messageCanBeTaken(createContinuousVariable(Double.valueOf(globalTimeLowerBound), Double.valueOf(globalTimeUpperBound))));
     }
 
     @Test
@@ -124,19 +115,16 @@ class PhysicalStateTest {
                 "receiver",
                 "content",
                 new HashMap<>(),
-                createContinuousVariable(new BigDecimal(message1ArrivalLowerBound), new BigDecimal(message1ArrivalUpperBound)));
+                createContinuousVariable(Double.valueOf(message1ArrivalLowerBound), Double.valueOf(message1ArrivalUpperBound)));
         Message message2 = new Message(
                 "sender",
                 "receiver",
                 "content",
                 new HashMap<>(),
-                createContinuousVariable(new BigDecimal(message2ArrivalLowerBound), new BigDecimal(message2ArrivalUpperBound)));
+                createContinuousVariable(Double.valueOf(message2ArrivalLowerBound), Double.valueOf(message2ArrivalUpperBound)));
         this.physicalState.getMessageBag().add(message1);
         this.physicalState.getMessageBag().add(message2);
-        assertFalse(this.physicalState.messageCanBeTaken(createContinuousVariable(
-                new BigDecimal(globalTimeLowerBound),
-                new BigDecimal(globalTimeUpperBound)
-        )));
+        assertFalse(this.physicalState.messageCanBeTaken(createContinuousVariable(Double.valueOf(globalTimeLowerBound), Double.valueOf(globalTimeUpperBound))));
     }
 
     @Test
@@ -150,18 +138,15 @@ class PhysicalStateTest {
                 "receiver",
                 "setMode",
                 new HashMap<>(),
-                createContinuousVariable(new BigDecimal(messageArrivalLowerBound), new BigDecimal(messageArrivalUpperBound)));
+                createContinuousVariable(Double.valueOf(messageArrivalLowerBound), Double.valueOf(messageArrivalUpperBound)));
         this.physicalState.getMessageBag().add(message);
-        assertFalse(this.physicalState.messageCanBeTaken(createContinuousVariable(
-                new BigDecimal(messageArrivalLowerBound + 1),
-                new BigDecimal(messageArrivalUpperBound
-                ))));
+        assertFalse(this.physicalState.messageCanBeTaken(createContinuousVariable(Double.valueOf(messageArrivalLowerBound + 1), Double.valueOf(messageArrivalUpperBound))));
     }
 
     @Test
     @Tag("getMessagesToBeTaken with 0 message in messageBag return empty list")
     void TestGetMessagesToBeTakenWithZeroMessage() {
-        assertTrue(this.physicalState.getMessagesToBeTaken(createContinuousVariable(new BigDecimal(0), new BigDecimal(10))).isEmpty());
+        assertTrue(this.physicalState.getMessagesToBeTaken(createContinuousVariable(Double.valueOf(0), Double.valueOf(10))).isEmpty());
     }
 
     @Test
@@ -175,14 +160,11 @@ class PhysicalStateTest {
                 "receiver",
                 "content",
                 new HashMap<>(),
-                createContinuousVariable(new BigDecimal(messageArrivalLowerBound), new BigDecimal(messageArrivalUpperBound)));
+                createContinuousVariable(Double.valueOf(messageArrivalLowerBound), Double.valueOf(messageArrivalUpperBound)));
         this.physicalState.getMessageBag().add(message);
         List<Message> expected = new ArrayList<>();
         expected.add(message);
-        assertEquals(expected, this.physicalState.getMessagesToBeTaken(createContinuousVariable(
-                new BigDecimal(messageArrivalLowerBound + 1),
-                new BigDecimal(messageArrivalUpperBound
-                ))));
+        assertEquals(expected, this.physicalState.getMessagesToBeTaken(createContinuousVariable(Double.valueOf(messageArrivalLowerBound + 1), Double.valueOf(messageArrivalUpperBound))));
     }
 
 
@@ -203,20 +185,20 @@ class PhysicalStateTest {
                 "receiver",
                 "content",
                 new HashMap<>(),
-                createContinuousVariable(new BigDecimal(message1ArrivalLowerBound), new BigDecimal(message1ArrivalUpperBound)));
+                createContinuousVariable(Double.valueOf(message1ArrivalLowerBound), Double.valueOf(message1ArrivalUpperBound)));
         Message message2 = new Message(
                 "sender",
                 "receiver",
                 "content",
                 new HashMap<>(),
-                createContinuousVariable(new BigDecimal(message2ArrivalLowerBound), new BigDecimal(message2ArrivalUpperBound)));
+                createContinuousVariable(Double.valueOf(message2ArrivalLowerBound), Double.valueOf(message2ArrivalUpperBound)));
         this.physicalState.getMessageBag().add(message1);
         this.physicalState.getMessageBag().add(message2);
         List<Message> expected = new ArrayList<>();
         expected.add(message1);
         assertEquals(expected, this.physicalState.getMessagesToBeTaken(createContinuousVariable(
-                new BigDecimal(globalTimeLowerBound),
-                new BigDecimal(globalTimeUpperBound)
+                Double.valueOf(globalTimeLowerBound),
+                Double.valueOf(globalTimeUpperBound)
         )));
     }
 
@@ -237,13 +219,13 @@ class PhysicalStateTest {
                 "receiver",
                 "content",
                 new HashMap<>(),
-                createContinuousVariable(new BigDecimal(message1ArrivalLowerBound), new BigDecimal(message1ArrivalUpperBound)));
+                createContinuousVariable(Double.valueOf(message1ArrivalLowerBound), Double.valueOf(message1ArrivalUpperBound)));
         Message message2 = new Message(
                 "sender",
                 "receiver",
                 "content",
                 new HashMap<>(),
-                createContinuousVariable(new BigDecimal(message2ArrivalLowerBound), new BigDecimal(message2ArrivalUpperBound)));
+                createContinuousVariable(Double.valueOf(message2ArrivalLowerBound), Double.valueOf(message2ArrivalUpperBound)));
         this.physicalState.getMessageBag().add(message1);
         this.physicalState.getMessageBag().add(message2);
         List<Message> messageList = new ArrayList<>();
@@ -251,8 +233,8 @@ class PhysicalStateTest {
         messageList.add(message2);
         Set<Message> expected = new HashSet<Message>(messageList);
         assertEquals(expected, new HashSet<>(this.physicalState.getMessagesToBeTaken(createContinuousVariable(
-                new BigDecimal(globalTimeLowerBound),
-                new BigDecimal(globalTimeUpperBound)
+                Double.valueOf(globalTimeLowerBound),
+                Double.valueOf(globalTimeUpperBound)
         ))));
     }
 
@@ -267,19 +249,19 @@ class PhysicalStateTest {
                 "receiver",
                 "setMode",
                 new HashMap<>(),
-                createContinuousVariable(new BigDecimal(messageArrivalLowerBound), new BigDecimal(messageArrivalUpperBound)));
+                createContinuousVariable(Double.valueOf(messageArrivalLowerBound), Double.valueOf(messageArrivalUpperBound)));
         this.physicalState.getMessageBag().add(message);
         List<Message> expected = new ArrayList<>();
         assertEquals(expected, this.physicalState.getMessagesToBeTaken(createContinuousVariable(
-                new BigDecimal(messageArrivalLowerBound + 1),
-                new BigDecimal(messageArrivalUpperBound
+                Double.valueOf(messageArrivalLowerBound + 1),
+                Double.valueOf(messageArrivalUpperBound
                 ))));
     }
 
     @Test
     @Tag("takeMessage with 0 message in messageBag return empty list")
     void TestTakeMessagesWithZeroMessage() {
-        assertTrue(this.physicalState.takeMessage(createContinuousVariable(new BigDecimal(0), new BigDecimal(10))).isEmpty());
+        assertTrue(this.physicalState.takeMessage(createContinuousVariable(Double.valueOf(0), Double.valueOf(10))).isEmpty());
     }
 
     @Test
@@ -288,8 +270,8 @@ class PhysicalStateTest {
         int messageArrivalLowerBound = 1;
         int messageArrivalUpperBound = 5;
 
-        ContinuousVariable messageArrivalTime = createContinuousVariable(new BigDecimal(messageArrivalLowerBound), new BigDecimal(messageArrivalUpperBound));
-        ContinuousVariable globalTime = createContinuousVariable(new BigDecimal(messageArrivalLowerBound), new BigDecimal(messageArrivalUpperBound));
+        ContinuousVariable messageArrivalTime = createContinuousVariable(Double.valueOf(messageArrivalLowerBound), Double.valueOf(messageArrivalUpperBound));
+        ContinuousVariable globalTime = createContinuousVariable(Double.valueOf(messageArrivalLowerBound), Double.valueOf(messageArrivalUpperBound));
 
         HashMap<String, Variable> messageParams = new HashMap<>();
         messageParams.put("key", new DiscreteDecimalVariable("value", new BigDecimal(1)));
@@ -335,10 +317,10 @@ class PhysicalStateTest {
         int messageArrivalLowerBound = 1; // t3
         int messageArrivalUpperBound = 5; // t4
 
-        ContinuousVariable messageArrivalTime = createContinuousVariable(new BigDecimal(messageArrivalLowerBound), new BigDecimal(messageArrivalUpperBound));
+        ContinuousVariable messageArrivalTime = createContinuousVariable(Double.valueOf(messageArrivalLowerBound), Double.valueOf(messageArrivalUpperBound));
         ContinuousVariable globalTime = createContinuousVariable(
-                new BigDecimal(messageArrivalLowerBound), // t1
-                new BigDecimal(messageArrivalUpperBound - 1) // t2
+                Double.valueOf(messageArrivalLowerBound), // t1
+                Double.valueOf(messageArrivalUpperBound - 1) // t2
         );
 
         HashMap<String, Variable> messageParams = new HashMap<>();
@@ -410,8 +392,8 @@ class PhysicalStateTest {
         int messageArrivalLowerBound = 1;
         int messageArrivalUpperBound = 5;
 
-        ContinuousVariable messageArrivalTime = createContinuousVariable(new BigDecimal(messageArrivalLowerBound), new BigDecimal(messageArrivalUpperBound));
-        ContinuousVariable globalTime = createContinuousVariable(new BigDecimal(messageArrivalLowerBound), new BigDecimal(messageArrivalUpperBound));
+        ContinuousVariable messageArrivalTime = createContinuousVariable(Double.valueOf(messageArrivalLowerBound), Double.valueOf(messageArrivalUpperBound));
+        ContinuousVariable globalTime = createContinuousVariable(Double.valueOf(messageArrivalLowerBound), Double.valueOf(messageArrivalUpperBound));
 
         HashMap<String, Variable> messageParams = new HashMap<>();
         messageParams.put("key", new DiscreteDecimalVariable("value", new BigDecimal(1)));

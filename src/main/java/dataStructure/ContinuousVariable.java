@@ -1,24 +1,23 @@
 package dataStructure;
 
 import javax.annotation.Nonnull;
-import java.math.BigDecimal;
 
 public class ContinuousVariable extends Variable implements Comparable<ContinuousVariable> {
 
     @Nonnull
-    private BigDecimal lowerBound;
+    private Double lowerBound;
     @Nonnull
-    private BigDecimal upperBound;
+    private Double upperBound;
 
     public ContinuousVariable(@Nonnull String name) {
-        this(name, new BigDecimal(0));
+        this(name, Double.valueOf(0));
     }
 
-    public ContinuousVariable(@Nonnull String name, @Nonnull BigDecimal value) {
+    public ContinuousVariable(@Nonnull String name, @Nonnull Double value) {
         this(name, value, value);
     }
 
-    public ContinuousVariable(@Nonnull String name, @Nonnull BigDecimal lowerBound, @Nonnull BigDecimal upperBound) {
+    public ContinuousVariable(@Nonnull String name, @Nonnull Double lowerBound, @Nonnull Double upperBound) {
         super(name);
         if (lowerBound.compareTo(upperBound) <= 0) {
             this.lowerBound = lowerBound;
@@ -36,20 +35,20 @@ public class ContinuousVariable extends Variable implements Comparable<Continuou
     }
 
     @Nonnull
-    public BigDecimal getLowerBound() {
+    public Double getLowerBound() {
         return lowerBound;
     }
 
-    public void setLowerBound(@Nonnull BigDecimal lowerBound) {
+    public void setLowerBound(@Nonnull Double lowerBound) {
         this.lowerBound = lowerBound;
     }
 
     @Nonnull
-    public BigDecimal getUpperBound() {
+    public Double getUpperBound() {
         return upperBound;
     }
 
-    public void setUpperBound(@Nonnull BigDecimal upperBound) {
+    public void setUpperBound(@Nonnull Double upperBound) {
         this.upperBound = upperBound;
     }
 
@@ -82,8 +81,8 @@ public class ContinuousVariable extends Variable implements Comparable<Continuou
         return String.format(
                 "ContinuousVariable{ %s = [%s, %s] }",
                 name,
-                lowerBound.toPlainString(),
-                upperBound.toPlainString()
+                lowerBound,
+                upperBound
         );
     }
 
@@ -94,7 +93,7 @@ public class ContinuousVariable extends Variable implements Comparable<Continuou
 
     public boolean isValid() {
         return (this.lowerBound.compareTo(this.upperBound) <= 0) &&
-                (this.lowerBound.compareTo(new BigDecimal(0)) >= 0) &&
-                (this.upperBound.compareTo(new BigDecimal(0)) >= 0);
+                (this.lowerBound.compareTo(Double.valueOf(0)) >= 0) &&
+                (this.upperBound.compareTo(Double.valueOf(0)) >= 0);
     }
 }

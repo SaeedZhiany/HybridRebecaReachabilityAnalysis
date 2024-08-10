@@ -28,7 +28,7 @@ class SoftwareStateTest {
         this.softwareState = new SoftwareState(actorName, variableValuation, messageBag, sigma, localTime, resumeTime);
     }
 
-    ContinuousVariable createContinuousVariable(BigDecimal lowerBound, BigDecimal upperBound) {
+    ContinuousVariable createContinuousVariable(Double lowerBound, Double upperBound) {
         return new ContinuousVariable("continuousVariable", lowerBound, upperBound);
     }
 
@@ -55,7 +55,7 @@ class SoftwareStateTest {
     @Test
     @Tag("messageCanBeTaken with 0 message in messageBag return false")
     void TestMessageCanBeTakenWithZeroMessage() {
-        assertFalse(this.softwareState.messageCanBeTaken(createContinuousVariable(new BigDecimal(0), new BigDecimal(10))));
+        assertFalse(this.softwareState.messageCanBeTaken(createContinuousVariable(Double.valueOf(0), Double.valueOf(10))));
     }
 
     @Test
@@ -69,11 +69,11 @@ class SoftwareStateTest {
                 "receiver",
                 "content",
                 new HashMap<>(),
-                createContinuousVariable(new BigDecimal(messageArrivalLowerBound), new BigDecimal(messageArrivalUpperBound)));
+                createContinuousVariable(Double.valueOf(messageArrivalLowerBound), Double.valueOf(messageArrivalUpperBound)));
         this.softwareState.getMessageBag().add(message);
         assertTrue(this.softwareState.messageCanBeTaken(createContinuousVariable(
-                new BigDecimal(messageArrivalLowerBound + 1),
-                new BigDecimal(messageArrivalUpperBound
+                Double.valueOf(messageArrivalLowerBound + 1),
+                Double.valueOf(messageArrivalUpperBound
                 ))));
     }
 
@@ -88,11 +88,11 @@ class SoftwareStateTest {
                 "receiver",
                 "content",
                 new HashMap<>(),
-                createContinuousVariable(new BigDecimal(messageArrivalLowerBound), new BigDecimal(messageArrivalUpperBound)));
+                createContinuousVariable(Double.valueOf(messageArrivalLowerBound), Double.valueOf(messageArrivalUpperBound)));
         this.softwareState.getMessageBag().add(message);
         assertFalse(this.softwareState.messageCanBeTaken(createContinuousVariable(
-                new BigDecimal(messageArrivalLowerBound - 1),
-                new BigDecimal(messageArrivalUpperBound
+                Double.valueOf(messageArrivalLowerBound - 1),
+                Double.valueOf(messageArrivalUpperBound
                 ))));
     }
 
@@ -113,18 +113,18 @@ class SoftwareStateTest {
                 "receiver",
                 "content",
                 new HashMap<>(),
-                createContinuousVariable(new BigDecimal(message1ArrivalLowerBound), new BigDecimal(message1ArrivalUpperBound)));
+                createContinuousVariable(Double.valueOf(message1ArrivalLowerBound), Double.valueOf(message1ArrivalUpperBound)));
         Message message2 = new Message(
                 "sender",
                 "receiver",
                 "content",
                 new HashMap<>(),
-                createContinuousVariable(new BigDecimal(message2ArrivalLowerBound), new BigDecimal(message2ArrivalUpperBound)));
+                createContinuousVariable(Double.valueOf(message2ArrivalLowerBound), Double.valueOf(message2ArrivalUpperBound)));
         this.softwareState.getMessageBag().add(message1);
         this.softwareState.getMessageBag().add(message2);
         assertTrue(this.softwareState.messageCanBeTaken(createContinuousVariable(
-                new BigDecimal(globalTimeLowerBound),
-                new BigDecimal(globalTimeUpperBound)
+                Double.valueOf(globalTimeLowerBound),
+                Double.valueOf(globalTimeUpperBound)
         )));
     }
 
@@ -145,25 +145,25 @@ class SoftwareStateTest {
                 "receiver",
                 "content",
                 new HashMap<>(),
-                createContinuousVariable(new BigDecimal(message1ArrivalLowerBound), new BigDecimal(message1ArrivalUpperBound)));
+                createContinuousVariable(Double.valueOf(message1ArrivalLowerBound), Double.valueOf(message1ArrivalUpperBound)));
         Message message2 = new Message(
                 "sender",
                 "receiver",
                 "content",
                 new HashMap<>(),
-                createContinuousVariable(new BigDecimal(message2ArrivalLowerBound), new BigDecimal(message2ArrivalUpperBound)));
+                createContinuousVariable(Double.valueOf(message2ArrivalLowerBound), Double.valueOf(message2ArrivalUpperBound)));
         this.softwareState.getMessageBag().add(message1);
         this.softwareState.getMessageBag().add(message2);
         assertFalse(this.softwareState.messageCanBeTaken(createContinuousVariable(
-                new BigDecimal(globalTimeLowerBound),
-                new BigDecimal(globalTimeUpperBound)
+                Double.valueOf(globalTimeLowerBound),
+                Double.valueOf(globalTimeUpperBound)
         )));
     }
 
     @Test
     @Tag("getMessagesToBeTaken with 0 message in messageBag return empty list")
     void TestGetMessagesToBeTakenWithZeroMessage() {
-        assertTrue(this.softwareState.getMessagesToBeTaken(createContinuousVariable(new BigDecimal(0), new BigDecimal(10))).isEmpty());
+        assertTrue(this.softwareState.getMessagesToBeTaken(createContinuousVariable(Double.valueOf(0), Double.valueOf(10))).isEmpty());
     }
 
     @Test
@@ -177,13 +177,13 @@ class SoftwareStateTest {
                 "receiver",
                 "content",
                 new HashMap<>(),
-                createContinuousVariable(new BigDecimal(messageArrivalLowerBound), new BigDecimal(messageArrivalUpperBound)));
+                createContinuousVariable(Double.valueOf(messageArrivalLowerBound), Double.valueOf(messageArrivalUpperBound)));
         this.softwareState.getMessageBag().add(message);
         List<Message> expected = new ArrayList<>();
         expected.add(message);
         assertEquals(expected, this.softwareState.getMessagesToBeTaken(createContinuousVariable(
-                new BigDecimal(messageArrivalLowerBound + 1),
-                new BigDecimal(messageArrivalUpperBound
+                Double.valueOf(messageArrivalLowerBound + 1),
+                Double.valueOf(messageArrivalUpperBound
                 ))));
     }
 
@@ -204,20 +204,20 @@ class SoftwareStateTest {
                 "receiver",
                 "content",
                 new HashMap<>(),
-                createContinuousVariable(new BigDecimal(message1ArrivalLowerBound), new BigDecimal(message1ArrivalUpperBound)));
+                createContinuousVariable(Double.valueOf(message1ArrivalLowerBound), Double.valueOf(message1ArrivalUpperBound)));
         Message message2 = new Message(
                 "sender",
                 "receiver",
                 "content",
                 new HashMap<>(),
-                createContinuousVariable(new BigDecimal(message2ArrivalLowerBound), new BigDecimal(message2ArrivalUpperBound)));
+                createContinuousVariable(Double.valueOf(message2ArrivalLowerBound), Double.valueOf(message2ArrivalUpperBound)));
         this.softwareState.getMessageBag().add(message1);
         this.softwareState.getMessageBag().add(message2);
         List<Message> expected = new ArrayList<>();
         expected.add(message1);
         assertEquals(expected, this.softwareState.getMessagesToBeTaken(createContinuousVariable(
-                new BigDecimal(globalTimeLowerBound),
-                new BigDecimal(globalTimeUpperBound)
+                Double.valueOf(globalTimeLowerBound),
+                Double.valueOf(globalTimeUpperBound)
         )));
     }
 
@@ -238,13 +238,13 @@ class SoftwareStateTest {
                 "receiver",
                 "content",
                 new HashMap<>(),
-                createContinuousVariable(new BigDecimal(message1ArrivalLowerBound), new BigDecimal(message1ArrivalUpperBound)));
+                createContinuousVariable(Double.valueOf(message1ArrivalLowerBound), Double.valueOf(message1ArrivalUpperBound)));
         Message message2 = new Message(
                 "sender",
                 "receiver",
                 "content",
                 new HashMap<>(),
-                createContinuousVariable(new BigDecimal(message2ArrivalLowerBound), new BigDecimal(message2ArrivalUpperBound)));
+                createContinuousVariable(Double.valueOf(message2ArrivalLowerBound), Double.valueOf(message2ArrivalUpperBound)));
         this.softwareState.getMessageBag().add(message1);
         this.softwareState.getMessageBag().add(message2);
         List<Message> messageList = new ArrayList<>();
@@ -252,15 +252,15 @@ class SoftwareStateTest {
         messageList.add(message2);
         Set<Message> expected = new HashSet<Message>(messageList);
         assertEquals(expected, new HashSet<>(this.softwareState.getMessagesToBeTaken(createContinuousVariable(
-                new BigDecimal(globalTimeLowerBound),
-                new BigDecimal(globalTimeUpperBound)
+                Double.valueOf(globalTimeLowerBound),
+                Double.valueOf(globalTimeUpperBound)
         ))));
     }
 
     @Test
     @Tag("takeMessage with 0 message in messageBag return empty list")
     void TestTakeMessagesWithZeroMessage() {
-        assertTrue(this.softwareState.takeMessage(createContinuousVariable(new BigDecimal(0), new BigDecimal(10))).isEmpty());
+        assertTrue(this.softwareState.takeMessage(createContinuousVariable(Double.valueOf(0), Double.valueOf(10))).isEmpty());
     }
 
     @Test
@@ -269,8 +269,8 @@ class SoftwareStateTest {
         int messageArrivalLowerBound = 1;
         int messageArrivalUpperBound = 5;
 
-        ContinuousVariable messageArrivalTime = createContinuousVariable(new BigDecimal(messageArrivalLowerBound), new BigDecimal(messageArrivalUpperBound));
-        ContinuousVariable globalTime = createContinuousVariable(new BigDecimal(messageArrivalLowerBound), new BigDecimal(messageArrivalUpperBound));
+        ContinuousVariable messageArrivalTime = createContinuousVariable(Double.valueOf(messageArrivalLowerBound), Double.valueOf(messageArrivalUpperBound));
+        ContinuousVariable globalTime = createContinuousVariable(Double.valueOf(messageArrivalLowerBound), Double.valueOf(messageArrivalUpperBound));
 
         HashMap<String, Variable> messageParams = new HashMap<>();
         messageParams.put("key", new DiscreteDecimalVariable("value", new BigDecimal(1)));
@@ -309,7 +309,6 @@ class SoftwareStateTest {
             assertInstanceOf(SoftwareState.class, actual.get(0));
             assertEquals(((SoftwareState) expected.get(0)).getResumeTime(), ((SoftwareState) actual.get(0)).getResumeTime());
         }
-
     }
 
     @Test
@@ -318,10 +317,10 @@ class SoftwareStateTest {
         int messageArrivalLowerBound = 1; // t3
         int messageArrivalUpperBound = 5; // t4
 
-        ContinuousVariable messageArrivalTime = createContinuousVariable(new BigDecimal(messageArrivalLowerBound), new BigDecimal(messageArrivalUpperBound));
+        ContinuousVariable messageArrivalTime = createContinuousVariable(Double.valueOf(messageArrivalLowerBound), Double.valueOf(messageArrivalUpperBound));
         ContinuousVariable globalTime = createContinuousVariable(
-                new BigDecimal(messageArrivalLowerBound), // t1
-                new BigDecimal(messageArrivalUpperBound - 1) // t2
+                Double.valueOf(messageArrivalLowerBound), // t1
+                Double.valueOf(messageArrivalUpperBound - 1) // t2
         );
 
         HashMap<String, Variable> messageParams = new HashMap<>();
