@@ -203,27 +203,27 @@ public class HybridState {
         ContinuousVariable messageArrivalTime = new ContinuousVariable(globalTime);
         if (after != null) {
             if (after instanceof IntervalRealVariable) {
-                messageArrivalTime.setLowerBound(globalTime.getLowerBound().add(BigDecimal.valueOf(((IntervalRealVariable) after).getLowerBound())));
-                messageArrivalTime.setUpperBound(globalTime.getUpperBound().add(BigDecimal.valueOf(((IntervalRealVariable) after).getUpperBound())));
+                messageArrivalTime.setLowerBound(globalTime.getLowerBound() + ((IntervalRealVariable) after).getLowerBound());
+                messageArrivalTime.setUpperBound(globalTime.getUpperBound() + ((IntervalRealVariable) after).getUpperBound());
             } else {
-                messageArrivalTime.setLowerBound(globalTime.getLowerBound().add(((DiscreteDecimalVariable) after).getValue()));
-                messageArrivalTime.setUpperBound(globalTime.getUpperBound().add(((DiscreteDecimalVariable) after).getValue()));
+                messageArrivalTime.setLowerBound(globalTime.getLowerBound() + ((DiscreteDecimalVariable) after).getValue().doubleValue());
+                messageArrivalTime.setUpperBound(globalTime.getUpperBound() + (((DiscreteDecimalVariable) after).getValue().doubleValue()));
             }
         }
 
         if (lowerBound != null) {
             if (after instanceof IntervalRealVariable) {
-                messageArrivalTime.setLowerBound(globalTime.getLowerBound().add(BigDecimal.valueOf(((IntervalRealVariable) lowerBound).getLowerBound())));
+                messageArrivalTime.setLowerBound(globalTime.getLowerBound() + (((IntervalRealVariable) lowerBound).getLowerBound()));
             } else {
-                messageArrivalTime.setLowerBound(globalTime.getLowerBound().add(((DiscreteDecimalVariable) lowerBound).getValue()));
+                messageArrivalTime.setLowerBound(globalTime.getLowerBound() + (((DiscreteDecimalVariable) lowerBound).getValue().doubleValue()));
             }
         }
 
         if (upperBound != null) {
             if (after instanceof IntervalRealVariable) {
-                messageArrivalTime.setUpperBound(globalTime.getUpperBound().add(BigDecimal.valueOf(((IntervalRealVariable) upperBound).getUpperBound())));
+                messageArrivalTime.setUpperBound(globalTime.getUpperBound() + (((IntervalRealVariable) upperBound).getUpperBound()));
             } else {
-                messageArrivalTime.setUpperBound(globalTime.getUpperBound().add(((DiscreteDecimalVariable) upperBound).getValue()));
+                messageArrivalTime.setUpperBound(globalTime.getUpperBound() + (((DiscreteDecimalVariable) upperBound).getValue().doubleValue()));
             }
         }
 
@@ -269,6 +269,9 @@ public class HybridState {
 
         String sender = actorState.actorName;
         String receiver = RebecInstantiationMapping.getInstance().getKnownRebecBinding(sender, ((TermPrimary) sendStatement.getLeft()).getName());
+        if (receiver == null && ((TermPrimary) sendStatement.getLeft()).getName().equals("self")) {
+            receiver = sender;
+        }
         String serverName = ((TermPrimary) sendStatement.getRight()).getName();
 
         ExpressionEvaluatorVisitor evaluatorVisitor = new ExpressionEvaluatorVisitor(newActorState.getVariableValuation());
@@ -282,11 +285,17 @@ public class HybridState {
         );
 
         Message message = new Message(actorState.actorName, receiver, serverName, callParameters, messageArrivalTime);
-        ActorState receiverActorState = newHybridState.getActorState(receiver);
-        receiverActorState.addMessage(message);
         resetResumeTime(newActorState);
-        newHybridState.replaceActorState(newActorState);
-        newHybridState.replaceActorState(receiverActorState);
+        if (sender.equals(receiver)) {
+            newActorState.addMessage(message);
+            newHybridState.replaceActorState(newActorState);
+        }
+        else {
+            ActorState receiverActorState = newHybridState.getActorState(receiver);
+            receiverActorState.addMessage(message);
+            newHybridState.replaceActorState(newActorState);
+            newHybridState.replaceActorState(receiverActorState);
+        }
         result.add(newHybridState);
 
         HybridState suspendedState = createSuspendedState(actorState);
@@ -389,6 +398,23 @@ public class HybridState {
             result.add(suspendedState);
         }
 
+        return result;
+    }
+
+    public List<HybridState> setModeStatement(PhysicalState physicalState) {
+        Cloner cloner = new Cloner();
+        List<HybridState> result = new ArrayList<>();
+        HybridState newHybridState = cloner.deepClone(this);
+        PhysicalState newPhysicalState = cloner.deepClone(physicalState);
+        // CHECKME: maybe shouldn't delete
+        final TermPrimary setModeStatement = (TermPrimary) physicalState.getSigma().get(0);
+
+        newPhysicalState.nextStatement();
+
+        String mode = ((TermPrimary) setModeStatement.getParentSuffixPrimary().getArguments().get(0)).getName();
+        newPhysicalState.setMode(mode);
+        newHybridState.replaceActorState(newPhysicalState);
+        result.add(newHybridState);
         return result;
     }
 
