@@ -10,9 +10,7 @@ import visitors.ExpressionEvaluatorVisitor;
 
 import javax.annotation.Nonnull;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 public class HybridState {
 
@@ -425,5 +423,81 @@ public class HybridState {
     public ActorState getActorState(String actorName) {
         SoftwareState softwareState = softwareStates.get(actorName);
         return softwareState != null ? softwareState : physicalStates.get(actorName);
+    }
+
+    public List<Set<String>> getGlobalStateModes() {
+        List<Set<String>> globalStateModes = new ArrayList<>();
+
+        for (Map.Entry<String, PhysicalState> entry : physicalStates.entrySet()) {
+            String key = entry.getKey();
+            PhysicalState value = entry.getValue();
+
+            if (!(value.getMode().equals("none"))) {
+                Set<String> new_set = new HashSet<>();
+                new_set.add(key);
+                new_set.add(value.getMode());
+                globalStateModes.add(new_set);
+
+            }
+        }
+
+        // Adding sets to the list
+        Set<String> set1 = new HashSet<>();
+        set1.add("hws");
+        set1.add("On");
+        globalStateModes.add(set1);
+
+//        Set<String> set1 = new HashSet<>();
+//        set1.add("hws1");
+//        set1.add("On");
+//        globalStateModes.add(set1);
+//
+//        Set<String> set4 = new HashSet<>();
+//        set4.add("hws2");
+//        set4.add("Off");
+//        globalStateModes.add(set4);
+
+        return  globalStateModes;
+    }
+
+    public double[] getIntervals(String[] ODEs) {
+        ArrayList<Double> intervalsList = new ArrayList<>();
+        for (String ODE : ODEs){
+            String[] components = extractVariableNames(ODE);
+            String physicalClassName = components[0], odeVariableName = components[1];
+
+            for (Map.Entry<String, PhysicalState> entry : physicalStates.entrySet()) {
+                PhysicalState it = entry.getValue();
+                String itName = entry.getKey();
+
+                if (physicalClassName.equals(itName)) {
+                    for (Map.Entry<String, Variable> VariablesValuation : it.getVariablesValuation().entrySet()) {
+                        String variable = VariablesValuation.getKey();
+                        Variable valuation = VariablesValuation.getValue();
+
+                        if(odeVariableName.equals(variable)) {
+                            intervalsList.add(((IntervalRealVariable)valuation).getLowerBound());
+                            intervalsList.add(((IntervalRealVariable)valuation).getUpperBound());
+                        }
+                    }
+                }
+            }
+        }
+
+        double[] intervalsArray = new double[intervalsList.size()];
+        for (int i = 0; i < intervalsList.size(); i++)
+            intervalsArray[i] = intervalsList.get(i);
+
+        return intervalsArray;
+    }
+
+    public static String[] extractVariableNames(String input) {
+        String[] result = new String[2];
+        String[] firstSplit = input.split("_");
+        result[0] = firstSplit[0];
+        String secondPart = firstSplit[1].replace("'", "").split("=")[0];
+        result[1] = secondPart;
+
+        return result;
     }
 }

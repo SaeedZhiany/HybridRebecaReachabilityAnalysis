@@ -58,6 +58,6 @@ reactiveclass Controller(3)
 
 main
 {
-	HeaterWithSensor hws(@Wire controller):(20);
+	HeaterWithSensor hws(@Wire controller):(20.0f);
 	Controller controller (@Wire hws):();
 }

@@ -15,6 +15,63 @@ import java.util.*;
 
 public class SpaceStateGenerator {
 
+    public SpaceStateGenerator() {
+
+    }
+
+    @FunctionalInterface
+    public interface JoszefCaller {
+        double[] call(String[] ODEs, double [] intervals, double [] reachParams);
+    }
+
+    public void analyzeReachability(JoszefCaller joszefCaller) {
+        Queue<HybridState> queue = new LinkedList<>();
+        Set<HybridState> visitedStates = new HashSet<>();
+        HybridState initialState = makeInitialState();
+        queue.add(initialState);
+        visitedStates.add(initialState);
+
+        while (!queue.isEmpty()) {
+            HybridState state = queue.poll();
+
+            List<Set<String>> globalStateModes = state.getGlobalStateModes();
+
+            String[] ODEs = RebecInstantiationMapping.getInstance().getCurrentFlows(globalStateModes);
+
+            double[] intervals = state.getIntervals(ODEs);
+//            double[] intervals = new double[]{0.0, 0.0, 20.0, 20.0};
+
+            double timeInterval = 0.01;
+            // min from nearest lower bound resume bound and step_size
+
+            // step_size is fixed
+            double[] reachParams = new double[]{50.0, 0.99, 0.01, 7.0, timeInterval};
+
+            if (ODEs.length > 0) {
+                 double[] result = joszefCaller.call(ODEs, intervals, reachParams);
+                //update i
+            }
+        }
+
+
+        // Queue<HybridState> states = new Queue(makeInitialState);
+        // while queue is not empty {
+        // state = queue.pop() -> hybridState
+        // odes = getCurrentFlows
+        // intervals = state->physicalstate->getvariablevaluation
+        // timeInterval = 0.1
+        // reachparams -> time = interval -> step_size = interval
+        // reault = computeFlowPipe(odes, intervals, timeInterval) -> calljuze
+        // update state with result
+        // copy state
+        // loop for each updated physical
+        //    update local state physical
+        //    if guard holds execute statement
+        //
+        // }
+
+    }
+
     private HybridState makeInitialState() {
         final HybridRebecaCode hybridRebecaCode = CompilerUtil.getHybridRebecaCode();
         HashMap<String, SoftwareState> softwareStates = new HashMap<>();
@@ -70,7 +127,7 @@ public class SpaceStateGenerator {
                     case "double": {
                         variableValuationInitial.put(variableDeclarator.getVariableName(),
                                 new IntervalRealVariable(variableDeclarator.getVariableName(), 0.0));
-                        break;        
+                        break;
                     }
                     case "boolean": {
                         variableValuationInitial.put(variableDeclarator.getVariableName(),
@@ -116,15 +173,18 @@ public class SpaceStateGenerator {
                     case "short": {
                         variableValuationInitial.put(variableDeclarator.getVariableName(),
                                 new DiscreteDecimalVariable(variableDeclarator.getVariableName(), new BigDecimal(0)));
+                        break;
                     }
                     case "float":
                     case "double": {
                         variableValuationInitial.put(variableDeclarator.getVariableName(),
                                 new IntervalRealVariable(variableDeclarator.getVariableName(), 0.0));
+                        break;
                     }
                     case "boolean": {
                         variableValuationInitial.put(variableDeclarator.getVariableName(),
                                 new DiscreteBoolVariable(variableDeclarator.getVariableName(), false));
+                        break;
                     }
                 }
             }
