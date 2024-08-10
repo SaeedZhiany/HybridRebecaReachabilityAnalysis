@@ -45,7 +45,9 @@ public class DiscreteBoolVariable extends Variable implements Comparable<Discret
 
     @Override
     public int compareTo(@Nonnull DiscreteBoolVariable other) {
-        return this.value.compareTo(other.value);
+        if (this.value.equals(other.value) && this.isDefinite.equals(other.isDefinite) && this.isDefinite)
+            return 0;
+        return -1;
     }
 
     @Override

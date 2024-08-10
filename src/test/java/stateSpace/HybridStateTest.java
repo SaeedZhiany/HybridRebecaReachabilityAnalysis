@@ -31,7 +31,7 @@ class HybridStateTest {
 //    @Mock
     private  TimedRebecaParentSuffixPrimary parentSuffixPrimaryMock;
 
-    ContinuousVariable createContinuousVariable(BigDecimal lowerBound, BigDecimal upperBound) {
+    ContinuousVariable createContinuousVariable(Double lowerBound, Double upperBound) {
         return new ContinuousVariable("continuousVariable", lowerBound, upperBound);
     }
 
@@ -66,6 +66,62 @@ class HybridStateTest {
     }
 
     @Test
+    @Tag("test takeMessage with non-deterministic behaviour in resumeTime")
+    void testTakeMessageWithNonDeterministicResumeTime() {
+        int messageArrivalLowerBound = 1;
+        int messageArrivalUpperBound = 5;
+
+        ContinuousVariable messageArrivalTime = createContinuousVariable(Double.valueOf(messageArrivalLowerBound), Double.valueOf(messageArrivalUpperBound));
+        ContinuousVariable globalTime = createContinuousVariable(Double.valueOf(messageArrivalLowerBound), Double.valueOf(messageArrivalUpperBound));
+
+        HashMap<String, Variable> messageParams = new HashMap<>();
+        messageParams.put("key", new DiscreteDecimalVariable("value", new BigDecimal(1)));
+
+        Message message = new Message(
+                "sender",
+                "receiver",
+                "content",
+                messageParams,
+                messageArrivalTime);
+        SoftwareState softwareState = new SoftwareState("init", new HashMap<>(), new HashSet<>(), new ArrayList<>(), 0, new ContinuousVariable("resumeTime", Double.valueOf(messageArrivalLowerBound), Double.valueOf(messageArrivalUpperBound+1)));
+        softwareState.addMessage(message);
+        List<ActorState> expected = new ArrayList<>();
+        try (MockedStatic<CompilerUtil> mockedCompiler = mockStatic(CompilerUtil.class)) {
+            List<Statement> messageBody = new ArrayList<>();
+            Statement mockedStatement = mock(Statement.class);
+            messageBody.add(mockedStatement);
+            mockedCompiler.when(() -> CompilerUtil.getMessageBody(anyString(), anyString())).thenReturn(messageBody);
+
+            ActorState expectedSoftwareState = new SoftwareState(
+                    "init",
+                    messageParams,
+                    new HashSet<>(),
+                    messageBody,
+                    0,
+                    new ContinuousVariable("resumeTime", globalTime.getLowerBound(), globalTime.getUpperBound())
+            );
+            expected.add(expectedSoftwareState);
+            HashMap<String, SoftwareState> softwareStateHashMap = new HashMap<>();
+            softwareStateHashMap.put(softwareState.getActorName(), softwareState);
+            HybridState hybridState = new HybridState(globalTime, softwareStateHashMap, new HashMap<>(), new CANNetworkState());
+            List<HybridState> newHybridStates = hybridState.takeMessage(softwareState);
+
+            assertEquals(2, newHybridStates.size());
+            ActorState actual = newHybridStates.get(0).getActorState(softwareState.getActorName());
+            assertEquals(expected.get(0).getActorName(), actual.getActorName());
+            assertEquals(expected.get(0).getVariableValuation(), actual.getVariableValuation());
+            assertTrue(actual.getMessageBag().isEmpty());
+            assertEquals(expected.get(0).getLocalTime(), actual.getLocalTime());
+            assertInstanceOf(SoftwareState.class, actual);
+            assertEquals(((SoftwareState) expected.get(0)).getResumeTime(), ((SoftwareState) actual).getResumeTime());
+
+            SoftwareState suspendedSoftwareState = (SoftwareState) newHybridStates.get(1).getActorState(softwareState.getActorName());
+            assertEquals(1, suspendedSoftwareState.getMessageBag().size());
+            assertTrue(suspendedSoftwareState.getMessageBag().contains(message));
+        }
+    }
+
+    @Test
     @Tag("test sendStatement with one parameter")
     void testSendStatementWithOneParameter() {
         try (MockedStatic<RebecInstantiationMapping> rebecInstantiationMappingMockedStatic = mockStatic(RebecInstantiationMapping.class);
@@ -90,9 +146,7 @@ class HybridStateTest {
             int messageArrivalUpperBound = 2;
             int globalStartTime = 1;
             int globalEndTime = 2;
-            ContinuousVariable continuousVariable = createContinuousVariable(
-                    new BigDecimal(globalStartTime),
-                    new BigDecimal(globalEndTime));
+            ContinuousVariable continuousVariable = createContinuousVariable(Double.valueOf(globalStartTime), Double.valueOf(globalEndTime));
             hybridState = new HybridState(continuousVariable, new HashMap<>(), physicalStateHashMap, new CANNetworkState());
             when(rebecInstantiationMappingMock.getKnownRebecBinding(physicalState1.getActorName(), left.getName())).thenReturn(physicalState2.getActorName());
 
@@ -134,6 +188,143 @@ class HybridStateTest {
     }
 
     @Test
+    @Tag("test sendStatement with self sender")
+    void testSendStatementWithSelfSender() {
+        try (MockedStatic<RebecInstantiationMapping> rebecInstantiationMappingMockedStatic = mockStatic(RebecInstantiationMapping.class);
+             MockedStatic<CompilerUtil> compilerUtilMockedStatic = mockStatic(CompilerUtil.class)) {
+            rebecInstantiationMappingMockedStatic.when(RebecInstantiationMapping::getInstance).thenReturn(rebecInstantiationMappingMock);
+            DotPrimary statement = new DotPrimary();
+            TermPrimary right = new TermPrimary();
+            right.setName("messageServerName");
+            TermPrimary left = new TermPrimary();
+            left.setName("self");
+            statement.setRight(right);
+            statement.setLeft(left);
+            List<Statement> sigma = new ArrayList<>();
+            sigma.add(statement);
+
+            PhysicalState physicalState = new PhysicalState("physicalState", "none", new HashMap<>(), new HashSet<>(), sigma, 0);
+            HashMap<String, PhysicalState> physicalStateHashMap = new HashMap<>();
+            physicalStateHashMap.put(physicalState.getActorName(), physicalState);
+            int messageArrivalLowerBound = 1;
+            int messageArrivalUpperBound = 2;
+            int globalStartTime = 1;
+            int globalEndTime = 2;
+            ContinuousVariable continuousVariable = createContinuousVariable(Double.valueOf(globalStartTime), Double.valueOf(globalEndTime));
+            hybridState = new HybridState(continuousVariable, new HashMap<>(), physicalStateHashMap, new CANNetworkState());
+            when(rebecInstantiationMappingMock.getKnownRebecBinding(physicalState.getActorName(), left.getName())).thenReturn(null);
+
+            List<FormalParameterDeclaration> formalParameterDeclarations = new ArrayList<>();
+            formalParameterDeclarations.add(new FormalParameterDeclaration());
+            formalParameterDeclarations.get(0).setName("formalParameterName1");
+            when(rebecInstantiationMappingMock.getRebecReactiveClassType(physicalState.getActorName())).thenReturn("ReactiveClassType");
+
+            compilerUtilMockedStatic.when(() -> CompilerUtil.getServerParameters("ReactiveClassType", "messageServerName")).thenReturn(formalParameterDeclarations);
+            Literal literal = new Literal();
+            literal.setLiteralValue("2");
+            OrdinaryPrimitiveType ordinaryPrimitiveType = new OrdinaryPrimitiveType();
+            ordinaryPrimitiveType.setName("int");
+            literal.setType(ordinaryPrimitiveType);
+            ArrayList<Expression> parentSuffixPrimaryArguments = new ArrayList<>();
+            parentSuffixPrimaryArguments.add(literal);
+            when(parentSuffixPrimaryMock.getArguments()).thenReturn(parentSuffixPrimaryArguments);
+            when(parentSuffixPrimaryMock.getStartAfterExpression()).thenReturn(createLiteral(messageArrivalLowerBound, "int"));
+            when(parentSuffixPrimaryMock.getEndAfterExpression()).thenReturn(createLiteral(messageArrivalUpperBound, "int"));
+
+            right.setParentSuffixPrimary(parentSuffixPrimaryMock);
+
+            HybridState newHybridState = hybridState.sendStatement(physicalState).get(0);
+            assertEquals(1, physicalState.getSigma().size());
+            assertEquals(0, newHybridState.getActorState(physicalState.getActorName()).getSigma().size());
+
+            assertEquals(globalStartTime + messageArrivalLowerBound,
+                    Arrays.stream(newHybridState.getActorState(physicalState.getActorName()).getMessageBag().toArray())
+                            .map(message -> ((Message) message).getArrivalTime().getLowerBound().doubleValue())
+                            .findFirst().get());
+
+            assertEquals(globalEndTime + messageArrivalUpperBound,
+                    Arrays.stream(newHybridState.getActorState(physicalState.getActorName()).getMessageBag().toArray())
+                            .map(message -> ((Message) message).getArrivalTime().getUpperBound().doubleValue())
+                            .findFirst().get());
+        }
+    }
+
+    @Test
+    @Tag("test sendStatement with non-deterministic behaviour in resume time")
+    void testSendStatementWithNonDeterministicResumeTime() {
+        try (MockedStatic<RebecInstantiationMapping> rebecInstantiationMappingMockedStatic = mockStatic(RebecInstantiationMapping.class);
+             MockedStatic<CompilerUtil> compilerUtilMockedStatic = mockStatic(CompilerUtil.class)) {
+            rebecInstantiationMappingMockedStatic.when(RebecInstantiationMapping::getInstance).thenReturn(rebecInstantiationMappingMock);
+            DotPrimary statement = new DotPrimary();
+            TermPrimary right = new TermPrimary();
+            right.setName("messageServerName");
+            TermPrimary left = new TermPrimary();
+            left.setName("knownRebecName");
+            statement.setRight(right);
+            statement.setLeft(left);
+            List<Statement> sigma = new ArrayList<>();
+            sigma.add(statement);
+
+            int messageArrivalLowerBound = 1;
+            int messageArrivalUpperBound = 2;
+            int globalStartTime = 1;
+            int globalEndTime = 2;
+
+            SoftwareState softwareState1 = new SoftwareState("softwareState1", new HashMap<>(), new HashSet<>(), sigma, 0, createContinuousVariable(Double.valueOf(globalStartTime), Double.valueOf(globalEndTime + 1)));
+            SoftwareState softwareState2 = new SoftwareState("softwareState2", new HashMap<>(), new HashSet<>(), new ArrayList<>(), 0, new ContinuousVariable("resumeTime"));
+            HashMap<String, SoftwareState> softwareStateHashMap = new HashMap<>();
+            softwareStateHashMap.put(softwareState1.getActorName(), softwareState1);
+            softwareStateHashMap.put(softwareState2.getActorName(), softwareState2);
+
+            ContinuousVariable continuousVariable = createContinuousVariable(Double.valueOf(globalStartTime), Double.valueOf(globalEndTime));
+            hybridState = new HybridState(continuousVariable, softwareStateHashMap, new HashMap<>(), new CANNetworkState());
+            when(rebecInstantiationMappingMock.getKnownRebecBinding(softwareState1.getActorName(), left.getName())).thenReturn(softwareState2.getActorName());
+
+            List<FormalParameterDeclaration> formalParameterDeclarations = new ArrayList<>();
+            formalParameterDeclarations.add(new FormalParameterDeclaration());
+            formalParameterDeclarations.get(0).setName("formalParameterName1");
+            when(rebecInstantiationMappingMock.getRebecReactiveClassType(softwareState2.getActorName())).thenReturn("ReactiveClassType");
+
+            compilerUtilMockedStatic.when(() -> CompilerUtil.getServerParameters("ReactiveClassType", "messageServerName")).thenReturn(formalParameterDeclarations);
+            Literal literal = new Literal();
+            literal.setLiteralValue("2");
+            OrdinaryPrimitiveType ordinaryPrimitiveType = new OrdinaryPrimitiveType();
+            ordinaryPrimitiveType.setName("int");
+            literal.setType(ordinaryPrimitiveType);
+            ArrayList<Expression> parentSuffixPrimaryArguments = new ArrayList<>();
+            parentSuffixPrimaryArguments.add(literal);
+            when(parentSuffixPrimaryMock.getArguments()).thenReturn(parentSuffixPrimaryArguments);
+            when(parentSuffixPrimaryMock.getStartAfterExpression()).thenReturn(createLiteral(messageArrivalLowerBound, "int"));
+            when(parentSuffixPrimaryMock.getEndAfterExpression()).thenReturn(createLiteral(messageArrivalUpperBound, "int"));
+
+            right.setParentSuffixPrimary(parentSuffixPrimaryMock);
+
+            List<HybridState> newHybridStates = hybridState.sendStatement(softwareState1);
+            HybridState newHybridState = newHybridStates.get(0);
+            assertEquals(0, softwareState2.getMessageBag().size());
+            assertEquals(1, newHybridState.getActorState(softwareState2.getActorName()).getMessageBag().size());
+            assertEquals(1, softwareState1.getSigma().size());
+            assertEquals(0, newHybridState.getActorState(softwareState1.getActorName()).getSigma().size());
+
+            assertEquals(globalStartTime + messageArrivalLowerBound,
+                    Arrays.stream(newHybridState.getActorState(softwareState2.getActorName()).getMessageBag().toArray())
+                            .map(message -> ((Message) message).getArrivalTime().getLowerBound().doubleValue())
+                            .findFirst().get());
+
+            assertEquals(globalEndTime + messageArrivalUpperBound,
+                    Arrays.stream(newHybridState.getActorState(softwareState2.getActorName()).getMessageBag().toArray())
+                            .map(message -> ((Message) message).getArrivalTime().getUpperBound().doubleValue())
+                            .findFirst().get());
+
+            assertEquals(2, newHybridStates.size());
+            assertEquals(1, newHybridStates.get(1).getActorState(softwareState1.getActorName()).getSigma().size());
+            assertEquals(0, newHybridStates.get(1).getActorState(softwareState2.getActorName()).getMessageBag().size());
+            assertEquals(Double.valueOf(globalEndTime), ((SoftwareState) newHybridStates.get(1).getActorState(softwareState1.getActorName())).getResumeTime().getLowerBound());
+            assertEquals(Double.valueOf(globalEndTime + 1), ((SoftwareState) newHybridStates.get(1).getActorState(softwareState1.getActorName())).getResumeTime().getUpperBound());
+        }
+    }
+
+    @Test
     @Tag("test assignStatement")
     void testAssignStatement() {
         BinaryExpression rightExp = creatBinaryExpression("*", createLiteral(2, "int"), createLiteral(3, "int"));
@@ -157,6 +348,38 @@ class HybridStateTest {
     }
 
     @Test
+    @Tag("test assignStatement with non-deterministic resume time")
+    void testAssignStatementWithNonDeterministicResumeTime() {
+        BinaryExpression rightExp = creatBinaryExpression("*", createLiteral(2, "int"), createLiteral(3, "int"));
+
+        String variableName = "variableName";
+        BinaryExpression assignStatement = creatBinaryExpression("=", createTermPrimary(variableName), rightExp);
+        List<Statement> sigma = new ArrayList<>();
+        sigma.add(assignStatement);
+
+        int globalLowerBound = 1;
+        int globalUpperBound = 2;
+
+        SoftwareState softwareState = new SoftwareState("softwareState", new HashMap<>(), new HashSet<>(), new ArrayList<>(), 0, new ContinuousVariable("resumeTime", Double.valueOf(globalLowerBound), Double.valueOf(globalUpperBound+1)));
+        softwareState.addStatements(sigma);
+        softwareState.addVariable(new DiscreteDecimalVariable(variableName, new BigDecimal(0)));
+        HashMap<String, SoftwareState> softwareStateHashMap = new HashMap<>();
+        softwareStateHashMap.put(softwareState.getActorName(), softwareState);
+        hybridState = new HybridState(createContinuousVariable(Double.valueOf(globalLowerBound), Double.valueOf(globalUpperBound)), softwareStateHashMap, new HashMap<>(), new CANNetworkState());
+
+        List<HybridState> newHybridStates = hybridState.assignStatement(softwareState);
+        HybridState newHybridState = newHybridStates.get(0);
+        assertEquals(new BigDecimal(0), ((DiscreteDecimalVariable) softwareState.getVariableValuation().get(variableName)).getValue());
+        assertTrue(newHybridState.getActorState(softwareState.getActorName()).getVariableValuation().get(variableName) instanceof DiscreteDecimalVariable);
+        assertEquals(new BigDecimal(6), ((DiscreteDecimalVariable) newHybridState.getActorState(softwareState.getActorName()).getVariableValuation().get(variableName)).getValue());
+
+        assertEquals(2, newHybridStates.size());
+        assertEquals(1, newHybridStates.get(1).getActorState(softwareState.getActorName()).getSigma().size());
+        assertTrue(newHybridStates.get(1).getActorState(softwareState.getActorName()).getVariableValuation().get(variableName) instanceof DiscreteDecimalVariable);
+        assertEquals(new BigDecimal(0), ((DiscreteDecimalVariable) newHybridStates.get(1).getActorState(softwareState.getActorName()).getVariableValuation().get(variableName)).getValue());
+    }
+
+    @Test
     @Tag("test delay statement")
     void testDelayStatement() {
         TermPrimary termPrimary = new TermPrimary();
@@ -171,18 +394,52 @@ class HybridStateTest {
         termPrimary.setParentSuffixPrimary(parentSuffixPrimaryMock);
         sigma.add(termPrimary);
 
-        ContinuousVariable globalTime = createContinuousVariable(new BigDecimal(1), new BigDecimal(2));
+        ContinuousVariable globalTime = createContinuousVariable(Double.valueOf(1), Double.valueOf(2));
         SoftwareState softwareState = new SoftwareState("softwareState", new HashMap<>(), new HashSet<>(), sigma, 0, new ContinuousVariable("resumeTime"));
         HashMap<String, SoftwareState> softwareStateHashMap = new HashMap<>();
         softwareStateHashMap.put(softwareState.getActorName(), softwareState);
         HybridState hybridState = new HybridState(globalTime, softwareStateHashMap, new HashMap<>(), new CANNetworkState());
 
         HybridState newHybridState = hybridState.delayStatement(softwareState).get(0);
-        BigDecimal softwareStateLowerBound = ((SoftwareState) newHybridState.getActorState(softwareState.getActorName())).getResumeTime().getLowerBound();
-        BigDecimal softwareStateUpperBound = ((SoftwareState) newHybridState.getActorState(softwareState.getActorName())).getResumeTime().getUpperBound();
-        assertEquals(softwareStateLowerBound, new BigDecimal(3));
-        assertEquals(softwareStateUpperBound, new BigDecimal(5));
+        Double softwareStateLowerBound = ((SoftwareState) newHybridState.getActorState(softwareState.getActorName())).getResumeTime().getLowerBound();
+        Double softwareStateUpperBound = ((SoftwareState) newHybridState.getActorState(softwareState.getActorName())).getResumeTime().getUpperBound();
+        assertEquals(softwareStateLowerBound, Double.valueOf(3));
+        assertEquals(softwareStateUpperBound, Double.valueOf(5));
+    }
 
+    @Test
+    @Tag("test delayStatement with non-deterministic resume time")
+    void testDelayStatementWithNonDeterministicResumeTime() {
+        TermPrimary termPrimary = new TermPrimary();
+        termPrimary.setName("delay");
+        List<Statement> sigma = new ArrayList<>();
+        // set arguments
+        parentSuffixPrimaryMock = mock(TimedRebecaParentSuffixPrimary.class);
+        ArrayList<Expression> arguments = new ArrayList<>();
+        arguments.add(createLiteral(2, "int"));
+        arguments.add(createLiteral(3, "int"));
+        when(parentSuffixPrimaryMock.getArguments()).thenReturn(arguments);
+        termPrimary.setParentSuffixPrimary(parentSuffixPrimaryMock);
+        sigma.add(termPrimary);
+
+        int globalLowerBound = 1;
+        int globalUpperBound = 2;
+
+        SoftwareState softwareState = new SoftwareState("softwareState", new HashMap<>(), new HashSet<>(), new ArrayList<>(), 0, new ContinuousVariable("resumeTime", Double.valueOf(globalLowerBound), Double.valueOf(globalUpperBound+1)));
+        softwareState.addStatements(sigma);
+        HashMap<String, SoftwareState> softwareStateHashMap = new HashMap<>();
+        softwareStateHashMap.put(softwareState.getActorName(), softwareState);
+        HybridState hybridState = new HybridState(createContinuousVariable(Double.valueOf(globalLowerBound), Double.valueOf(globalUpperBound)), softwareStateHashMap, new HashMap<>(), new CANNetworkState());
+
+        List<HybridState> newHybridStates = hybridState.delayStatement(softwareState);
+        HybridState newHybridState = newHybridStates.get(0);
+        Double softwareStateLowerBound = ((SoftwareState) newHybridState.getActorState(softwareState.getActorName())).getResumeTime().getLowerBound();
+        Double softwareStateUpperBound = ((SoftwareState) newHybridState.getActorState(softwareState.getActorName())).getResumeTime().getUpperBound();
+        assertEquals(softwareStateLowerBound, Double.valueOf(3));
+        assertEquals(softwareStateUpperBound, Double.valueOf(5));
+
+        assertEquals(2, newHybridStates.size());
+        assertEquals(1, newHybridStates.get(1).getActorState(softwareState.getActorName()).getSigma().size());
     }
 
     @Test
@@ -198,7 +455,7 @@ class HybridStateTest {
         List<Statement> sigma = new ArrayList<>();
         sigma.add(conditionalStatement);
 
-        ContinuousVariable globalTime = createContinuousVariable(new BigDecimal(0), new BigDecimal(2));
+        ContinuousVariable globalTime = createContinuousVariable(Double.valueOf(0), Double.valueOf(2));
         SoftwareState softwareState = new SoftwareState("softwareState", new HashMap<>(), new HashSet<>(), sigma, 0, new ContinuousVariable("resumeTime"));
         HashMap<String, SoftwareState> softwareStateHashMap = new HashMap<>();
         softwareStateHashMap.put(softwareState.getActorName(), softwareState);
@@ -223,7 +480,7 @@ class HybridStateTest {
         List<Statement> sigma = new ArrayList<>();
         sigma.add(conditionalStatement);
 
-        ContinuousVariable globalTime = createContinuousVariable(new BigDecimal(0), new BigDecimal(2));
+        ContinuousVariable globalTime = createContinuousVariable(Double.valueOf(0), Double.valueOf(2));
         SoftwareState softwareState = new SoftwareState("softwareState", new HashMap<>(), new HashSet<>(), sigma, 0, new ContinuousVariable("resumeTime"));
         HashMap<String, SoftwareState> softwareStateHashMap = new HashMap<>();
         softwareStateHashMap.put(softwareState.getActorName(), softwareState);
@@ -256,7 +513,7 @@ class HybridStateTest {
         List<Statement> sigma = new ArrayList<>();
         sigma.add(conditionalStatement);
 
-        ContinuousVariable globalTime = createContinuousVariable(new BigDecimal(0), new BigDecimal(2));
+        ContinuousVariable globalTime = createContinuousVariable(Double.valueOf(0), Double.valueOf(2));
         SoftwareState softwareState = new SoftwareState("softwareState", variableValuation, new HashSet<>(), sigma, 0, new ContinuousVariable("resumeTime"));
         HashMap<String, SoftwareState> softwareStateHashMap = new HashMap<>();
         softwareStateHashMap.put(softwareState.getActorName(), softwareState);
@@ -269,5 +526,61 @@ class HybridStateTest {
 
         assertEquals(1, newHybridStates.get(1).getActorState(softwareState.getActorName()).getSigma().size());
         assertEquals(elseStatement, newHybridStates.get(1).getActorState(softwareState.getActorName()).getSigma().get(0));
+    }
+
+    @Test
+    @Tag("test ifStatement with non-deterministic resume time")
+    void testIfStatementWithNonDeterministicResumeTime() {
+        BinaryExpression conditionExpr = creatBinaryExpression(">", createLiteral(3, "int"), createLiteral(2, "int"));
+        ConditionalStatement conditionalStatement = new ConditionalStatement();
+        Statement ifStatement = new Statement();
+        Statement elseStatement = new Statement();
+        conditionalStatement.setCondition(conditionExpr);
+        conditionalStatement.setStatement(ifStatement);
+        conditionalStatement.setElseStatement(elseStatement);
+        List<Statement> sigma = new ArrayList<>();
+        sigma.add(conditionalStatement);
+
+        int globalLowerBound = 1;
+        int globalUpperBound = 2;
+
+        SoftwareState softwareState = new SoftwareState("softwareState", new HashMap<>(), new HashSet<>(), new ArrayList<>(), 0, new ContinuousVariable("resumeTime", Double.valueOf(globalLowerBound), Double.valueOf(globalUpperBound+1)));
+        softwareState.addStatements(sigma);
+        HashMap<String, SoftwareState> softwareStateHashMap = new HashMap<>();
+        softwareStateHashMap.put(softwareState.getActorName(), softwareState);
+        HybridState hybridState = new HybridState(createContinuousVariable(Double.valueOf(globalLowerBound), Double.valueOf(globalUpperBound)), softwareStateHashMap, new HashMap<>(), new CANNetworkState());
+
+        List<HybridState> newHybridStates = hybridState.ifStatement(softwareState);
+        HybridState newHybridState = newHybridStates.get(0);
+        assertEquals(1, newHybridStates.get(0).getActorState(softwareState.getActorName()).getSigma().size());
+        assertEquals(ifStatement, newHybridStates.get(0).getActorState(softwareState.getActorName()).getSigma().get(0));
+
+        assertEquals(2, newHybridStates.size());
+        assertEquals(1, newHybridStates.get(1).getActorState(softwareState.getActorName()).getSigma().size());
+        assertTrue(newHybridStates.get(1).getActorState(softwareState.getActorName()).getSigma().get(0) instanceof ConditionalStatement);
+    }
+
+    @Test
+    @Tag("test setMode statement")
+    void testSetModeStatement() {
+        TermPrimary termPrimary = new TermPrimary();
+        termPrimary.setName("setMode");
+        List<Statement> sigma = new ArrayList<>();
+        // set arguments
+        parentSuffixPrimaryMock = mock(TimedRebecaParentSuffixPrimary.class);
+        ArrayList<Expression> arguments = new ArrayList<>();
+        arguments.add(createTermPrimary("mode"));
+        when(parentSuffixPrimaryMock.getArguments()).thenReturn(arguments);
+        termPrimary.setParentSuffixPrimary(parentSuffixPrimaryMock);
+        sigma.add(termPrimary);
+
+        ContinuousVariable globalTime = createContinuousVariable(Double.valueOf(0), Double.valueOf(2));
+        PhysicalState physicalState = new PhysicalState("physicalState", "none", new HashMap<>(), new HashSet<>(), sigma, 0);
+        HashMap<String, PhysicalState> physicalStateHashMap = new HashMap<>();
+        physicalStateHashMap.put(physicalState.getActorName(), physicalState);
+        HybridState hybridState = new HybridState(globalTime, new HashMap<>(), physicalStateHashMap, new CANNetworkState());
+
+        HybridState newHybridState = hybridState.setModeStatement(physicalState).get(0);
+        assertEquals("mode", ((PhysicalState) newHybridState.getActorState(physicalState.getActorName())).getMode());
     }
 }
