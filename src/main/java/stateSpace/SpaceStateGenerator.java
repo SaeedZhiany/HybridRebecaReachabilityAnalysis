@@ -42,13 +42,15 @@ public class SpaceStateGenerator {
 //            double[] intervals = new double[]{0.0, 0.0, 20.0, 20.0};
 
             double timeInterval = 0.01;
+
+            double[] nextInvents = state.getInvents();
             // min from nearest lower bound resume bound and step_size
 
             // step_size is fixed
             double[] reachParams = new double[]{50.0, 0.99, 0.01, 7.0, timeInterval};
 
             if (ODEs.length > 0) {
-                 double[] result = joszefCaller.call(ODEs, intervals, reachParams);
+//                 double[] result = joszefCaller.call(ODEs, intervals, reachParams);
                 //update i
             }
         }

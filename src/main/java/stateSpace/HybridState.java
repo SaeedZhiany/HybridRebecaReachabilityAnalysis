@@ -474,4 +474,70 @@ public class HybridState {
 
         return result;
     }
+
+//    ContinuousVariable createContinuousVariable(BigDecimal lowerBound, BigDecimal upperBound) {
+//        return new ContinuousVariable("continuousVariable", lowerBound, upperBound);
+//    }
+
+    public double[] getInvents() {
+//        -- for test --
+//        for (SoftwareState softwareState : softwareStates.values()) {
+//            int message1ArrivalLowerBound = 1;
+//            int message1ArrivalUpperBound = 5;
+//
+//            int message2ArrivalLowerBound = message1ArrivalLowerBound + 2;
+//            int message2ArrivalUpperBound = message1ArrivalUpperBound;
+//
+//            int globalTimeLowerBound = message1ArrivalLowerBound + 1;
+//            int globalTimeUpperBound = message1ArrivalUpperBound;
+//
+//            Message message1 = new Message(
+//                    "sender",
+//                    "receiver",
+//                    "content",
+//                    new HashMap<>(),
+//                    createContinuousVariable(new BigDecimal(message1ArrivalLowerBound), new BigDecimal(message1ArrivalUpperBound)));
+//            Message message2 = new Message(
+//                    "sender",
+//                    "receiver",
+//                    "content",
+//                    new HashMap<>(),
+//                    createContinuousVariable(new BigDecimal(message2ArrivalLowerBound), new BigDecimal(message2ArrivalUpperBound)));
+//            softwareState.getMessageBag().add(message1);
+//            softwareState.getMessageBag().add(message2);
+//        }
+
+        ArrayList<Double> resumeTimes = getSoftwareStatesResumeTimes();
+        ArrayList<Double> arrivalTimes = getMessageArrivalTimes();
+
+        ArrayList<Double> combinedList = new ArrayList<>(resumeTimes);
+        combinedList.addAll(arrivalTimes);
+
+        double[] invents = combinedList.stream().mapToDouble(Double::doubleValue).toArray();
+        Arrays.sort(invents);
+
+        return invents;
+    }
+
+    private ArrayList<Double> getSoftwareStatesResumeTimes() {
+        ArrayList<Double> resumeTimes = new ArrayList<>();
+        for (SoftwareState softwareState : softwareStates.values()) {
+            resumeTimes.add(softwareState.getResumeTime().getLowerBound().doubleValue());
+            resumeTimes.add(softwareState.getResumeTime().getUpperBound().doubleValue());
+        }
+
+        return resumeTimes;
+    }
+
+    private ArrayList<Double> getMessageArrivalTimes() {
+        ArrayList<Double> arrivalTimes = new ArrayList<>();
+        for (SoftwareState softwareState : softwareStates.values()) {
+            for (Message message : softwareState.messageBag) {
+                arrivalTimes.add(message.getArrivalTime().getLowerBound().doubleValue());
+                arrivalTimes.add(message.getArrivalTime().getUpperBound().doubleValue());
+            }
+        }
+
+        return arrivalTimes;
+    }
 }
