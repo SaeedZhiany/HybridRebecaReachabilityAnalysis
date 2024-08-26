@@ -10,7 +10,7 @@ import java.util.Map;
 public class NonTimeProgressSOSExecutor {
 
 
-    private final List<AbstractSOSExecutor> sosExecutors = new ArrayList<>() {{
+    private final List<AbstractSOSExecutor> sosExecutors = new ArrayList<AbstractSOSExecutor>() {{
         add(new AssignmentStatementSOSExecutor());
         add(new DelaySOSExecuter());
         add(new TakeMessageSOSExecutor());

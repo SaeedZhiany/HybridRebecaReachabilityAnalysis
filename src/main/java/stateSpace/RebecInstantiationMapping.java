@@ -1,12 +1,13 @@
 package stateSpace;
 
+import dataStructure.StringVariable;
 import org.rebecalang.compiler.modelcompiler.corerebeca.objectmodel.*;
 import org.rebecalang.compiler.modelcompiler.hybridrebeca.objectmodel.HybridRebecaCode;
-import org.rebecalang.compiler.modelcompiler.hybridrebeca.objectmodel.HybridTermPrimary;
 import org.rebecalang.compiler.modelcompiler.hybridrebeca.objectmodel.ModeDeclaration;
 import org.rebecalang.compiler.modelcompiler.hybridrebeca.objectmodel.PhysicalClassDeclaration;
 
 import utils.CompilerUtil;
+import visitors.ExpressionExtractorVisitor;
 
 import java.util.*;
 
@@ -49,24 +50,13 @@ public class RebecInstantiationMapping {
 
         final HybridRebecaCode hybridRebecaCode = getHybridRebecaCode();
         modeToODEs = getModeODEs(hybridRebecaCode);
-
-//        System.out.println("\n-----------------\nmodeToODEs");
-//        for (Set<String> key : modeToODEs.keySet()) {
-//            String[] value = modeToODEs.get(key);
-//
-//            System.out.println("Key: " + key);
-//            System.out.println("Value: ");
-//            for (String ode : value) {
-//                System.out.println(ode);
-//            }
-//            System.out.println("----");
-//        }
     }
 
 
     private static Map<Set<String>, String[]> getModeODEs(HybridRebecaCode hybridRebecaCode) {
         List<MainRebecDefinition> allRebecNodes = hybridRebecaCode.getMainDeclaration().getMainRebecDefinition();
         List<PhysicalClassDeclaration> allPhysicalClassDeclaration = hybridRebecaCode.getPhysicalClassDeclaration();
+        ExpressionExtractorVisitor expressionExtractorVisitor = new ExpressionExtractorVisitor();
 
         // get physical nodes from main
         HashMap<MainRebecDefinition, PhysicalClassDeclaration> allPhysicalNodes = new HashMap<>();
@@ -91,38 +81,9 @@ public class RebecInstantiationMapping {
                 String nameOfPhisicalVarible = "";
                 for (int i = 0; i < statements.size(); i++) {
                     Statement statement = statements.get(i);
-
-                    // get left -> write visitor for HybridTermPrimary
-                    String ODE = ((TermPrimary) ((BinaryExpression) statement).getLeft()).getName();
-
-                    // add name of physical class
                     nameOfPhisicalVarible = mainRebecDefinition.getName();
-                    ODE = nameOfPhisicalVarible + "_" + ODE;
-
-                    int derivativeOrder = 0;
-                    try {
-                        derivativeOrder = ((HybridTermPrimary) ((BinaryExpression) statement).getLeft()).getDerivativeOrder();
-                    } catch (Exception e) {
-                        derivativeOrder = 0;
-                    }
-                    ODE += repeatCharacter('\'', derivativeOrder);
-                    ODE += ((BinaryExpression) statement).getOperator();
-
-                    //                     try to use visitor
-//                    SymbolTable s = CompilerUtil.getSymbolTable();
-//                    Map<String, Variable> symbolTable = getSymbolTableAsMap(declaration);
-//                    ExpressionEvaluatorVisitor expressionEvaluatorVisitor = new ExpressionEvaluatorVisitor(symbolTable);
-//                    Variable actual = expressionEvaluatorVisitor.visit(((BinaryExpression) statement).getRight());
-
-                    // get right -> symbol table needed
-                    if (((BinaryExpression) statement).getRight() instanceof Literal) {
-                        ODE += ((Literal) (((BinaryExpression) statement).getRight())).getLiteralValue();
-                    } else if (((BinaryExpression) statement).getRight() instanceof UnaryExpression) {
-                        ODE += ((UnaryExpression) ((BinaryExpression) statement).getRight()).getOperator();
-                        ODE += ((Literal) ((UnaryExpression) ((BinaryExpression) statement).getRight()).getExpression()).getLiteralValue();
-                    }
-
-                    ODEs[i] = ODE;
+                    expressionExtractorVisitor.setNameOfPhisicalVarible(nameOfPhisicalVarible);
+                    ODEs[i] = ((StringVariable)expressionExtractorVisitor.visit((BinaryExpression) statement)).getValue();
                 }
 
                 Set<String> keySet = new HashSet<>();
@@ -158,14 +119,6 @@ public class RebecInstantiationMapping {
         List<String> combinedList = new ArrayList<>(Arrays.asList(a));
         combinedList.addAll(Arrays.asList(b));
         return combinedList.toArray(new String[0]);
-    }
-
-    public static String repeatCharacter(char ch, int num) {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < num; i++) {
-            sb.append(ch);
-        }
-        return sb.toString();
     }
 
     public static RebecInstantiationMapping getInstance() {

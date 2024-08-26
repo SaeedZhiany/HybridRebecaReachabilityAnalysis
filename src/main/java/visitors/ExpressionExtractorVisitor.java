@@ -2,15 +2,18 @@ package visitors;
 
 import dataStructure.*;
 import org.rebecalang.compiler.modelcompiler.corerebeca.objectmodel.*;
+import org.rebecalang.compiler.modelcompiler.hybridrebeca.objectmodel.HybridTermPrimary;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.util.Map;
 
-import static org.apache.commons.lang3.ObjectUtils.min;
 import static org.apache.commons.lang3.math.NumberUtils.max;
 
 public class ExpressionExtractorVisitor extends Visitor<Variable> {
+    private String nameOfPhisicalVarible = "";
+
+    public void setNameOfPhisicalVarible(String nameOfPhisicalVarible) {
+        this.nameOfPhisicalVarible = (nameOfPhisicalVarible.equals("")) ? "" : nameOfPhisicalVarible + "_";
+    }
 
     private StringVariable convertToStringVarible(Variable variable) {
         if (variable instanceof StringVariable)
@@ -32,6 +35,8 @@ public class ExpressionExtractorVisitor extends Visitor<Variable> {
             return visit((UnaryExpression) expression);
         } else if (expression instanceof BinaryExpression) {
             return visit((BinaryExpression) expression);
+        } else if (expression instanceof HybridTermPrimary) {
+            return visit((HybridTermPrimary) expression);
         } else if (expression instanceof TermPrimary) {
             return visit((TermPrimary) expression);
         } else if (expression instanceof Literal) {
@@ -44,7 +49,7 @@ public class ExpressionExtractorVisitor extends Visitor<Variable> {
     public Variable visit(UnaryExpression unaryExpression) {
         Variable operand = this.visit(unaryExpression.getExpression());
         String operator = unaryExpression.getOperator();
-        return new StringVariable("", operator + convertToStringVarible(operand).getValue());
+        return new StringVariable("", operator + '(' + convertToStringVarible(operand).getValue()+ ')');
     }
 
     @Override
@@ -56,8 +61,16 @@ public class ExpressionExtractorVisitor extends Visitor<Variable> {
     }
 
     @Override
+    public Variable visit(HybridTermPrimary hybridTermPrimary) {
+        return new StringVariable("", this.nameOfPhisicalVarible +
+                hybridTermPrimary.getName() +
+                String.valueOf('\'').repeat(hybridTermPrimary.getDerivativeOrder())
+        );
+    }
+
+    @Override
     public Variable visit(TermPrimary termPrimary) {
-        return new StringVariable("", termPrimary.getName());
+        return new StringVariable("", this.nameOfPhisicalVarible + termPrimary.getName());
     }
 
     @Override

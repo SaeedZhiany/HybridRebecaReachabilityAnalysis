@@ -1,5 +1,6 @@
 package stateSpace;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import dataStructure.*;
 import org.rebecalang.compiler.modelcompiler.corerebeca.objectmodel.*;
 import org.rebecalang.compiler.modelcompiler.hybridrebeca.objectmodel.HybridRebecaCode;
@@ -12,6 +13,8 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.math.BigDecimal;
 import java.util.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
 
 public class SpaceStateGenerator {
 
@@ -25,6 +28,7 @@ public class SpaceStateGenerator {
     }
 
     public void analyzeReachability(JoszefCaller joszefCaller) {
+        double currentEvent = 0.0;
         Queue<HybridState> queue = new LinkedList<>();
         Set<HybridState> visitedStates = new HashSet<>();
         HybridState initialState = makeInitialState();
@@ -42,9 +46,8 @@ public class SpaceStateGenerator {
 //            double[] intervals = new double[]{0.0, 0.0, 20.0, 20.0};
 
             double timeInterval = 0.01;
-
-            double[] nextInvents = state.getInvents();
-            // min from nearest lower bound resume bound and step_size
+            double[] nextEvents = state.getEvents(currentEvent, timeInterval);
+            double[] nextEventInterval = {currentEvent, Arrays.stream(nextEvents).min().orElseThrow()};
 
             // step_size is fixed
             double[] reachParams = new double[]{50.0, 0.99, 0.01, 7.0, timeInterval};

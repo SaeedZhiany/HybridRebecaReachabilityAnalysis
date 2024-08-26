@@ -415,11 +415,11 @@ public class HybridState {
             }
         }
 
-        // Adding sets to the list
-        Set<String> set1 = new HashSet<>();
-        set1.add("hws");
-        set1.add("On");
-        globalStateModes.add(set1);
+//        // Adding sets to the list
+//        Set<String> set1 = new HashSet<>();
+//        set1.add("hws");
+//        set1.add("Off");
+//        globalStateModes.add(set1);
 
 //        Set<String> set1 = new HashSet<>();
 //        set1.add("hws1");
@@ -475,11 +475,11 @@ public class HybridState {
         return result;
     }
 
-//    ContinuousVariable createContinuousVariable(BigDecimal lowerBound, BigDecimal upperBound) {
-//        return new ContinuousVariable("continuousVariable", lowerBound, upperBound);
-//    }
+    ContinuousVariable createContinuousVariable(BigDecimal lowerBound, BigDecimal upperBound) {
+        return new ContinuousVariable("continuousVariable", lowerBound, upperBound);
+    }
 
-    public double[] getInvents() {
+    public double[] getEvents(double currentEvent, double timeInterval) {
 //        -- for test --
 //        for (SoftwareState softwareState : softwareStates.values()) {
 //            int message1ArrivalLowerBound = 1;
@@ -511,12 +511,13 @@ public class HybridState {
         ArrayList<Double> arrivalTimes = getMessageArrivalTimes();
 
         ArrayList<Double> combinedList = new ArrayList<>(resumeTimes);
+        combinedList.add(currentEvent + timeInterval);
         combinedList.addAll(arrivalTimes);
 
-        double[] invents = combinedList.stream().mapToDouble(Double::doubleValue).toArray();
-        Arrays.sort(invents);
+        double[] Events = combinedList.stream().mapToDouble(Double::doubleValue).toArray();
+        Arrays.sort(Events);
 
-        return invents;
+        return Events;
     }
 
     private ArrayList<Double> getSoftwareStatesResumeTimes() {
@@ -539,5 +540,9 @@ public class HybridState {
         }
 
         return arrivalTimes;
+    }
+
+    public void setPhysicalStates(HashMap<String, PhysicalState> physicalStates) {
+        this.physicalStates = physicalStates;
     }
 }

@@ -4,6 +4,7 @@ import dataStructure.*;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.rebecalang.compiler.modelcompiler.corerebeca.objectmodel.*;
+import org.rebecalang.compiler.modelcompiler.hybridrebeca.objectmodel.HybridTermPrimary;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
@@ -41,6 +42,13 @@ class ExpressionExtractorVisitorTest {
         binaryExpression.setLeft(a);
         binaryExpression.setRight(b);
         return binaryExpression;
+    }
+
+    HybridTermPrimary createHybridTermPrimary(String name, int order) {
+        HybridTermPrimary hybridTermPrimary = new HybridTermPrimary();
+        hybridTermPrimary.setName(name);
+        hybridTermPrimary.setDerivativeOrder(order);
+        return hybridTermPrimary;
     }
 
     @Test
@@ -238,241 +246,265 @@ class ExpressionExtractorVisitorTest {
         assertTrue(actual instanceof StringVariable);
         assertEquals("a%b", ((StringVariable) actual).getValue());
     }
-//
-//    @Test
-//    @Tag("test binary expression double(literal) + double(literal)")
-//    void testBinaryExpressionDoubleLiteralPlusDoubleLiteral() {
-//        BinaryExpression binaryExpression = creatBinaryExpression(
-//                "+",
-//                createLiteral(1.6, "double"),
-//                createLiteral(2.5, "double"));
-//        ExpressionEvaluatorVisitor expressionEvaluatorVisitor = new ExpressionEvaluatorVisitor(new HashMap<>());
-//
-//        Variable actual = expressionEvaluatorVisitor.visit(binaryExpression);
-//        assertTrue(actual instanceof IntervalRealVariable);
-//        assertEquals(4.1, ((IntervalRealVariable) actual).getLowerBound().doubleValue());
-//        assertEquals(4.1, ((IntervalRealVariable) actual).getUpperBound().doubleValue());
-//    }
-//
-//    @Test
-//    @Tag("test binary expression double(literal) - int(termPrimary)")
-//    void testBinaryExpressionDoubleLiteralMinusIntTermPrimary() {
-//        Map<String, Variable> symbolTable = new HashMap<>();
-//        symbolTable.put("a", new DiscreteDecimalVariable("a", new BigDecimal(2)));
-//        BinaryExpression binaryExpression = creatBinaryExpression(
-//                "-",
-//                createLiteral(1.5, "double"),
-//                createTermPrimary("a"));
-//        ExpressionEvaluatorVisitor expressionEvaluatorVisitor = new ExpressionEvaluatorVisitor(symbolTable);
-//
-//        Variable actual = expressionEvaluatorVisitor.visit(binaryExpression);
-//        assertTrue(actual instanceof IntervalRealVariable);
-//        assertEquals(-0.5, ((IntervalRealVariable) actual).getLowerBound().doubleValue());
-//        assertEquals(-0.5, ((IntervalRealVariable) actual).getUpperBound().doubleValue());
-//    }
-//
-//    @Test
-//    @Tag("test binary expression double(literal) * double(termPrimary)")
-//    void testBinaryExpressionDoubleLiteralMultiplyDoubleTermPrimary() {
-//        Map<String, Variable> symbolTable = new HashMap<>();
-//        symbolTable.put("a", new IntervalRealVariable("a", 2.0, 3.0));
-//        BinaryExpression binaryExpression = creatBinaryExpression(
-//                "*",
-//                createLiteral(1.5, "double"),
-//                createTermPrimary("a"));
-//        ExpressionEvaluatorVisitor expressionEvaluatorVisitor = new ExpressionEvaluatorVisitor(symbolTable);
-//
-//        Variable actual = expressionEvaluatorVisitor.visit(binaryExpression);
-//        assertTrue(actual instanceof IntervalRealVariable);
-//        assertEquals(3.0, ((IntervalRealVariable) actual).getLowerBound().doubleValue());
-//        assertEquals(4.5, ((IntervalRealVariable) actual).getUpperBound().doubleValue());
-//    }
-//
-//    @Test
-//    @Tag("test binary expression boolean(literal) && boolean(literal)")
-//    void testBinaryExpressionBooleanLiteralAndBooleanLiteral() {
-//        BinaryExpression binaryExpression = creatBinaryExpression(
-//                "&&",
-//                createLiteral(true, "boolean"),
-//                createLiteral(false, "boolean"));
-//        ExpressionEvaluatorVisitor expressionEvaluatorVisitor = new ExpressionEvaluatorVisitor(new HashMap<>());
-//        Variable actual = expressionEvaluatorVisitor.visit(binaryExpression);
-//        assertTrue(actual instanceof DiscreteBoolVariable);
-//        assertFalse(((DiscreteBoolVariable) actual).getValue());
-//    }
-//
-//    @Test
-//    @Tag("test binary expression boolean(literal) || boolean(literal)")
-//    void testBinaryExpressionBooleanLiteralOrBooleanLiteral() {
-//        BinaryExpression binaryExpression = creatBinaryExpression(
-//                "||",
-//                createLiteral(true, "boolean"),
-//                createLiteral(false, "boolean"));
-//        ExpressionEvaluatorVisitor expressionEvaluatorVisitor = new ExpressionEvaluatorVisitor(new HashMap<>());
-//        Variable actual = expressionEvaluatorVisitor.visit(binaryExpression);
-//        assertTrue(actual instanceof DiscreteBoolVariable);
-//        assertTrue(((DiscreteBoolVariable) actual).getValue());
-//    }
-//
-//    @Test
-//    @Tag("test binary expression boolean(literal) == boolean(literal)")
-//    void testBinaryExpressionBooleanLiteralEqualBooleanLiteral() {
-//        BinaryExpression binaryExpression = creatBinaryExpression(
-//                "==",
-//                createLiteral(true, "boolean"),
-//                createLiteral(false, "boolean"));
-//        ExpressionEvaluatorVisitor expressionEvaluatorVisitor = new ExpressionEvaluatorVisitor(new HashMap<>());
-//        Variable actual = expressionEvaluatorVisitor.visit(binaryExpression);
-//        assertTrue(actual instanceof DiscreteBoolVariable);
-//        assertFalse(((DiscreteBoolVariable) actual).getValue());
-//    }
-//
-//    @Test
-//    @Tag("test binary expression int(literal) == int(literal)")
-//    void testBinaryExpressionIntLiteralEqualIntLiteral() {
-//        BinaryExpression binaryExpression = creatBinaryExpression(
-//                "==",
-//                createLiteral(1, "int"),
-//                createLiteral(1, "int"));
-//        ExpressionEvaluatorVisitor expressionEvaluatorVisitor = new ExpressionEvaluatorVisitor(new HashMap<>());
-//        Variable actual = expressionEvaluatorVisitor.visit(binaryExpression);
-//        assertTrue(actual instanceof DiscreteBoolVariable);
-//        assertTrue(((DiscreteBoolVariable) actual).getValue());
-//    }
-//
-//    @Test
-//    @Tag("test binary expression double(literal) == double(literal)")
-//    void testBinaryExpressionDoubleLiteralEqualDoubleLiteral() {
-//        BinaryExpression binaryExpression = creatBinaryExpression(
-//                "==",
-//                createLiteral(1.5, "double"),
-//                createLiteral(1.5, "double"));
-//        ExpressionEvaluatorVisitor expressionEvaluatorVisitor = new ExpressionEvaluatorVisitor(new HashMap<>());
-//        Variable actual = expressionEvaluatorVisitor.visit(binaryExpression);
-//        assertTrue(actual instanceof DiscreteBoolVariable);
-//        assertTrue(((DiscreteBoolVariable) actual).getValue());
-//    }
-//
-//    @Test
-//    @Tag("test binary expression boolean(literal) != boolean(literal)")
-//    void testBinaryExpressionBooleanLiteralNotEqualBooleanLiteral() {
-//        BinaryExpression binaryExpression = creatBinaryExpression(
-//                "!=",
-//                createLiteral(true, "boolean"),
-//                createLiteral(false, "boolean"));
-//        ExpressionEvaluatorVisitor expressionEvaluatorVisitor = new ExpressionEvaluatorVisitor(new HashMap<>());
-//        Variable actual = expressionEvaluatorVisitor.visit(binaryExpression);
-//        assertTrue(actual instanceof DiscreteBoolVariable);
-//        assertTrue(((DiscreteBoolVariable) actual).getValue());
-//    }
-//
-//    @Test
-//    @Tag("test binary expression int(literal) != int(literal)")
-//    void testBinaryExpressionIntLiteralNotEqualIntLiteral() {
-//        BinaryExpression binaryExpression = creatBinaryExpression(
-//                "!=",
-//                createLiteral(1, "int"),
-//                createLiteral(1, "int"));
-//        ExpressionEvaluatorVisitor expressionEvaluatorVisitor = new ExpressionEvaluatorVisitor(new HashMap<>());
-//        Variable actual = expressionEvaluatorVisitor.visit(binaryExpression);
-//        assertTrue(actual instanceof DiscreteBoolVariable);
-//        assertFalse(((DiscreteBoolVariable) actual).getValue());
-//    }
-//
-//    @Test
-//    @Tag("test binary expression double(literal) != double(literal)")
-//    void testBinaryExpressionDoubleLiteralNotEqualDoubleLiteral() {
-//        BinaryExpression binaryExpression = creatBinaryExpression(
-//                "!=",
-//                createLiteral(1.5, "double"),
-//                createLiteral(1.5, "double"));
-//        ExpressionEvaluatorVisitor expressionEvaluatorVisitor = new ExpressionEvaluatorVisitor(new HashMap<>());
-//        Variable actual = expressionEvaluatorVisitor.visit(binaryExpression);
-//        assertTrue(actual instanceof DiscreteBoolVariable);
-//        assertFalse(((DiscreteBoolVariable) actual).getValue());
-//    }
-//
-//    @Test
-//    @Tag("test unary expression -int(literal)")
-//    void testUnaryExpressionMinusIntLiteral() {
-//        UnaryExpression unaryExpression = createUnaryExpression("-", createLiteral(1, "int"));
-//        ExpressionEvaluatorVisitor expressionEvaluatorVisitor = new ExpressionEvaluatorVisitor(new HashMap<>());
-//        Variable actual = expressionEvaluatorVisitor.visit(unaryExpression);
-//        assertTrue(actual instanceof DiscreteDecimalVariable);
-//        assertEquals(-1, ((DiscreteDecimalVariable) actual).getValue().intValue());
-//    }
-//
-//    @Test
-//    @Tag("test unary expression +int(literal)")
-//    void testUnaryExpressionPlusIntLiteral() {
-//        UnaryExpression unaryExpression = createUnaryExpression("+", createLiteral(1, "int"));
-//        ExpressionEvaluatorVisitor expressionEvaluatorVisitor = new ExpressionEvaluatorVisitor(new HashMap<>());
-//        Variable actual = expressionEvaluatorVisitor.visit(unaryExpression);
-//        assertTrue(actual instanceof DiscreteDecimalVariable);
-//        assertEquals(1, ((DiscreteDecimalVariable) actual).getValue().intValue());
-//    }
-//
-//    @Test
-//    @Tag("test unary expression -double(literal)")
-//    void testUnaryExpressionMinusDoubleLiteral() {
-//        UnaryExpression unaryExpression = createUnaryExpression("-", createLiteral(1.5, "double"));
-//        ExpressionEvaluatorVisitor expressionEvaluatorVisitor = new ExpressionEvaluatorVisitor(new HashMap<>());
-//        Variable actual = expressionEvaluatorVisitor.visit(unaryExpression);
-//        assertTrue(actual instanceof IntervalRealVariable);
-//        assertEquals(-1.5, ((IntervalRealVariable) actual).getLowerBound().doubleValue());
-//        assertEquals(-1.5, ((IntervalRealVariable) actual).getUpperBound().doubleValue());
-//    }
-//
-//    @Test
-//    @Tag("test unary expression !boolean(literal)")
-//    void testUnaryExpressionNotBooleanLiteral() {
-//        UnaryExpression unaryExpression = createUnaryExpression("!", createLiteral(true, "boolean"));
-//        ExpressionEvaluatorVisitor expressionEvaluatorVisitor = new ExpressionEvaluatorVisitor(new HashMap<>());
-//        Variable actual = expressionEvaluatorVisitor.visit(unaryExpression);
-//        assertTrue(actual instanceof DiscreteBoolVariable);
-//        assertFalse(((DiscreteBoolVariable) actual).getValue());
-//    }
-//
-//    @Test
-//    @Tag("test binary expression and unary expression -(2 + 3)")
-//    void testBinaryExpressionAndUnaryExpression() {
-//        BinaryExpression binaryExpression = creatBinaryExpression(
-//                "+",
-//                createLiteral(2, "int"),
-//                createLiteral(3, "int"));
-//        UnaryExpression unaryExpression = createUnaryExpression("-", binaryExpression);
-//        ExpressionEvaluatorVisitor expressionEvaluatorVisitor = new ExpressionEvaluatorVisitor(new HashMap<>());
-//        Variable actual = expressionEvaluatorVisitor.visit(unaryExpression);
-//        assertTrue(actual instanceof DiscreteDecimalVariable);
-//        assertEquals(-5, ((DiscreteDecimalVariable) actual).getValue().intValue());
-//    }
-//
-//    @Test
-//    @Tag("test binary expression and unary expression -(2 + -(3))")
-//    void testBinaryExpressionAndUnaryExpression2() {
-//        BinaryExpression binaryExpression = creatBinaryExpression(
-//                "+",
-//                createLiteral(2, "int"),
-//                createUnaryExpression("-", createLiteral(3, "int")));
-//        UnaryExpression unaryExpression = createUnaryExpression("-", binaryExpression);
-//        ExpressionEvaluatorVisitor expressionEvaluatorVisitor = new ExpressionEvaluatorVisitor(new HashMap<>());
-//        Variable actual = expressionEvaluatorVisitor.visit(unaryExpression);
-//        assertTrue(actual instanceof DiscreteDecimalVariable);
-//        assertEquals(1, ((DiscreteDecimalVariable) actual).getValue().intValue());
-//    }
-//
-//    @Test
-//    @Tag("test binary expression and unary expression +((-2.5) + 3.1)")
-//    void testBinaryExpressionAndUnaryExpression3() {
-//        BinaryExpression binaryExpression = creatBinaryExpression(
-//                "+",
-//                createUnaryExpression("-", createLiteral(2.5, "double")),
-//                createLiteral(3.1, "double"));
-//        UnaryExpression unaryExpression = createUnaryExpression("+", binaryExpression);
-//        ExpressionEvaluatorVisitor expressionEvaluatorVisitor = new ExpressionEvaluatorVisitor(new HashMap<>());
-//        Variable actual = expressionEvaluatorVisitor.visit(unaryExpression);
-//        assertTrue(actual instanceof IntervalRealVariable);
-//        assertEquals(0.6, ((IntervalRealVariable) actual).getLowerBound(), 0.01);
-//        assertEquals(0.6, ((IntervalRealVariable) actual).getUpperBound(), 0.01);
-//    }
+
+    @Test
+    @Tag("test binary expression double(literal) + double(literal)")
+    void testBinaryExpressionDoubleLiteralPlusDoubleLiteral() {
+        BinaryExpression binaryExpression = creatBinaryExpression(
+                "+",
+                createLiteral(1.6, "double"),
+                createLiteral(2.5, "double"));
+        ExpressionExtractorVisitor expressionExtractorVisitor = new ExpressionExtractorVisitor();
+        Variable actual = expressionExtractorVisitor.visit(binaryExpression);
+        assertTrue(actual instanceof StringVariable);
+        assertEquals("1.6+2.5", ((StringVariable) actual).getValue());
+    }
+
+    @Test
+    @Tag("test binary expression double(literal) - int(termPrimary)")
+    void testBinaryExpressionDoubleLiteralMinusIntTermPrimary() {
+        Map<String, Variable> symbolTable = new HashMap<>();
+        BinaryExpression binaryExpression = creatBinaryExpression(
+                "-",
+                createLiteral(1.5, "double"),
+                createTermPrimary("a"));
+        ExpressionExtractorVisitor expressionExtractorVisitor = new ExpressionExtractorVisitor();
+        Variable actual = expressionExtractorVisitor.visit(binaryExpression);
+        assertTrue(actual instanceof StringVariable);
+        assertEquals("1.5-a", ((StringVariable) actual).getValue());
+    }
+
+    @Test
+    @Tag("test binary expression boolean(literal) && boolean(literal)")
+    void testBinaryExpressionBooleanLiteralAndBooleanLiteral() {
+        BinaryExpression binaryExpression = creatBinaryExpression(
+                "&&",
+                createLiteral(true, "boolean"),
+                createLiteral(false, "boolean"));
+        ExpressionExtractorVisitor expressionExtractorVisitor = new ExpressionExtractorVisitor();
+        Variable actual = expressionExtractorVisitor.visit(binaryExpression);
+        assertTrue(actual instanceof StringVariable);
+        assertEquals("true&&false", ((StringVariable) actual).getValue());
+    }
+
+    @Test
+    @Tag("test binary expression boolean(literal) || boolean(literal)")
+    void testBinaryExpressionBooleanLiteralOrBooleanLiteral() {
+        BinaryExpression binaryExpression = creatBinaryExpression(
+                "||",
+                createLiteral(true, "boolean"),
+                createLiteral(false, "boolean"));
+        ExpressionExtractorVisitor expressionExtractorVisitor = new ExpressionExtractorVisitor();
+        Variable actual = expressionExtractorVisitor.visit(binaryExpression);
+        assertTrue(actual instanceof StringVariable);
+        assertEquals("true||false", ((StringVariable) actual).getValue());
+    }
+
+    @Test
+    @Tag("test binary expression boolean(literal) == boolean(literal)")
+    void testBinaryExpressionBooleanLiteralEqualBooleanLiteral() {
+        BinaryExpression binaryExpression = creatBinaryExpression(
+                "==",
+                createLiteral(true, "boolean"),
+                createLiteral(false, "boolean"));
+        ExpressionExtractorVisitor expressionExtractorVisitor = new ExpressionExtractorVisitor();
+        Variable actual = expressionExtractorVisitor.visit(binaryExpression);
+        assertTrue(actual instanceof StringVariable);
+        assertEquals("true==false", ((StringVariable) actual).getValue());
+    }
+
+    @Test
+    @Tag("test binary expression int(literal) == int(literal)")
+    void testBinaryExpressionIntLiteralEqualIntLiteral() {
+        BinaryExpression binaryExpression = creatBinaryExpression(
+                "==",
+                createLiteral(1, "int"),
+                createLiteral(1, "int"));
+        ExpressionExtractorVisitor expressionExtractorVisitor = new ExpressionExtractorVisitor();
+        Variable actual = expressionExtractorVisitor.visit(binaryExpression);
+        assertTrue(actual instanceof StringVariable);
+        assertEquals("1==1", ((StringVariable) actual).getValue());
+    }
+
+    @Test
+    @Tag("test binary expression double(literal) == double(literal)")
+    void testBinaryExpressionDoubleLiteralEqualDoubleLiteral() {
+        BinaryExpression binaryExpression = creatBinaryExpression(
+                "==",
+                createLiteral(1.5, "double"),
+                createLiteral(1.5, "double"));
+        ExpressionExtractorVisitor expressionExtractorVisitor = new ExpressionExtractorVisitor();
+        Variable actual = expressionExtractorVisitor.visit(binaryExpression);
+        assertTrue(actual instanceof StringVariable);
+        assertEquals("1.5==1.5", ((StringVariable) actual).getValue());
+    }
+
+    @Test
+    @Tag("test binary expression boolean(literal) != boolean(literal)")
+    void testBinaryExpressionBooleanLiteralNotEqualBooleanLiteral() {
+        BinaryExpression binaryExpression = creatBinaryExpression(
+                "!=",
+                createLiteral(true, "boolean"),
+                createLiteral(false, "boolean"));
+        ExpressionExtractorVisitor expressionExtractorVisitor = new ExpressionExtractorVisitor();
+        Variable actual = expressionExtractorVisitor.visit(binaryExpression);
+        assertTrue(actual instanceof StringVariable);
+        assertEquals("true!=false", ((StringVariable) actual).getValue());
+    }
+
+    @Test
+    @Tag("test binary expression int(literal) != int(literal)")
+    void testBinaryExpressionIntLiteralNotEqualIntLiteral() {
+        BinaryExpression binaryExpression = creatBinaryExpression(
+                "!=",
+                createLiteral(1, "int"),
+                createLiteral(1, "int"));
+        ExpressionExtractorVisitor expressionExtractorVisitor = new ExpressionExtractorVisitor();
+        Variable actual = expressionExtractorVisitor.visit(binaryExpression);
+        assertTrue(actual instanceof StringVariable);
+        assertEquals("1!=1", ((StringVariable) actual).getValue());
+    }
+
+    @Test
+    @Tag("test binary expression double(literal) != double(literal)")
+    void testBinaryExpressionDoubleLiteralNotEqualDoubleLiteral() {
+        BinaryExpression binaryExpression = creatBinaryExpression(
+                "!=",
+                createLiteral(1.5, "double"),
+                createLiteral(1.5, "double"));
+        ExpressionExtractorVisitor expressionExtractorVisitor = new ExpressionExtractorVisitor();
+        Variable actual = expressionExtractorVisitor.visit(binaryExpression);
+        assertTrue(actual instanceof StringVariable);
+        assertEquals("1.5!=1.5", ((StringVariable) actual).getValue());
+    }
+
+    @Test
+    @Tag("test unary expression -int(literal)")
+    void testUnaryExpressionMinusIntLiteral() {
+        UnaryExpression unaryExpression = createUnaryExpression("-", createLiteral(1, "int"));
+        ExpressionExtractorVisitor expressionExtractorVisitor = new ExpressionExtractorVisitor();
+        Variable actual = expressionExtractorVisitor.visit(unaryExpression);
+        assertTrue(actual instanceof StringVariable);
+        assertEquals("-(1)", ((StringVariable) actual).getValue());
+    }
+
+    @Test
+    @Tag("test unary expression +int(literal)")
+    void testUnaryExpressionPlusIntLiteral() {
+        UnaryExpression unaryExpression = createUnaryExpression("+", createLiteral(1, "int"));
+        ExpressionExtractorVisitor expressionExtractorVisitor = new ExpressionExtractorVisitor();
+        Variable actual = expressionExtractorVisitor.visit(unaryExpression);
+        assertTrue(actual instanceof StringVariable);
+        assertEquals("+(1)", ((StringVariable) actual).getValue());
+    }
+
+    @Test
+    @Tag("test unary expression -double(literal)")
+    void testUnaryExpressionMinusDoubleLiteral() {
+        UnaryExpression unaryExpression = createUnaryExpression("-", createLiteral(1.5, "double"));
+        ExpressionExtractorVisitor expressionExtractorVisitor = new ExpressionExtractorVisitor();
+        Variable actual = expressionExtractorVisitor.visit(unaryExpression);
+        assertTrue(actual instanceof StringVariable);
+        assertEquals("-(1.5)", ((StringVariable) actual).getValue());
+    }
+
+    @Test
+    @Tag("test unary expression !boolean(literal)")
+    void testUnaryExpressionNotBooleanLiteral() {
+        UnaryExpression unaryExpression = createUnaryExpression("!", createLiteral(true, "boolean"));
+        ExpressionExtractorVisitor expressionExtractorVisitor = new ExpressionExtractorVisitor();
+        Variable actual = expressionExtractorVisitor.visit(unaryExpression);
+        assertTrue(actual instanceof StringVariable);
+        assertEquals("!(true)", ((StringVariable) actual).getValue());
+    }
+
+    @Test
+    @Tag("test binary expression and unary expression -(2 + 3)")
+    void testBinaryExpressionAndUnaryExpression() {
+        BinaryExpression binaryExpression = creatBinaryExpression(
+                "+",
+                createLiteral(2, "int"),
+                createLiteral(3, "int"));
+        UnaryExpression unaryExpression = createUnaryExpression("-", binaryExpression);
+        ExpressionExtractorVisitor expressionExtractorVisitor = new ExpressionExtractorVisitor();
+        Variable actual = expressionExtractorVisitor.visit(unaryExpression);
+        assertTrue(actual instanceof StringVariable);
+        assertEquals("-(2+3)", ((StringVariable) actual).getValue());
+    }
+
+    @Test
+    @Tag("test binary expression and unary expression -(2 + -(3))")
+    void testBinaryExpressionAndUnaryExpression2() {
+        BinaryExpression binaryExpression = creatBinaryExpression(
+                "+",
+                createLiteral(2, "int"),
+                createUnaryExpression("-", createLiteral(3, "int")));
+        UnaryExpression unaryExpression = createUnaryExpression("-", binaryExpression);
+        ExpressionExtractorVisitor expressionExtractorVisitor = new ExpressionExtractorVisitor();
+        Variable actual = expressionExtractorVisitor.visit(unaryExpression);
+        assertTrue(actual instanceof StringVariable);
+        assertEquals("-(2+-(3))", ((StringVariable) actual).getValue());
+    }
+
+    @Test
+    @Tag("test binary expression and unary expression +(-(2.5) + 3.1)")
+    void testBinaryExpressionAndUnaryExpression3() {
+        BinaryExpression binaryExpression = creatBinaryExpression(
+                "+",
+                createUnaryExpression("-", createLiteral(2.5, "double")),
+                createLiteral(3.1, "double"));
+        UnaryExpression unaryExpression = createUnaryExpression("+", binaryExpression);
+        ExpressionExtractorVisitor expressionExtractorVisitor = new ExpressionExtractorVisitor();
+        Variable actual = expressionExtractorVisitor.visit(unaryExpression);
+        assertTrue(actual instanceof StringVariable);
+        assertEquals("+(-(2.5)+3.1)", ((StringVariable) actual).getValue());
+    }
+
+    @Test
+    @Tag("test HybridTermPrimary order-1 time'")
+    void testHybridTermPrimaryFirstOrder() {
+        HybridTermPrimary hybridTermPrimary = createHybridTermPrimary(
+                "time",
+                1);
+        ExpressionExtractorVisitor expressionExtractorVisitor = new ExpressionExtractorVisitor();
+        Variable actual = expressionExtractorVisitor.visit(hybridTermPrimary);
+        assertTrue(actual instanceof StringVariable);
+        assertEquals("time'", ((StringVariable) actual).getValue());
+    }
+
+    @Test
+    @Tag("test HybridTermPrimary order-2 time''")
+    void testHybridTermPrimarySecondOrder() {
+        HybridTermPrimary hybridTermPrimary = createHybridTermPrimary(
+                "time",
+                2);
+        ExpressionExtractorVisitor expressionExtractorVisitor = new ExpressionExtractorVisitor();
+        Variable actual = expressionExtractorVisitor.visit(hybridTermPrimary);
+        assertTrue(actual instanceof StringVariable);
+        assertEquals("time''", ((StringVariable) actual).getValue());
+    }
+
+    @Test
+    @Tag("test TermPrimary with setNameOfPhisicalVarible hws_time")
+    void testTermPrimaryWithSetNameOfPhisicalVarible() {
+        TermPrimary termPrimary = createTermPrimary("time");
+        ExpressionExtractorVisitor expressionExtractorVisitor = new ExpressionExtractorVisitor();
+        expressionExtractorVisitor.setNameOfPhisicalVarible("hws");
+        Variable actual = expressionExtractorVisitor.visit(termPrimary);
+        assertTrue(actual instanceof StringVariable);
+        assertEquals("hws_time", ((StringVariable) actual).getValue());
+    }
+
+    @Test
+    @Tag("test HybridTermPrimary order-2 with setNameOfPhisicalVarible hws_time''")
+    void testHybridTermPrimarySecondOrderWithSetNameOfPhisicalVarible() {
+        HybridTermPrimary hybridTermPrimary = createHybridTermPrimary(
+                "time",
+                2);
+        ExpressionExtractorVisitor expressionExtractorVisitor = new ExpressionExtractorVisitor();
+        expressionExtractorVisitor.setNameOfPhisicalVarible("hws");
+        Variable actual = expressionExtractorVisitor.visit(hybridTermPrimary);
+        assertTrue(actual instanceof StringVariable);
+        assertEquals("hws_time''", ((StringVariable) actual).getValue());
+    }
 }
