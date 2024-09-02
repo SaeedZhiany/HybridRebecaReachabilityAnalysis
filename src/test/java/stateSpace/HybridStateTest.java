@@ -363,4 +363,130 @@ class HybridStateTest {
 
         assertArrayEquals(new double[]{1.0, 5.0, 2.0, 6.0}, intervals, "Intervals do not match the expected values.");
     }
+//
+//    @Nested
+//    class GetEventsTests {
+//        private HybridState hybridStateForEvents;
+//        private HashMap<String, SoftwareState> softwareStatesMock;
+//
+//        @BeforeEach
+//        void setUp() {
+//            // Set up the HybridState object
+//            hybridStateForEvents = new HybridState();
+//
+//            // Mock the softwareStates map
+//            softwareStatesMock = mock(HashMap.class);
+//            hybridStateForEvents.setSoftwareStates(softwareStatesMock);
+//        }
+//
+//        @Test
+//        void testGetEvents_withEmptySoftwareStates() {
+//            // Given an empty softwareStates map
+//            when(softwareStatesMock.values()).thenReturn(new ArrayList<>());
+//
+//            // When calling getEvents with currentEvent = 0.0 and timeInterval = 1.0
+//            double[] result = hybridStateForEvents.getEvents(0.0, 1.0);
+//
+//            // Then the result should only contain the currentEvent + timeInterval
+//            assertArrayEquals(new double[]{1.0}, result);
+//        }
+//
+//        @Test
+//        void testGetEvents_withSoftwareStateResumeTimes() {
+//            // Given a softwareState with specific resume times and message arrival times
+//            SoftwareState softwareState = mock(SoftwareState.class);
+//
+//            // Mock the resume time
+//            ContinuousVariable resumeTime = mock(ContinuousVariable.class);
+//            when(resumeTime.getLowerBound()).thenReturn(new BigDecimal("2.0"));
+//            when(resumeTime.getUpperBound()).thenReturn(new BigDecimal("4.0"));
+//            when(softwareState.getResumeTime()).thenReturn(resumeTime);
+//
+//            // Mock a message with arrival time
+//            Message message1 = mock(Message.class);
+//            ContinuousVariable arrivalTime1 = mock(ContinuousVariable.class);
+//            when(arrivalTime1.getLowerBound()).thenReturn(new BigDecimal("3.0"));
+//            when(arrivalTime1.getUpperBound()).thenReturn(new BigDecimal("5.0"));
+//            when(message1.getArrivalTime()).thenReturn(arrivalTime1);
+//
+//            // Mock the message bag to return the mocked message as a Set
+//            when(softwareState.getMessageBag()).thenReturn(new HashSet<>(Arrays.asList(message1)));
+//
+//            // Mock the software states map
+//            HashMap<String, SoftwareState> softwareStatesMock = new HashMap<>();
+//            softwareStatesMock.put("actor1", softwareState);
+//            when(hybridStateForEvents.getSoftwareStates()).thenReturn(softwareStatesMock);
+//
+//            // When calling getEvents with currentEvent = 0.0 and timeInterval = 1.0
+//            double[] result = hybridStateForEvents.getEvents(0.0, 1.0);
+//
+//            // Then the result should contain the resume times and arrival times, plus the currentEvent + timeInterval
+//            double[] expected = new double[]{1.0, 2.0, 3.0, 4.0, 5.0};
+//            assertArrayEquals(expected, result);
+//        }
+//
+//
+//        @Test
+//        void testGetEvents_withMultipleSoftwareStates() {
+//            // Given multiple softwareStates with different resume times and message arrival times
+//            SoftwareState state1 = mock(SoftwareState.class);
+//            SoftwareState state2 = mock(SoftwareState.class);
+//
+//            ContinuousVariable resumeTime1 = mock(ContinuousVariable.class);
+//            when(resumeTime1.getLowerBound()).thenReturn(new BigDecimal(2.0));
+//            when(resumeTime1.getUpperBound()).thenReturn(new BigDecimal(3.0));
+//
+//            ContinuousVariable resumeTime2 = mock(ContinuousVariable.class);
+//            when(resumeTime2.getLowerBound()).thenReturn(new BigDecimal(4.0));
+//            when(resumeTime2.getUpperBound()).thenReturn(new BigDecimal(6.0));
+//
+//            when(state1.getResumeTime()).thenReturn(resumeTime1);
+//            when(state2.getResumeTime()).thenReturn(resumeTime2);
+//
+//            // Change from ArrayList to HashSet
+//            when(state1.getMessageBag()).thenReturn(new HashSet<>());
+//            when(state2.getMessageBag()).thenReturn(new HashSet<>());
+//
+//            when(softwareStatesMock.values()).thenReturn(Arrays.asList(state1, state2));
+//
+//            // When calling getEvents with currentEvent = 1.0 and timeInterval = 2.0
+//            double[] result = hybridStateForEvents.getEvents(1.0, 2.0);
+//
+//            // Then the result should contain all resume times, plus the currentEvent + timeInterval
+//            double[] expected = new double[]{3.0, 2.0, 3.0, 4.0, 6.0};
+//            assertArrayEquals(expected, result);
+//        }
+//
+//        @Test
+//        void testGetEvents_withSortedOutput() {
+//            // Given a state where events are out of order initially
+//            SoftwareState state1 = mock(SoftwareState.class);
+//
+//            ContinuousVariable resumeTime1 = mock(ContinuousVariable.class);
+//            when(resumeTime1.getLowerBound()).thenReturn(new BigDecimal(5.0));
+//            when(resumeTime1.getUpperBound()).thenReturn(new BigDecimal(2.0));  // Deliberate reverse order
+//
+//            when(state1.getResumeTime()).thenReturn(resumeTime1);
+//
+//            Message message1 = mock(Message.class);
+//            ContinuousVariable arrivalTime1 = mock(ContinuousVariable.class);
+//            when(arrivalTime1.getLowerBound()).thenReturn(new BigDecimal(7.0));
+//            when(arrivalTime1.getUpperBound()).thenReturn(new BigDecimal(3.0));  // Deliberate reverse order
+//            when(message1.getArrivalTime()).thenReturn(arrivalTime1);
+//
+//            // Change from List to HashSet
+//            when(state1.getMessageBag()).thenReturn(new HashSet<>(Arrays.asList(message1)));
+//
+//            when(softwareStatesMock.values()).thenReturn(Arrays.asList(state1));
+//
+//            // When calling getEvents with currentEvent = 1.0 and timeInterval = 2.0
+//            double[] result = hybridStateForEvents.getEvents(1.0, 2.0);
+//
+//            // Then the result should be sorted in ascending order
+//            double[] expected = new double[]{3.0, 2.0, 3.0, 5.0, 7.0};
+//            Arrays.sort(expected);  // Sorting the expected result
+//            assertArrayEquals(expected, result);
+//        }
+
+    }
 }

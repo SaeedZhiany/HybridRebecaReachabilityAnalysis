@@ -545,4 +545,8 @@ public class HybridState {
     public void setPhysicalStates(HashMap<String, PhysicalState> physicalStates) {
         this.physicalStates = physicalStates;
     }
+
+    public void setSoftwareStates(HashMap<String, SoftwareState> softwareStates) {
+        this.softwareStates = softwareStates;
+    }
 }

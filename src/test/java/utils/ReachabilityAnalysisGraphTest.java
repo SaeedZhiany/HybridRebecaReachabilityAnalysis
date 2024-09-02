@@ -3,6 +3,8 @@ package utils;
 import dataStructure.ContinuousVariable;
 import dataStructure.DiscreteDecimalVariable;
 import dataStructure.Variable;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Tag;
 import org.rebecalang.compiler.modelcompiler.corerebeca.objectmodel.*;
@@ -17,59 +19,97 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class ReachabilityAnalysisGraphTest {
+    private HybridState rootState = createSampleHybridState(
+            "RootState",
+            new BigDecimal(0),
+            new BigDecimal(10),
+            new BigDecimal(5),
+            2,
+            3,
+            "*"
+    );
+    private HybridState childState1 = createSampleHybridState(
+            "ChildState1",
+            new BigDecimal(1),
+            new BigDecimal(11),
+            new BigDecimal(6),
+            4,
+            5,
+            "+"
+    );
+    private HybridState childState2 = createSampleHybridState(
+            "ChildState2",
+            new BigDecimal(2),
+            new BigDecimal(12),
+            new BigDecimal(7),
+            6,
+            2,
+            "-"
+    );
+    private HybridState grandChildState = createSampleHybridState(
+            "GrandChildState",
+            new BigDecimal(3),
+            new BigDecimal(13),
+            new BigDecimal(8),
+            3,
+            3,
+            "*"
+    );
+
+    @Nested
+    class FindNodeInGraphTests {
+        private ReachabilityAnalysisGraph reachabilityAnalysisGraph;
+
+        @BeforeEach
+        void setUp() {
+            this.reachabilityAnalysisGraph = new ReachabilityAnalysisGraph(rootState);
+
+            ReachabilityAnalysisGraph.TreeNode rootNode = this.reachabilityAnalysisGraph.getRoot();
+            this.reachabilityAnalysisGraph.addNode(rootNode, childState1);
+            this.reachabilityAnalysisGraph.addNode(rootNode, childState2);
+        }
+
+        @Test
+        @Tag("Test finding an existing node")
+        void testFindNodeInGraph_existingNode() {
+            ReachabilityAnalysisGraph.TreeNode foundNode = this.reachabilityAnalysisGraph.findNodeInGraph(childState1);
+            assertNotNull(foundNode);
+            assertEquals(childState1.getHash(), foundNode.getId());
+            assertEquals(childState1, foundNode.getData());
+        }
+
+        @Test
+        @Tag("Test finding the root node")
+        void testFindNodeInGraph_rootNode() {
+            ReachabilityAnalysisGraph.TreeNode foundNode = this.reachabilityAnalysisGraph.findNodeInGraph(rootState);
+            assertNotNull(foundNode);
+            assertEquals(rootState.getHash(), foundNode.getId());
+            assertEquals(rootState, foundNode.getData());
+        }
+
+        @Test
+        @Tag("Test finding a non-existing node")
+        void testFindNodeInGraph_nonExistingNode() {
+            ReachabilityAnalysisGraph.TreeNode foundNode = this.reachabilityAnalysisGraph.findNodeInGraph(grandChildState);
+            assertNull(foundNode);
+        }
+    }
 
     @Test
-    @Tag("integration")  // Or another tag relevant to your test
     public void testReachabilityAnalysisGraph() {
-        HybridState rootState = createSampleHybridState(
-                "RootState",
-                new BigDecimal(0),
-                new BigDecimal(10),
-                new BigDecimal(5),
-                2,
-                3,
-                "*"
-        );
-        HybridState childState1 = createSampleHybridState(
-                "ChildState1",
-                new BigDecimal(1),
-                new BigDecimal(11),
-                new BigDecimal(6),
-                4,
-                5,
-                "+"
-        );
-        HybridState childState2 = createSampleHybridState(
-                "ChildState2",
-                new BigDecimal(2),
-                new BigDecimal(12),
-                new BigDecimal(7),
-                6,
-                2,
-                "-"
-        );
-        HybridState grandChildState = createSampleHybridState(
-                "GrandChildState",
-                new BigDecimal(3),
-                new BigDecimal(13),
-                new BigDecimal(8),
-                3,
-                3,
-                "*"
-        );
-
-        ReachabilityAnalysisGraph reachabilityAnalysisGraph = new ReachabilityAnalysisGraph(rootState);
+        ReachabilityAnalysisGraph reachabilityAnalysisGraph = new ReachabilityAnalysisGraph(this.rootState);
 
         ReachabilityAnalysisGraph.TreeNode rootNode = reachabilityAnalysisGraph.getRoot();
-        reachabilityAnalysisGraph.addNode(rootNode, "child1", childState1);
-        reachabilityAnalysisGraph.addNode(rootNode, "child2", childState2);
+        reachabilityAnalysisGraph.addNode(rootNode, this.childState1);
+        reachabilityAnalysisGraph.addNode(rootNode, this.childState2);
         ReachabilityAnalysisGraph.TreeNode childNode1 = rootNode.getChildren().get(0);
-        reachabilityAnalysisGraph.addNode(childNode1, "grandchild1", grandChildState);
+        reachabilityAnalysisGraph.addNode(childNode1, this.grandChildState);
 
         String jsonOutput = reachabilityAnalysisGraph.toJson();
+        System.out.println(jsonOutput);
         assertNotNull(jsonOutput);
     }
 
