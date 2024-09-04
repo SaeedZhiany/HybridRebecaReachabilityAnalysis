@@ -1,17 +1,19 @@
 package stateSpace;
 
+import com.rits.cloning.Cloner;
 import dataStructure.*;
 import org.rebecalang.compiler.modelcompiler.corerebeca.objectmodel.*;
 import org.rebecalang.compiler.modelcompiler.hybridrebeca.objectmodel.HybridRebecaCode;
 import org.rebecalang.compiler.modelcompiler.hybridrebeca.objectmodel.PhysicalClassDeclaration;
+import sos.NonTimeProgressSOSExecutor;
 import utils.CompilerUtil;
 import visitors.BlockStatementExecutorVisitor;
 import visitors.ExpressionEvaluatorVisitor;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.math.BigDecimal;
 import java.util.*;
+
+import static stateSpace.HybridState.extractVariableNames;
 
 public class SpaceStateGenerator {
 
@@ -25,11 +27,11 @@ public class SpaceStateGenerator {
     }
 
     public void analyzeReachability(JoszefCaller joszefCaller) {
+        NonTimeProgressSOSExecutor nonTimeProgressSOSExecutor = new NonTimeProgressSOSExecutor();
+        final HybridRebecaCode hybridRebecaCode = CompilerUtil.getHybridRebecaCode();
         Queue<HybridState> queue = new LinkedList<>();
-        Set<HybridState> visitedStates = new HashSet<>();
         HybridState initialState = makeInitialState();
-        queue.add(initialState);
-        visitedStates.add(initialState);
+        queue.addAll(nonTimeProgressSOSExecutor.generateNextStates(initialState, false));
 
         while (!queue.isEmpty()) {
             HybridState state = queue.poll();
@@ -47,9 +49,36 @@ public class SpaceStateGenerator {
             // step_size is fixed
             double[] reachParams = new double[]{50.0, 0.99, 0.01, 7.0, timeInterval};
 
+            Cloner cloner = new Cloner();
+            HybridState updatedPhysicalHybridState = cloner.deepClone(state);
+            Map<String, HybridState> updatedPhysicalHybridStates = new HashMap<>();
+            updatedPhysicalHybridStates.put(updatedPhysicalHybridState.updateHash(), updatedPhysicalHybridState);
+
             if (ODEs.length > 0) {
-                 double[] result = joszefCaller.call(ODEs, intervals, reachParams);
+                double[] result = joszefCaller.call(ODEs, intervals, reachParams);
                 //update i
+
+                int index = 0;
+                for (String ODE : ODEs) {
+                        String[] components = extractVariableNames(ODE);
+                        String physicalClassName = components[0], odeVariableName = components[1];
+                        double odeVariableLowerBound = result[index * 2];
+                        double odeVariableUpperBound = result[(index * 2) + 1];
+
+                        PhysicalState physicalState = (PhysicalState) updatedPhysicalHybridState.getActorState(physicalClassName);
+                        physicalState.updateVariable(new IntervalRealVariable(odeVariableName, odeVariableLowerBound, odeVariableUpperBound));
+                    index++;
+                }
+            }
+
+            updatePhysicalStates(updatedPhysicalHybridState.getPhysicalStates(), updatedPhysicalHybridStates);
+
+
+            // CHECKME: when we should call NonTimeProgressExecutor
+//            NonTimeProgressSOSExecutor nonTimeProgressSOSExecutor = new NonTimeProgressSOSExecutor();
+            for (Map.Entry<String, HybridState> hybridStateEntry : updatedPhysicalHybridStates.entrySet()) {
+                List<HybridState> generatedHybridStates = nonTimeProgressSOSExecutor.generateNextStates(hybridStateEntry.getValue(), false);
+                queue.addAll(generatedHybridStates);
             }
         }
 
@@ -70,6 +99,76 @@ public class SpaceStateGenerator {
         //
         // }
 
+    }
+
+    private static void updatePhysicalStates(HashMap<String, PhysicalState> physicalStates, Map<String, HybridState> updatedPhysicalHybridStates) {
+        for (Map.Entry<String, PhysicalState>  physicalStateEntry :  physicalStates.entrySet()) {
+            Map<String, HybridState> shallowCopyCurrentStates = new HashMap<>(updatedPhysicalHybridStates);
+            for (Map.Entry<String, HybridState> hybridStateEntry : shallowCopyCurrentStates.entrySet()) {
+
+                PhysicalState physicalState = hybridStateEntry.getValue().getPhysicalStates().get(physicalStateEntry.getKey());
+
+                ExpressionEvaluatorVisitor evaluatorVisitor = new ExpressionEvaluatorVisitor(physicalState.getVariablesValuation());
+                String physicalDeclarationName = RebecInstantiationMapping.getInstance().getRebecReactiveClassType(physicalState.getActorName());
+                DiscreteBoolVariable guardSatisfiedResult = (DiscreteBoolVariable) evaluatorVisitor.visit(
+                        (BinaryExpression) Objects.requireNonNull(CompilerUtil.getGuardCondition(physicalDeclarationName, physicalState.getMode())));
+                DiscreteBoolVariable invariantSatisfiedResult = (DiscreteBoolVariable) evaluatorVisitor.visit(
+                        (BinaryExpression) Objects.requireNonNull(CompilerUtil.getInvariantCondition(physicalDeclarationName, physicalState.getMode())));
+                PhysicalClassDeclaration physicalClassDeclaration = CompilerUtil.getPhysicalClassDeclaration(physicalDeclarationName);
+
+                if (invariantSatisfiedResult.getDefinite()) {
+                    if (invariantSatisfiedResult.getValue()) {
+                        // CHECKME
+                        checkGuardIfInvariantIsTrue(updatedPhysicalHybridStates, physicalStateEntry, hybridStateEntry,
+                                guardSatisfiedResult, physicalDeclarationName);
+                    } else {
+                        checkGuardIfInvariantIsFalse(guardSatisfiedResult, physicalDeclarationName, physicalState);
+                    }
+                } else {
+                    //Invariant = True
+                    checkGuardIfInvariantIsTrue(updatedPhysicalHybridStates, physicalStateEntry, hybridStateEntry,
+                            guardSatisfiedResult, physicalDeclarationName);
+                    //Invariant = False
+                    checkGuardIfInvariantIsFalse(guardSatisfiedResult, physicalDeclarationName, physicalState);
+                }
+            }
+        }
+    }
+
+    private static void checkGuardIfInvariantIsFalse(DiscreteBoolVariable guardSatisfiedResult,
+                                                     String physicalDeclarationName, PhysicalState physicalState) {
+        if (guardSatisfiedResult.getDefinite()) {
+            if (guardSatisfiedResult.getValue()) {
+                List<Statement> guardStatements =
+                        Objects.requireNonNull(CompilerUtil.getModeDeclaration(physicalDeclarationName
+                                , physicalState.getMode())).getGuardDeclaration().getBlock().getStatements();
+                physicalState.addStatements(guardStatements);
+            } else {
+                throw new RuntimeException("Time lock happened");
+            }
+        } else {
+            List<Statement> guardStatements =
+                    Objects.requireNonNull(CompilerUtil.getModeDeclaration(physicalDeclarationName,
+                            physicalState.getMode())).getGuardDeclaration().getBlock().getStatements();
+            physicalState.addStatements(guardStatements);
+        }
+    }
+
+    private static void checkGuardIfInvariantIsTrue(Map<String, HybridState> updatedPhysicalHybridStates,
+                                                    Map.Entry<String, PhysicalState> physicalStateEntry,
+                                                    Map.Entry<String, HybridState> hybridStateEntry,
+                                                    DiscreteBoolVariable guardSatisfiedResult,
+                                                    String physicalDeclarationName) {
+        if ((guardSatisfiedResult.getDefinite() && guardSatisfiedResult.getValue())) {
+            Cloner cloner = new Cloner();
+            HybridState newHybridState = cloner.deepClone(hybridStateEntry.getValue());
+            PhysicalState newPhysicalState = newHybridState.getPhysicalStates().get(physicalStateEntry.getKey());
+            List<Statement> guardStatements =
+                    Objects.requireNonNull(CompilerUtil.getModeDeclaration(physicalDeclarationName,
+                            newPhysicalState.getMode())).getGuardDeclaration().getBlock().getStatements();
+            newPhysicalState.addStatements(guardStatements);
+            updatedPhysicalHybridStates.put(newHybridState.updateHash(), newHybridState);
+        }
     }
 
     private HybridState makeInitialState() {
