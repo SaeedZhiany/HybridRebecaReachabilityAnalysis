@@ -510,10 +510,6 @@ public class HybridState {
     public void setParentHash(String parentHash) {
         this.parentHash = parentHash;
     }
-    
-    ContinuousVariable createContinuousVariable(BigDecimal lowerBound, BigDecimal upperBound) {
-        return new ContinuousVariable("continuousVariable", lowerBound, upperBound);
-    }
 
     public double[] getEvents(double currentEvent, double timeInterval) {
 //        -- for test --

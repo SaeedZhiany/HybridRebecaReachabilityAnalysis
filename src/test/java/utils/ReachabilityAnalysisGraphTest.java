@@ -24,36 +24,36 @@ import static org.junit.jupiter.api.Assertions.*;
 public class ReachabilityAnalysisGraphTest {
     private HybridState rootState = createSampleHybridState(
             "RootState",
-            new BigDecimal(0),
-            new BigDecimal(10),
-            new BigDecimal(5),
+            0.0,
+            10.0,
+            5.0,
             2,
             3,
             "*"
     );
     private HybridState childState1 = createSampleHybridState(
             "ChildState1",
-            new BigDecimal(1),
-            new BigDecimal(11),
-            new BigDecimal(6),
+            1.0,
+            11.0,
+            6.0,
             4,
             5,
             "+"
     );
     private HybridState childState2 = createSampleHybridState(
             "ChildState2",
-            new BigDecimal(2),
-            new BigDecimal(12),
-            new BigDecimal(7),
+            2.0,
+            12.0,
+            7.0,
             6,
             2,
             "-"
     );
     private HybridState grandChildState = createSampleHybridState(
             "GrandChildState",
-            new BigDecimal(3),
-            new BigDecimal(13),
-            new BigDecimal(8),
+            3.0,
+            13.0,
+            8.0,
             3,
             3,
             "*"
@@ -115,9 +115,9 @@ public class ReachabilityAnalysisGraphTest {
 
     private static HybridState createSampleHybridState(
             String stateName,
-            BigDecimal globalTimeLowerBound,
-            BigDecimal globalTimeUpperBound,
-            BigDecimal variableInitialValue,
+            Double globalTimeLowerBound,
+            Double globalTimeUpperBound,
+            Double variableInitialValue,
             int literalA,
             int literalB,
             String operator
@@ -127,7 +127,7 @@ public class ReachabilityAnalysisGraphTest {
 
         // Create a SoftwareState with the given variable initial value
         HashMap<String, Variable> variableValuation = new HashMap<>();
-        variableValuation.put("variableName", new DiscreteDecimalVariable("variableName", variableInitialValue));
+        variableValuation.put("variableName", new DiscreteDecimalVariable("variableName", new BigDecimal(variableInitialValue)));
 
         // Create a list of statements for the sigma (executing statements) list using the given literals and operator
         List<Statement> sigma = new ArrayList<>();
