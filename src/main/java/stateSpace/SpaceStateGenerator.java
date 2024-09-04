@@ -7,6 +7,7 @@ import org.rebecalang.compiler.modelcompiler.hybridrebeca.objectmodel.HybridRebe
 import org.rebecalang.compiler.modelcompiler.hybridrebeca.objectmodel.PhysicalClassDeclaration;
 import sos.NonTimeProgressSOSExecutor;
 import utils.CompilerUtil;
+import utils.ReachabilityAnalysisGraph;
 import visitors.BlockStatementExecutorVisitor;
 import visitors.ExpressionEvaluatorVisitor;
 
@@ -23,18 +24,21 @@ public class SpaceStateGenerator {
 
     @FunctionalInterface
     public interface JoszefCaller {
-        double[] call(String[] ODEs, double [] intervals, double [] reachParams);
+        double[] call(String[] ODEs, double[] intervals, double[] reachParams);
     }
 
     public void analyzeReachability(JoszefCaller joszefCaller) {
+        double currentEvent = 0.0;
         NonTimeProgressSOSExecutor nonTimeProgressSOSExecutor = new NonTimeProgressSOSExecutor();
         final HybridRebecaCode hybridRebecaCode = CompilerUtil.getHybridRebecaCode();
         Queue<HybridState> queue = new LinkedList<>();
         HybridState initialState = makeInitialState();
+        ReachabilityAnalysisGraph reachabilityAnalysisGraph = new ReachabilityAnalysisGraph(initialState);
         queue.addAll(nonTimeProgressSOSExecutor.generateNextStates(initialState, false));
 
-        while (!queue.isEmpty()) {
+        while (!queue.isEmpty()) { // should add time upper bound
             HybridState state = queue.poll();
+            ReachabilityAnalysisGraph.TreeNode rootNode = reachabilityAnalysisGraph.findNodeInGraph(state);
 
             List<Set<String>> globalStateModes = state.getGlobalStateModes();
 
@@ -44,6 +48,8 @@ public class SpaceStateGenerator {
 //            double[] intervals = new double[]{0.0, 0.0, 20.0, 20.0};
 
             double timeInterval = 0.01;
+            double[] nextEvents = state.getEvents(currentEvent, timeInterval);
+            double[] nextEventInterval = {currentEvent, Arrays.stream(nextEvents).min().orElseThrow()};
             // min from nearest lower bound resume bound and step_size
 
             // step_size is fixed
@@ -80,6 +86,71 @@ public class SpaceStateGenerator {
                 List<HybridState> generatedHybridStates = nonTimeProgressSOSExecutor.generateNextStates(hybridStateEntry.getValue(), false);
                 queue.addAll(generatedHybridStates);
             }
+
+            for (Map.Entry<String, PhysicalState> physicalStateEntry : updatedPhysicalHybridState.getPhysicalStates().entrySet()) {
+                Map<String, HybridState> shallowCopyCurrentStates = new HashMap<>(updatedPhysicalHybridStates);
+                for (Map.Entry<String, HybridState> hybridStateEntry : shallowCopyCurrentStates.entrySet()) {
+
+                    PhysicalState physicalState = hybridStateEntry.getValue().getPhysicalStates().get(physicalStateEntry.getKey());
+
+                    ExpressionEvaluatorVisitor evaluatorVisitor = new ExpressionEvaluatorVisitor(physicalState.getVariablesValuation());
+                    String physicalDeclarationName = RebecInstantiationMapping.getInstance().getRebecReactiveClassType(physicalState.getActorName());
+                    DiscreteBoolVariable guardSatisfiedResult = (DiscreteBoolVariable) evaluatorVisitor.visit(
+                            (BinaryExpression) Objects.requireNonNull(CompilerUtil.getGuardCondition(physicalDeclarationName, physicalState.getMode())));
+                    DiscreteBoolVariable invariantSatisfiedResult = (DiscreteBoolVariable) evaluatorVisitor.visit(
+                            (BinaryExpression) Objects.requireNonNull(CompilerUtil.getInvariantCondition(physicalDeclarationName, physicalState.getMode())));
+                    PhysicalClassDeclaration physicalClassDeclaration = CompilerUtil.getPhysicalClassDeclaration(physicalDeclarationName);
+
+                    if (invariantSatisfiedResult.getDefinite()) {
+                        if (invariantSatisfiedResult.getValue()) {
+                            // CHECKME: Should Do sth else?
+                        } else {
+                            if (guardSatisfiedResult.getDefinite()) {
+                                if (guardSatisfiedResult.getValue()) {
+                                    List<Statement> guardStatements =
+                                            Objects.requireNonNull(CompilerUtil.getModeDeclaration(physicalDeclarationName, physicalState.getMode())).getGuardDeclaration().getBlock().getStatements();
+                                    physicalState.addStatements(guardStatements);
+                                } else {
+                                    throw new RuntimeException("Time lock happened");
+                                }
+                            } else {
+//                                HybridState hybridStateUnsatisfiedGuard = cloner.deepClone(hybridStateEntry.getValue());
+                                List<Statement> guardStatements =
+                                        Objects.requireNonNull(CompilerUtil.getModeDeclaration(physicalDeclarationName, physicalState.getMode())).getGuardDeclaration().getBlock().getStatements();
+                                physicalState.addStatements(guardStatements);
+//                                updatedPhysicalHybridStates.put(hybridStateUnsatisfiedGuard.updateHash(), hybridStateUnsatisfiedGuard);
+                            }
+                        }
+                    } else {
+                        //Invariant = True
+                        //Invariant = False
+                        if (guardSatisfiedResult.getDefinite()) {
+                            if (guardSatisfiedResult.getValue()) {
+                                List<Statement> guardStatements =
+                                        Objects.requireNonNull(CompilerUtil.getModeDeclaration(physicalDeclarationName, physicalState.getMode())).getGuardDeclaration().getBlock().getStatements();
+                                physicalState.addStatements(guardStatements);
+                            } else {
+                                throw new RuntimeException("Time lock happened");
+                            }
+                        } else {
+//                                HybridState hybridStateUnsatisfiedGuard = cloner.deepClone(hybridStateEntry.getValue());
+                            List<Statement> guardStatements =
+                                    Objects.requireNonNull(CompilerUtil.getModeDeclaration(physicalDeclarationName, physicalState.getMode())).getGuardDeclaration().getBlock().getStatements();
+                            physicalState.addStatements(guardStatements);
+//                                updatedPhysicalHybridStates.put(hybridStateUnsatisfiedGuard.updateHash(), hybridStateUnsatisfiedGuard);
+                        }
+
+                    }
+                }
+            }
+            // CHECKME: when we should call NonTimeProgressExecutor
+//            NonTimeProgressSOSExecutor nonTimeProgressSOSExecutor = new NonTimeProgressSOSExecutor();
+            List<HybridState> generatedHybridStates = nonTimeProgressSOSExecutor.generateNextStates(updatedPhysicalHybridState);
+
+            queue.addAll(generatedHybridStates);
+            for (HybridState hybridState : generatedHybridStates)
+                reachabilityAnalysisGraph.addNode(rootNode, hybridState);
+
         }
 
 
@@ -188,14 +259,13 @@ public class SpaceStateGenerator {
 //                physicalStates.add(createPhysicalState(physicalClassDeclaration, mainRebecDefinition));
                 PhysicalState physicalState = createPhysicalState(physicalClassDeclaration, mainRebecDefinition);
                 physicalStates.put(physicalState.getActorName(), physicalState);
-            }
-            else {
+            } else {
 //                softwareStates.add(createSoftwareState(reactiveClassDeclaration, mainRebecDefinition));
                 SoftwareState softwareState = createSoftwareState(reactiveClassDeclaration, mainRebecDefinition);
                 softwareStates.put(softwareState.getActorName(), softwareState);
             }
         }
-        return new HybridState(new ContinuousVariable("globalTime"),  softwareStates,  physicalStates, new CANNetworkState());
+        return new HybridState(new ContinuousVariable("globalTime"), softwareStates, physicalStates, new CANNetworkState());
     }
 
     private SoftwareState createSoftwareState(ReactiveClassDeclaration reactiveClassDeclaration, MainRebecDefinition mainRebecDefinition) {
@@ -212,7 +282,7 @@ public class SpaceStateGenerator {
 
         List<FieldDeclaration> stateVars = reactiveClassDeclaration.getStatevars();
         for (FieldDeclaration stateVar : stateVars) {
-            String type = ((OrdinaryPrimitiveType)stateVar.getType()).getName();
+            String type = ((OrdinaryPrimitiveType) stateVar.getType()).getName();
             for (VariableDeclarator variableDeclarator : stateVar.getVariableDeclarators()) {
                 switch (type) {
                     case "int":
@@ -264,7 +334,7 @@ public class SpaceStateGenerator {
 
         List<FieldDeclaration> stateVars = physicalClassDeclaration.getStatevars();
         for (FieldDeclaration stateVar : stateVars) {
-            String type = ((OrdinaryPrimitiveType)stateVar.getType()).getName();
+            String type = ((OrdinaryPrimitiveType) stateVar.getType()).getName();
             for (VariableDeclarator variableDeclarator : stateVar.getVariableDeclarators()) {
                 switch (type) {
                     case "int":

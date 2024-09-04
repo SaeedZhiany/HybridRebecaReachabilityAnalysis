@@ -443,11 +443,11 @@ public class HybridState {
             }
         }
 
-        // Adding sets to the list
-        Set<String> set1 = new HashSet<>();
-        set1.add("hws");
-        set1.add("On");
-        globalStateModes.add(set1);
+//        // Adding sets to the list
+//        Set<String> set1 = new HashSet<>();
+//        set1.add("hws");
+//        set1.add("Off");
+//        globalStateModes.add(set1);
 
 //        Set<String> set1 = new HashSet<>();
 //        set1.add("hws1");
@@ -509,5 +509,80 @@ public class HybridState {
 
     public void setParentHash(String parentHash) {
         this.parentHash = parentHash;
+    }
+    
+    ContinuousVariable createContinuousVariable(BigDecimal lowerBound, BigDecimal upperBound) {
+        return new ContinuousVariable("continuousVariable", lowerBound, upperBound);
+    }
+
+    public double[] getEvents(double currentEvent, double timeInterval) {
+//        -- for test --
+//        for (SoftwareState softwareState : softwareStates.values()) {
+//            int message1ArrivalLowerBound = 1;
+//            int message1ArrivalUpperBound = 5;
+//
+//            int message2ArrivalLowerBound = message1ArrivalLowerBound + 2;
+//            int message2ArrivalUpperBound = message1ArrivalUpperBound;
+//
+//            int globalTimeLowerBound = message1ArrivalLowerBound + 1;
+//            int globalTimeUpperBound = message1ArrivalUpperBound;
+//
+//            Message message1 = new Message(
+//                    "sender",
+//                    "receiver",
+//                    "content",
+//                    new HashMap<>(),
+//                    createContinuousVariable(new BigDecimal(message1ArrivalLowerBound), new BigDecimal(message1ArrivalUpperBound)));
+//            Message message2 = new Message(
+//                    "sender",
+//                    "receiver",
+//                    "content",
+//                    new HashMap<>(),
+//                    createContinuousVariable(new BigDecimal(message2ArrivalLowerBound), new BigDecimal(message2ArrivalUpperBound)));
+//            softwareState.getMessageBag().add(message1);
+//            softwareState.getMessageBag().add(message2);
+//        }
+
+        ArrayList<Double> resumeTimes = getSoftwareStatesResumeTimes();
+        ArrayList<Double> arrivalTimes = getMessageArrivalTimes();
+
+        ArrayList<Double> combinedList = new ArrayList<>(resumeTimes);
+        combinedList.add(currentEvent + timeInterval);
+        combinedList.addAll(arrivalTimes);
+
+        double[] Events = combinedList.stream().mapToDouble(Double::doubleValue).toArray();
+        Arrays.sort(Events);
+
+        return Events;
+    }
+
+    private ArrayList<Double> getSoftwareStatesResumeTimes() {
+        ArrayList<Double> resumeTimes = new ArrayList<>();
+        for (SoftwareState softwareState : softwareStates.values()) {
+            resumeTimes.add(softwareState.getResumeTime().getLowerBound().doubleValue());
+            resumeTimes.add(softwareState.getResumeTime().getUpperBound().doubleValue());
+        }
+
+        return resumeTimes;
+    }
+
+    private ArrayList<Double> getMessageArrivalTimes() {
+        ArrayList<Double> arrivalTimes = new ArrayList<>();
+        for (SoftwareState softwareState : softwareStates.values()) {
+            for (Message message : softwareState.messageBag) {
+                arrivalTimes.add(message.getArrivalTime().getLowerBound().doubleValue());
+                arrivalTimes.add(message.getArrivalTime().getUpperBound().doubleValue());
+            }
+        }
+
+        return arrivalTimes;
+    }
+
+    public void setPhysicalStates(HashMap<String, PhysicalState> physicalStates) {
+        this.physicalStates = physicalStates;
+    }
+
+    public void setSoftwareStates(HashMap<String, SoftwareState> softwareStates) {
+        this.softwareStates = softwareStates;
     }
 }

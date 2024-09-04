@@ -6,6 +6,7 @@ import dataStructure.DiscreteDecimalVariable;
 import dataStructure.IntervalRealVariable;
 import dataStructure.Variable;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -582,5 +583,222 @@ class HybridStateTest {
 
         HybridState newHybridState = hybridState.setModeStatement(physicalState).get(0);
         assertEquals("mode", ((PhysicalState) newHybridState.getActorState(physicalState.getActorName())).getMode());
+    }
+    
+    @Tag("verify getGlobalStateModes output")
+    void testGetGlobalStateModes() {
+        // Prepare the test data
+        PhysicalState physicalState1 = new PhysicalState("actor1", "On", new HashMap<>(), new HashSet<>(), new ArrayList<>(), 0);
+        PhysicalState physicalState2 = new PhysicalState("actor2", "Off", new HashMap<>(), new HashSet<>(), new ArrayList<>(), 0);
+        PhysicalState physicalState3 = new PhysicalState("actor3", "none", new HashMap<>(), new HashSet<>(), new ArrayList<>(), 0);
+
+        HashMap<String, PhysicalState> physicalStates = new HashMap<>();
+        physicalStates.put(physicalState1.getActorName(), physicalState1);
+        physicalStates.put(physicalState2.getActorName(), physicalState2);
+        physicalStates.put(physicalState3.getActorName(), physicalState3);
+
+        List<Statement> sigma = new ArrayList<>();
+        ContinuousVariable globalTime = createContinuousVariable(new BigDecimal(0), new BigDecimal(2));
+        SoftwareState softwareState = new SoftwareState("softwareState", new HashMap<>(), new HashSet<>(), sigma, 0, new ContinuousVariable("resumeTime"));
+        HashMap<String, SoftwareState> softwareStateHashMap = new HashMap<>();
+        softwareStateHashMap.put(softwareState.getActorName(), softwareState);
+        HybridState hybridState = new HybridState(globalTime, softwareStateHashMap, new HashMap<>(), new CANNetworkState());
+        hybridState.setPhysicalStates(physicalStates);
+
+        // Invoke the method under test
+        List<Set<String>> result = hybridState.getGlobalStateModes();
+
+        // Define the expected output
+        List<Set<String>> expected = new ArrayList<>();
+        Set<String> expectedSet1 = new HashSet<>(Arrays.asList("actor1", "On"));
+        Set<String> expectedSet2 = new HashSet<>(Arrays.asList("actor2", "Off"));
+        expected.add(expectedSet1);
+        expected.add(expectedSet2);
+
+        // Verify the result
+        assertEquals(expected.size(), result.size(), "The number of global state modes is incorrect.");
+        assertTrue(result.containsAll(expected), "The global state modes do not match the expected values.");
+    }
+
+    @Test
+    public void testGetIntervalsMultipleOdesDifferentStates() {
+        String[] odes = {"temperature > 100", "pressure < 2"};
+        HashMap<String, PhysicalState> physicalStates = new HashMap<>();
+
+        // Physical state for temperature
+        PhysicalState tempState = new PhysicalState("sensor1", "active", new HashMap<>(), new HashSet<>(), new ArrayList<>(), 0);
+        IntervalRealVariable temperature = new IntervalRealVariable("temperature", 80.0, 120.0);
+        tempState.getVariablesValuation().put("temperature", temperature);
+        physicalStates.put("sensor1", tempState);
+
+        // Physical state for pressure
+        PhysicalState pressureState = new PhysicalState("sensor2", "active", new HashMap<>(), new HashSet<>(), new ArrayList<>(), 0);
+        IntervalRealVariable pressure = new IntervalRealVariable("pressure", 0.0, 5.0);
+        pressureState.getVariablesValuation().put("pressure", pressure);
+        physicalStates.put("sensor2", pressureState);
+
+        double[] actualIntervals = new HybridState(null, null, physicalStates, null).getIntervals(odes);
+        assertEquals(4, actualIntervals.length);
+
+        // Order doesn't matter, so verify both temperature and pressure intervals are present
+        assertTrue(actualIntervals[0] == 80.0 || actualIntervals[0] == 0.0);
+        assertTrue(actualIntervals[1] == 120.0 || actualIntervals[1] == 0.0);
+        assertTrue(actualIntervals[2] == 80.0 || actualIntervals[2] == 5.0);
+        assertTrue(actualIntervals[3] == 120.0 || actualIntervals[3] == 5.0);
+    }
+
+    @Test
+    void testGetIntervalsBasicValidCase() {
+        HashMap<String, PhysicalState> physicalStates = new HashMap<>();
+
+        // Initialize physical states and their variables
+        PhysicalState physicalState1 = new PhysicalState("Physics1", "none", new HashMap<>(), new HashSet<>(), new ArrayList<>(), 0);
+        PhysicalState physicalState2 = new PhysicalState("Physics2", "none", new HashMap<>(), new HashSet<>(), new ArrayList<>(), 0);
+
+        IntervalRealVariable intervalVariable1 = new IntervalRealVariable("Var1", 1.0, 5.0);
+        IntervalRealVariable intervalVariable2 = new IntervalRealVariable("Var2", 2.0, 6.0);
+
+        HashMap<String, Variable> variables1 = new HashMap<>();
+        variables1.put("Var1", intervalVariable1);
+        physicalState1.setVariablesValuation(variables1);
+
+        HashMap<String, Variable> variables2 = new HashMap<>();
+        variables2.put("Var2", intervalVariable2);
+        physicalState2.setVariablesValuation(variables2);
+
+        physicalStates.put("Physics1", physicalState1);
+        physicalStates.put("Physics2", physicalState2);
+
+        hybridState = new HybridState(new ContinuousVariable("globalTime"), new HashMap<>(), physicalStates, new CANNetworkState());
+        String[] ODEs = {"Physics1_Var1=1", "Physics2_Var2=1"};
+        double[] intervals = hybridState.getIntervals(ODEs);
+
+        assertArrayEquals(new double[]{1.0, 5.0, 2.0, 6.0}, intervals, "Intervals do not match the expected values.");
+    }
+//
+//    @Nested
+//    class GetEventsTests {
+//        private HybridState hybridStateForEvents;
+//        private HashMap<String, SoftwareState> softwareStatesMock;
+//
+//        @BeforeEach
+//        void setUp() {
+//            // Set up the HybridState object
+//            hybridStateForEvents = new HybridState();
+//
+//            // Mock the softwareStates map
+//            softwareStatesMock = mock(HashMap.class);
+//            hybridStateForEvents.setSoftwareStates(softwareStatesMock);
+//        }
+//
+//        @Test
+//        void testGetEvents_withEmptySoftwareStates() {
+//            // Given an empty softwareStates map
+//            when(softwareStatesMock.values()).thenReturn(new ArrayList<>());
+//
+//            // When calling getEvents with currentEvent = 0.0 and timeInterval = 1.0
+//            double[] result = hybridStateForEvents.getEvents(0.0, 1.0);
+//
+//            // Then the result should only contain the currentEvent + timeInterval
+//            assertArrayEquals(new double[]{1.0}, result);
+//        }
+//
+//        @Test
+//        void testGetEvents_withSoftwareStateResumeTimes() {
+//            // Given a softwareState with specific resume times and message arrival times
+//            SoftwareState softwareState = mock(SoftwareState.class);
+//
+//            // Mock the resume time
+//            ContinuousVariable resumeTime = mock(ContinuousVariable.class);
+//            when(resumeTime.getLowerBound()).thenReturn(new BigDecimal("2.0"));
+//            when(resumeTime.getUpperBound()).thenReturn(new BigDecimal("4.0"));
+//            when(softwareState.getResumeTime()).thenReturn(resumeTime);
+//
+//            // Mock a message with arrival time
+//            Message message1 = mock(Message.class);
+//            ContinuousVariable arrivalTime1 = mock(ContinuousVariable.class);
+//            when(arrivalTime1.getLowerBound()).thenReturn(new BigDecimal("3.0"));
+//            when(arrivalTime1.getUpperBound()).thenReturn(new BigDecimal("5.0"));
+//            when(message1.getArrivalTime()).thenReturn(arrivalTime1);
+//
+//            // Mock the message bag to return the mocked message as a Set
+//            when(softwareState.getMessageBag()).thenReturn(new HashSet<>(Arrays.asList(message1)));
+//
+//            // Mock the software states map
+//            HashMap<String, SoftwareState> softwareStatesMock = new HashMap<>();
+//            softwareStatesMock.put("actor1", softwareState);
+//            when(hybridStateForEvents.getSoftwareStates()).thenReturn(softwareStatesMock);
+//
+//            // When calling getEvents with currentEvent = 0.0 and timeInterval = 1.0
+//            double[] result = hybridStateForEvents.getEvents(0.0, 1.0);
+//
+//            // Then the result should contain the resume times and arrival times, plus the currentEvent + timeInterval
+//            double[] expected = new double[]{1.0, 2.0, 3.0, 4.0, 5.0};
+//            assertArrayEquals(expected, result);
+//        }
+//
+//
+//        @Test
+//        void testGetEvents_withMultipleSoftwareStates() {
+//            // Given multiple softwareStates with different resume times and message arrival times
+//            SoftwareState state1 = mock(SoftwareState.class);
+//            SoftwareState state2 = mock(SoftwareState.class);
+//
+//            ContinuousVariable resumeTime1 = mock(ContinuousVariable.class);
+//            when(resumeTime1.getLowerBound()).thenReturn(new BigDecimal(2.0));
+//            when(resumeTime1.getUpperBound()).thenReturn(new BigDecimal(3.0));
+//
+//            ContinuousVariable resumeTime2 = mock(ContinuousVariable.class);
+//            when(resumeTime2.getLowerBound()).thenReturn(new BigDecimal(4.0));
+//            when(resumeTime2.getUpperBound()).thenReturn(new BigDecimal(6.0));
+//
+//            when(state1.getResumeTime()).thenReturn(resumeTime1);
+//            when(state2.getResumeTime()).thenReturn(resumeTime2);
+//
+//            // Change from ArrayList to HashSet
+//            when(state1.getMessageBag()).thenReturn(new HashSet<>());
+//            when(state2.getMessageBag()).thenReturn(new HashSet<>());
+//
+//            when(softwareStatesMock.values()).thenReturn(Arrays.asList(state1, state2));
+//
+//            // When calling getEvents with currentEvent = 1.0 and timeInterval = 2.0
+//            double[] result = hybridStateForEvents.getEvents(1.0, 2.0);
+//
+//            // Then the result should contain all resume times, plus the currentEvent + timeInterval
+//            double[] expected = new double[]{3.0, 2.0, 3.0, 4.0, 6.0};
+//            assertArrayEquals(expected, result);
+//        }
+//
+//        @Test
+//        void testGetEvents_withSortedOutput() {
+//            // Given a state where events are out of order initially
+//            SoftwareState state1 = mock(SoftwareState.class);
+//
+//            ContinuousVariable resumeTime1 = mock(ContinuousVariable.class);
+//            when(resumeTime1.getLowerBound()).thenReturn(new BigDecimal(5.0));
+//            when(resumeTime1.getUpperBound()).thenReturn(new BigDecimal(2.0));  // Deliberate reverse order
+//
+//            when(state1.getResumeTime()).thenReturn(resumeTime1);
+//
+//            Message message1 = mock(Message.class);
+//            ContinuousVariable arrivalTime1 = mock(ContinuousVariable.class);
+//            when(arrivalTime1.getLowerBound()).thenReturn(new BigDecimal(7.0));
+//            when(arrivalTime1.getUpperBound()).thenReturn(new BigDecimal(3.0));  // Deliberate reverse order
+//            when(message1.getArrivalTime()).thenReturn(arrivalTime1);
+//
+//            // Change from List to HashSet
+//            when(state1.getMessageBag()).thenReturn(new HashSet<>(Arrays.asList(message1)));
+//
+//            when(softwareStatesMock.values()).thenReturn(Arrays.asList(state1));
+//
+//            // When calling getEvents with currentEvent = 1.0 and timeInterval = 2.0
+//            double[] result = hybridStateForEvents.getEvents(1.0, 2.0);
+//
+//            // Then the result should be sorted in ascending order
+//            double[] expected = new double[]{3.0, 2.0, 3.0, 5.0, 7.0};
+//            Arrays.sort(expected);  // Sorting the expected result
+//            assertArrayEquals(expected, result);
+//        }
+
     }
 }

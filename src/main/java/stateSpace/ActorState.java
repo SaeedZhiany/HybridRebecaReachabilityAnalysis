@@ -150,4 +150,8 @@ public abstract class ActorState {
     public void addStatementsToFront(List<Statement> statements) {
         this.sigma.addAll(0, statements);
     }
+
+    public void setVariablesValuation(@Nonnull HashMap<String, Variable> variablesValuation) {
+        this.variablesValuation = variablesValuation;
+    }
 }

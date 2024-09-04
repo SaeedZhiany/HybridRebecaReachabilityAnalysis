@@ -1,8 +1,10 @@
 package visitors;
 
+import dataStructure.Variable;
 import org.rebecalang.compiler.modelcompiler.corerebeca.objectmodel.*;
+import org.rebecalang.compiler.modelcompiler.hybridrebeca.objectmodel.HybridTermPrimary;
 
-public class Visitor<T> implements IVisitor<T>{
+public abstract class Visitor<T> implements IVisitor<T>{
 
     @Override
     public T visit(DotPrimary dotPrimary) {
@@ -16,6 +18,11 @@ public class Visitor<T> implements IVisitor<T>{
 
     @Override
     public T visit(BinaryExpression binaryExpression) {
+        return null;
+    }
+
+    @Override
+    public T visit(HybridTermPrimary hybridTermPrimary) {
         return null;
     }
 
