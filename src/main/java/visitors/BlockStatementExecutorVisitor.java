@@ -34,17 +34,17 @@ public class BlockStatementExecutorVisitor extends Visitor<Void> {
     public Void visit(BlockStatement blockStatement) {
         for (Statement statement : blockStatement.getStatements()) {
             if (statement instanceof DotPrimary) {
-                return visit((DotPrimary) statement);
+                visit((DotPrimary) statement);
             } else if (statement instanceof UnaryExpression) {
-                return visit((UnaryExpression) statement);
+                visit((UnaryExpression) statement);
             } else if (statement instanceof BinaryExpression) {
-                return visit((BinaryExpression) statement);
+                visit((BinaryExpression) statement);
             } else if (statement instanceof TermPrimary) {
-                return visit((TermPrimary) statement);
+                visit((TermPrimary) statement);
             } else if (statement instanceof Literal) {
-                return visit((Literal) statement);
+                visit((Literal) statement);
             } else if (statement instanceof FieldDeclaration) {
-                return visit((FieldDeclaration) statement);
+                visit((FieldDeclaration) statement);
             }
         }
         return null;
