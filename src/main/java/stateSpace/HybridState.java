@@ -25,6 +25,8 @@ public class HybridState {
     private CANNetworkState CANNetworkState;
     //    @Nonnull
     private String hashString;
+    private String parentHash;
+
 
     public HybridState() {
         // FIXME: is this the correct way to initialize globalTime?
@@ -432,7 +434,7 @@ public class HybridState {
             String key = entry.getKey();
             PhysicalState value = entry.getValue();
 
-            if (!(value.getMode().equals("none"))) {
+            if (!("none".equals(value.getMode()))) {
                 Set<String> new_set = new HashSet<>();
                 new_set.add(key);
                 new_set.add(value.getMode());
@@ -499,5 +501,13 @@ public class HybridState {
         result[1] = secondPart;
 
         return result;
+    }
+
+    public String getParentHash() {
+        return parentHash;
+    }
+
+    public void setParentHash(String parentHash) {
+        this.parentHash = parentHash;
     }
 }
