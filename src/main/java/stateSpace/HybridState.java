@@ -545,6 +545,7 @@ public class HybridState {
         ArrayList<Double> combinedList = new ArrayList<>(resumeTimes);
         combinedList.add(currentEvent + timeInterval);
         combinedList.addAll(arrivalTimes);
+        combinedList.removeIf(value -> value == 0.0);
 
         double[] Events = combinedList.stream().mapToDouble(Double::doubleValue).toArray();
         Arrays.sort(Events);

@@ -28,7 +28,7 @@ public class SpaceStateGenerator {
     }
 
     public void analyzeReachability(JoszefCaller joszefCaller) {
-        double currentEvent = 0.0;
+        double currentEvent = 0.0; // must be tupple
         double endSimulation = 100.0;
         NonTimeProgressSOSExecutor nonTimeProgressSOSExecutor = new NonTimeProgressSOSExecutor();
         final HybridRebecaCode hybridRebecaCode = CompilerUtil.getHybridRebecaCode();
