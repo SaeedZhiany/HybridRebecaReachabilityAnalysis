@@ -58,7 +58,8 @@ public class SpaceStateGenerator {
             updatedPhysicalHybridStates.put(updatedPhysicalHybridState.updateHash(), updatedPhysicalHybridState);
 
             if (ODEs.length > 0) {
-                double[] result = joszefCaller.call(ODEs, intervals, reachParams);
+//                double[] result = joszefCaller.call(ODEs, intervals, reachParams);
+                double[] result = {0.0, 0.0, 20.0, 20.0, 0.0, 0.01, 20.0, 20.0};
                 int index = 0;
                 for (String ODE : ODEs) {
                         String[] components = extractVariableNames(ODE);
@@ -75,6 +76,7 @@ public class SpaceStateGenerator {
             updatePhysicalStates(updatedPhysicalHybridState.getPhysicalStates(), updatedPhysicalHybridStates);
 
             for (Map.Entry<String, HybridState> hybridStateEntry : updatedPhysicalHybridStates.entrySet()) {
+                hybridStateEntry.getValue().updateHash();
                 reachabilityAnalysisGraph.addNode(rootNode, hybridStateEntry.getValue());
                 List<HybridState> generatedHybridStates = nonTimeProgressSOSExecutor.generateNextStates(hybridStateEntry.getValue(), false);
                 queue.addAll(generatedHybridStates);

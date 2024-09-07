@@ -55,6 +55,7 @@ public class Main {
 //        // reachability parameters
 //        // Max_iter_number(int), Stop_ration, timeStepSize, Taylor_model_Order(int), Time
 //        double [] reachParams = new double [] {50.0, 0.99, 0.01, 7.0, 5};
+//        String[] ODEs_ = {"timer'=1", "tempr'=0.1"};
 
         double[] resultArray = new HelloJNI().sayHello(ODEs, intervals, reachParams);  // Create an instance and invoke the native method
 
