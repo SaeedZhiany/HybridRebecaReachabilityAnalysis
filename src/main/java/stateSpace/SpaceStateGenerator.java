@@ -47,7 +47,7 @@ public class SpaceStateGenerator {
 
             double[] intervals = state.getIntervals(ODEs);
 
-            double timeStep = 0.1;
+            double timeStep = 1;
             double[] nextEvents = state.getEvents(currentEvent, timeStep);
             currentEvent = Arrays.stream(nextEvents).min().orElseThrow();
 
@@ -63,14 +63,15 @@ public class SpaceStateGenerator {
                 double[] result = joszefCaller.call(ODEs, intervals, reachParams);
 //                double[] result = {0.0, 0.0, 20.0, 20.0, 0.0, 0.01, 20.0, 20.0};
                 int index = 0;
+                int StartIndex = result.length - 2 * ODEs.length;
                 for (String ODE : ODEs) {
-                        String[] components = extractVariableNames(ODE);
-                        String physicalClassName = components[0], odeVariableName = components[1];
-                        double odeVariableLowerBound = result[index * 2];
-                        double odeVariableUpperBound = result[(index * 2) + 1];
+                    String[] components = extractVariableNames(ODE);
+                    String physicalClassName = components[0], odeVariableName = components[1];
+                    double odeVariableLowerBound = result[2 * index + StartIndex];
+                    double odeVariableUpperBound = result[(index * 2) + 1 + StartIndex];
 
-                        PhysicalState physicalState = (PhysicalState) updatedPhysicalHybridState.getActorState(physicalClassName);
-                        physicalState.updateVariable(new IntervalRealVariable(odeVariableName, odeVariableLowerBound, odeVariableUpperBound));
+                    PhysicalState physicalState = (PhysicalState) updatedPhysicalHybridState.getActorState(physicalClassName);
+                    physicalState.updateVariable(new IntervalRealVariable(odeVariableName, odeVariableLowerBound, odeVariableUpperBound));
                     index++;
                 }
             }
@@ -127,14 +128,20 @@ public class SpaceStateGenerator {
                         checkGuardIfInvariantIsTrue(updatedPhysicalHybridStates, physicalStateEntry, hybridStateEntry,
                                 guardSatisfiedResult, physicalDeclarationName);
                     } else {
-                        checkGuardIfInvariantIsFalse(guardSatisfiedResult, physicalDeclarationName, physicalState);
+                        try {
+                            checkGuardIfInvariantIsFalse(guardSatisfiedResult, physicalDeclarationName, physicalState);
+                        } catch (RuntimeException e) {
+                        }
                     }
                 } else {
                     //Invariant = True
                     checkGuardIfInvariantIsTrue(updatedPhysicalHybridStates, physicalStateEntry, hybridStateEntry,
                             guardSatisfiedResult, physicalDeclarationName);
                     //Invariant = False
-                    checkGuardIfInvariantIsFalse(guardSatisfiedResult, physicalDeclarationName, physicalState);
+                    try {
+                        checkGuardIfInvariantIsFalse(guardSatisfiedResult, physicalDeclarationName, physicalState);
+                    } catch (RuntimeException e) {
+                    }
                 }
             }
         }

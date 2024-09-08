@@ -14,22 +14,22 @@ physicalclass HeaterWithSensor(3)
 	}
 
 	mode On{
-		inv(timer<=0.05){
+		inv(timer<=5){
 			timer' = 1;
 			tempr' = 1;
 		}
-		guard(timer==0.05){
+		guard(timer==5){
 			timer = 0;
 			controller.control(tempr);
 		}
 	}
 
 	mode Off{
-		inv(timer<=0.05){
+		inv(timer<=5){
 			timer' = 1;
 			tempr' = -1;
 		}
-		guard(timer==0.05){
+		guard(timer==5){
 			timer = 0;
 			controller.control(tempr);
 		}
