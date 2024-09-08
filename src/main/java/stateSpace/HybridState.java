@@ -13,7 +13,6 @@ import java.math.BigDecimal;
 import java.util.*;
 
 public class HybridState {
-
     // CHECKME: should global time be non-null?
 //    @Nonnull
     private ContinuousVariable globalTime;
@@ -545,7 +544,7 @@ public class HybridState {
         ArrayList<Double> combinedList = new ArrayList<>(resumeTimes);
         combinedList.add(currentEvent + timeInterval);
         combinedList.addAll(arrivalTimes);
-        combinedList.removeIf(value -> value == 0.0);
+        combinedList.removeIf(value -> value <= currentEvent);
 
         double[] Events = combinedList.stream().mapToDouble(Double::doubleValue).toArray();
         Arrays.sort(Events);
@@ -581,5 +580,10 @@ public class HybridState {
 
     public void setSoftwareStates(HashMap<String, SoftwareState> softwareStates) {
         this.softwareStates = softwareStates;
+    }
+
+    public void updateGlobalTime(double currentEvent) {
+        this.globalTime.setLowerBound(this.globalTime.getUpperBound());
+        this.globalTime.setUpperBound(currentEvent);
     }
 }

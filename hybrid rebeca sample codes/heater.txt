@@ -16,7 +16,7 @@ physicalclass HeaterWithSensor(3)
 	mode On{
 		inv(timer<=0.05){
 			timer' = 1;
-			tempr' = 0.1f;
+			tempr' = 1;
 		}
 		guard(timer==0.05){
 			timer = 0;
@@ -27,7 +27,7 @@ physicalclass HeaterWithSensor(3)
 	mode Off{
 		inv(timer<=0.05){
 			timer' = 1;
-			tempr' = -0.1f;
+			tempr' = -1;
 		}
 		guard(timer==0.05){
 			timer = 0;

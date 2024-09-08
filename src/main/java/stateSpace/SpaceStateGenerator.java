@@ -30,14 +30,15 @@ public class SpaceStateGenerator {
     public void analyzeReachability(JoszefCaller joszefCaller) {
         double currentEvent = 0.0; // must be tupple
         double endSimulation = 100.0;
+
         NonTimeProgressSOSExecutor nonTimeProgressSOSExecutor = new NonTimeProgressSOSExecutor();
         final HybridRebecaCode hybridRebecaCode = CompilerUtil.getHybridRebecaCode();
         HybridState initialState = makeInitialState();
         ReachabilityAnalysisGraph reachabilityAnalysisGraph = new ReachabilityAnalysisGraph(initialState);
         Queue<HybridState> queue = new LinkedList<>(nonTimeProgressSOSExecutor.generateNextStates(initialState, false));
-
         while (!queue.isEmpty() && endSimulation > currentEvent) { // should add time upper bound
             HybridState state = queue.poll();
+
             ReachabilityAnalysisGraph.TreeNode rootNode = reachabilityAnalysisGraph.findNodeInGraph(state);
 
             List<Set<String>> globalStateModes = state.getGlobalStateModes();
@@ -46,20 +47,21 @@ public class SpaceStateGenerator {
 
             double[] intervals = state.getIntervals(ODEs);
 
-            double timeInterval = 0.01;
-            double[] nextEvents = state.getEvents(currentEvent, timeInterval);
+            double timeStep = 0.1;
+            double[] nextEvents = state.getEvents(currentEvent, timeStep);
             currentEvent = Arrays.stream(nextEvents).min().orElseThrow();
 
-            double[] reachParams = new double[]{50.0, 0.99, 0.01, 7.0, timeInterval};
+            double[] reachParams = new double[]{50.0, 0.99, 0.01, 7.0, timeStep};
 
             Cloner cloner = new Cloner();
             HybridState updatedPhysicalHybridState = cloner.deepClone(state);
+            updatedPhysicalHybridState.updateGlobalTime(currentEvent);
             Map<String, HybridState> updatedPhysicalHybridStates = new HashMap<>();
             updatedPhysicalHybridStates.put(updatedPhysicalHybridState.updateHash(), updatedPhysicalHybridState);
-
+            String graph = reachabilityAnalysisGraph.toJson();
             if (ODEs.length > 0) {
-//                double[] result = joszefCaller.call(ODEs, intervals, reachParams);
-                double[] result = {0.0, 0.0, 20.0, 20.0, 0.0, 0.01, 20.0, 20.0};
+                double[] result = joszefCaller.call(ODEs, intervals, reachParams);
+//                double[] result = {0.0, 0.0, 20.0, 20.0, 0.0, 0.01, 20.0, 20.0};
                 int index = 0;
                 for (String ODE : ODEs) {
                         String[] components = extractVariableNames(ODE);
@@ -74,7 +76,6 @@ public class SpaceStateGenerator {
             }
 
             updatePhysicalStates(updatedPhysicalHybridState.getPhysicalStates(), updatedPhysicalHybridStates);
-
             for (Map.Entry<String, HybridState> hybridStateEntry : updatedPhysicalHybridStates.entrySet()) {
                 hybridStateEntry.getValue().updateHash();
                 reachabilityAnalysisGraph.addNode(rootNode, hybridStateEntry.getValue());
