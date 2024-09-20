@@ -283,11 +283,15 @@ class SoftwareStateTest {
                 messageArrivalTime);
         this.softwareState.addMessage(message);
         List<ActorState> expected = new ArrayList<>();
-        try (MockedStatic<CompilerUtil> mockedCompiler = mockStatic(CompilerUtil.class)) {
+        try (MockedStatic<CompilerUtil> mockedCompiler = mockStatic(CompilerUtil.class);
+             MockedStatic<RebecInstantiationMapping> rebecInstantiationMappingMockedStatic = mockStatic(RebecInstantiationMapping.class)) {
             List<Statement> messageBody = new ArrayList<>();
             Statement mockedStatement = mock(Statement.class);
             messageBody.add(mockedStatement);
             mockedCompiler.when(() -> CompilerUtil.getMessageBody(anyString(), anyString())).thenReturn(messageBody);
+            RebecInstantiationMapping rebecInstantiationMappingMock = mock(RebecInstantiationMapping.class);
+            rebecInstantiationMappingMockedStatic.when(RebecInstantiationMapping::getInstance).thenReturn(rebecInstantiationMappingMock);
+            when(rebecInstantiationMappingMock.getRebecReactiveClassType(this.softwareState.getActorName())).thenReturn("ReactiveClassType");
 
             ActorState expectedSoftwareState = new SoftwareState(
                     "init",
@@ -334,11 +338,15 @@ class SoftwareStateTest {
                 messageArrivalTime);
         this.softwareState.addMessage(message);
         List<ActorState> expected = new ArrayList<>();
-        try (MockedStatic<CompilerUtil> mockedCompiler = mockStatic(CompilerUtil.class)) {
+        try (MockedStatic<CompilerUtil> mockedCompiler = mockStatic(CompilerUtil.class);
+             MockedStatic<RebecInstantiationMapping> rebecInstantiationMappingMockedStatic = mockStatic(RebecInstantiationMapping.class)) {
             List<Statement> messageBody = new ArrayList<>();
             Statement mockedStatement = mock(Statement.class);
             messageBody.add(mockedStatement);
             mockedCompiler.when(() -> CompilerUtil.getMessageBody(anyString(), anyString())).thenReturn(messageBody);
+            RebecInstantiationMapping rebecInstantiationMappingMock = mock(RebecInstantiationMapping.class);
+            rebecInstantiationMappingMockedStatic.when(RebecInstantiationMapping::getInstance).thenReturn(rebecInstantiationMappingMock);
+            when(rebecInstantiationMappingMock.getRebecReactiveClassType(this.softwareState.getActorName())).thenReturn("ReactiveClassType");
 
             ActorState expectedSoftwareState1 = new SoftwareState(
                     "init",

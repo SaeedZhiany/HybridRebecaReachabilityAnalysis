@@ -15,8 +15,7 @@ import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.*;
 
 class PhysicalStateTest {
 
@@ -284,11 +283,15 @@ class PhysicalStateTest {
                 messageArrivalTime);
         this.physicalState.addMessage(message);
         List<ActorState> expected = new ArrayList<>();
-        try (MockedStatic<CompilerUtil> mockedCompiler = mockStatic(CompilerUtil.class)) {
+        try (MockedStatic<CompilerUtil> mockedCompiler = mockStatic(CompilerUtil.class);
+             MockedStatic<RebecInstantiationMapping> rebecInstantiationMappingMockedStatic = mockStatic(RebecInstantiationMapping.class)) {
             List<Statement> messageBody = new ArrayList<>();
             Statement mockedStatement = mock(Statement.class);
             messageBody.add(mockedStatement);
             mockedCompiler.when(() -> CompilerUtil.getMessageBody(anyString(), anyString())).thenReturn(messageBody);
+            RebecInstantiationMapping rebecInstantiationMappingMock = mock(RebecInstantiationMapping.class);
+            rebecInstantiationMappingMockedStatic.when(RebecInstantiationMapping::getInstance).thenReturn(rebecInstantiationMappingMock);
+            when(rebecInstantiationMappingMock.getRebecReactiveClassType(this.physicalState.getActorName())).thenReturn("PhysicalClassType");
 
             ActorState expectedPhysicalState = new PhysicalState(
                     "init",
@@ -334,11 +337,15 @@ class PhysicalStateTest {
                 messageArrivalTime);
         this.physicalState.addMessage(message);
         List<ActorState> expected = new ArrayList<>();
-        try (MockedStatic<CompilerUtil> mockedCompiler = mockStatic(CompilerUtil.class)) {
+        try (MockedStatic<CompilerUtil> mockedCompiler = mockStatic(CompilerUtil.class);
+             MockedStatic<RebecInstantiationMapping> rebecInstantiationMappingMockedStatic = mockStatic(RebecInstantiationMapping.class)) {
             List<Statement> messageBody = new ArrayList<>();
             Statement mockedStatement = mock(Statement.class);
             messageBody.add(mockedStatement);
             mockedCompiler.when(() -> CompilerUtil.getMessageBody(anyString(), anyString())).thenReturn(messageBody);
+            RebecInstantiationMapping rebecInstantiationMappingMock = mock(RebecInstantiationMapping.class);
+            rebecInstantiationMappingMockedStatic.when(RebecInstantiationMapping::getInstance).thenReturn(rebecInstantiationMappingMock);
+            when(rebecInstantiationMappingMock.getRebecReactiveClassType(this.physicalState.getActorName())).thenReturn("PhysicalClassType");
 
             ActorState expectedPhysicalState1 = new PhysicalState(
                     "init",
