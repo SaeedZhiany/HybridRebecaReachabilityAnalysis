@@ -77,6 +77,9 @@ public class SpaceStateGenerator {
             }
 
             updatePhysicalStates(updatedPhysicalHybridState.getPhysicalStates(), updatedPhysicalHybridStates);
+
+
+
             for (Map.Entry<String, HybridState> hybridStateEntry : updatedPhysicalHybridStates.entrySet()) {
                 hybridStateEntry.getValue().updateHash();
                 reachabilityAnalysisGraph.addNode(rootNode, hybridStateEntry.getValue());
@@ -128,20 +131,12 @@ public class SpaceStateGenerator {
                         checkGuardIfInvariantIsTrue(updatedPhysicalHybridStates, physicalStateEntry, hybridStateEntry,
                                 guardSatisfiedResult, physicalDeclarationName);
                     } else {
-                        try {
                             checkGuardIfInvariantIsFalse(guardSatisfiedResult, physicalDeclarationName, physicalState);
-                        } catch (RuntimeException e) {
-                        }
                     }
                 } else {
                     //Invariant = True
                     checkGuardIfInvariantIsTrue(updatedPhysicalHybridStates, physicalStateEntry, hybridStateEntry,
                             guardSatisfiedResult, physicalDeclarationName);
-                    //Invariant = False
-                    try {
-                        checkGuardIfInvariantIsFalse(guardSatisfiedResult, physicalDeclarationName, physicalState);
-                    } catch (RuntimeException e) {
-                    }
                 }
             }
         }
@@ -171,7 +166,7 @@ public class SpaceStateGenerator {
                                                     Map.Entry<String, HybridState> hybridStateEntry,
                                                     DiscreteBoolVariable guardSatisfiedResult,
                                                     String physicalDeclarationName) {
-        if ((guardSatisfiedResult.getDefinite() && guardSatisfiedResult.getValue())) {
+        if ((guardSatisfiedResult.getDefinite() && guardSatisfiedResult.getValue()) || !guardSatisfiedResult.getDefinite()) {
             Cloner cloner = new Cloner();
             HybridState newHybridState = cloner.deepClone(hybridStateEntry.getValue());
             PhysicalState newPhysicalState = newHybridState.getPhysicalStates().get(physicalStateEntry.getKey());

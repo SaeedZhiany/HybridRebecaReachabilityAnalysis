@@ -247,11 +247,12 @@ public class HybridState {
     }
 
     private void addExtractedStatement(ActorState actorState, Statement statement) {
-        if (statement instanceof BlockStatement) {
-            actorState.addStatementsToFront(((BlockStatement) statement).getStatements());
-        }
-        else {
-            actorState.addStatementsToFront(List.of(statement));
+        if (statement != null) {
+            if (statement instanceof BlockStatement) {
+                actorState.addStatementsToFront(((BlockStatement) statement).getStatements());
+            } else {
+                actorState.addStatementsToFront(List.of(statement));
+            }
         }
     }
 

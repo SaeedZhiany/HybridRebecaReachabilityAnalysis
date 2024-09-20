@@ -11,7 +11,7 @@ import java.util.List;
 public class AssignmentStatementApplicableVisitor extends Visitor<Boolean> {
 
     public Boolean checkStatementApplicability(ActorState actorState) {
-        List<Statement> statements = actorState.getSigma();
+        Statement statements = actorState.getSigma().get(0);
         if (statements instanceof BinaryExpression) {
             return this.visit((BinaryExpression) statements);
         }

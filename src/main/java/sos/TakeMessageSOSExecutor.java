@@ -56,7 +56,7 @@ public class TakeMessageSOSExecutor extends AbstractSOSExecutor {
         for (SoftwareState softwareState : hybridState.getSoftwareStates().values()) {
             if (!softwareState.hasStatement()) {
                 if (!hybridState.isSuspended(softwareState.getResumeTime())) {
-                    if (!softwareState.messageCanBeTaken(hybridState.getGlobalTime())) {
+                    if (softwareState.messageCanBeTaken(hybridState.getGlobalTime())) {
                         applicableStates.add(softwareState);
                     }
                 } 
@@ -71,7 +71,7 @@ public class TakeMessageSOSExecutor extends AbstractSOSExecutor {
         for (PhysicalState physicalState : hybridState.getPhysicalStates().values()) {
             if (!physicalState.hasStatement()) {
                 if (!physicalState.isIdle()) {
-                    if (!physicalState.messageCanBeTaken(hybridState.getGlobalTime())) {
+                    if (physicalState.messageCanBeTaken(hybridState.getGlobalTime())) {
                         applicableStates.add(physicalState);
                     }
                 }

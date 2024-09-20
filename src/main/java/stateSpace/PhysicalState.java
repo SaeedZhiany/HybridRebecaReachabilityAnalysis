@@ -145,7 +145,8 @@ public class PhysicalState extends ActorState {
             // removing message from message bag
             newPhysicalState.removeMessage(message);
             // TODO: add body of the message to list of statement to be executed
-            List<Statement> messageBody = CompilerUtil.getMessageBody(newPhysicalState.getActorName(), message.getServerName());
+            String physicalClassType = RebecInstantiationMapping.getInstance().getRebecReactiveClassType(newPhysicalState.getActorName());
+            List<Statement> messageBody = CompilerUtil.getMessageBody(physicalClassType, message.getServerName());
             newPhysicalState.addStatements(messageBody);
             // TODO: update resume time
             // CHECKME: why we should update resume time?

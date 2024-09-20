@@ -86,6 +86,22 @@ public class ExpressionEvaluatorVisitor extends Visitor<Variable> {
                 else
                     return new DiscreteBoolVariable("", false, false);
             }
+            case "==": {
+                if (left.getLowerBound().doubleValue() == right.getLowerBound().doubleValue() && left.getUpperBound().doubleValue() == right.getUpperBound().doubleValue())
+                    return new DiscreteBoolVariable("", true);
+                else if (left.getLowerBound() > right.getUpperBound() || left.getUpperBound() < right.getLowerBound())
+                    return new DiscreteBoolVariable("", false);
+                else
+                    return new DiscreteBoolVariable("", false, false);
+            }
+            case "!=": {
+                if (left.getLowerBound().doubleValue() == right.getLowerBound().doubleValue() && left.getUpperBound().doubleValue() == right.getUpperBound().doubleValue())
+                    return new DiscreteBoolVariable("", false);
+                else if (left.getLowerBound() > right.getUpperBound() || left.getUpperBound() < right.getLowerBound())
+                    return new DiscreteBoolVariable("", true);
+                else
+                    return new DiscreteBoolVariable("", false, false);
+            }
             default:
                 return null;
         }
@@ -125,6 +141,22 @@ public class ExpressionEvaluatorVisitor extends Visitor<Variable> {
                 else
                     return new DiscreteBoolVariable("", false, false);
             }
+            case "==": {
+                if (right.getValue().doubleValue() == left.getUpperBound() || right.getValue().doubleValue() == left.getLowerBound())
+                    return new DiscreteBoolVariable("", true);
+                else if (right.getValue().doubleValue() < left.getLowerBound() || right.getValue().doubleValue() > left.getUpperBound())
+                    return new DiscreteBoolVariable("", false);
+                else
+                    return new DiscreteBoolVariable("", false, false);
+            }
+            case "!=": {
+                if (right.getValue().doubleValue() == left.getUpperBound() || right.getValue().doubleValue() == left.getLowerBound())
+                    return new DiscreteBoolVariable("", false);
+                else if (right.getValue().doubleValue() < left.getLowerBound() || right.getValue().doubleValue() > left.getUpperBound())
+                    return new DiscreteBoolVariable("", true);
+                else
+                    return new DiscreteBoolVariable("", false, false);
+            }
             default:
                 return null;
         }
@@ -161,6 +193,22 @@ public class ExpressionEvaluatorVisitor extends Visitor<Variable> {
                     return new DiscreteBoolVariable("", true);
                 else if (left.getValue().doubleValue() > right.getUpperBound())
                     return new DiscreteBoolVariable("", false);
+                else
+                    return new DiscreteBoolVariable("", false, false);
+            }
+            case "==": {
+                if (left.getValue().doubleValue() == right.getUpperBound() || left.getValue().doubleValue() == right.getLowerBound())
+                    return new DiscreteBoolVariable("", true);
+                else if (left.getValue().doubleValue() < right.getLowerBound() || left.getValue().doubleValue() > right.getUpperBound())
+                    return new DiscreteBoolVariable("", false);
+                else
+                    return new DiscreteBoolVariable("", false, false);
+            }
+            case "!=": {
+                if (left.getValue().doubleValue() == right.getUpperBound() || left.getValue().doubleValue() == right.getLowerBound())
+                    return new DiscreteBoolVariable("", false);
+                else if (left.getValue().doubleValue() < right.getLowerBound() || left.getValue().doubleValue() > right.getUpperBound())
+                    return new DiscreteBoolVariable("", true);
                 else
                     return new DiscreteBoolVariable("", false, false);
             }
@@ -288,26 +336,26 @@ public class ExpressionEvaluatorVisitor extends Visitor<Variable> {
                 if (left instanceof DiscreteDecimalVariable && right instanceof DiscreteDecimalVariable) {
                     return new DiscreteBoolVariable("", ((DiscreteDecimalVariable) left).getValue().equals(((DiscreteDecimalVariable) right).getValue()));
                 } else if (left instanceof IntervalRealVariable && right instanceof IntervalRealVariable) {
-                    return new DiscreteBoolVariable("", ((IntervalRealVariable) left).getLowerBound().equals(((IntervalRealVariable) right).getLowerBound()) && ((IntervalRealVariable) left).getUpperBound().equals(((IntervalRealVariable) right).getUpperBound()));
+                    return intervalComparison((IntervalRealVariable) left, (IntervalRealVariable) right, operator);
                 } else if (left instanceof DiscreteBoolVariable && right instanceof DiscreteBoolVariable) {
                     return new DiscreteBoolVariable("", ((DiscreteBoolVariable) left).getValue().equals(((DiscreteBoolVariable) right).getValue()), isDefinite((DiscreteBoolVariable) left, (DiscreteBoolVariable) right, "=="));
                 } else if (left instanceof DiscreteDecimalVariable && right instanceof IntervalRealVariable) {
-                    return new DiscreteBoolVariable("", (((DiscreteDecimalVariable) left).getValue().doubleValue() == ((IntervalRealVariable) right).getLowerBound()) && (((DiscreteDecimalVariable) left).getValue().doubleValue() == ((IntervalRealVariable) right).getUpperBound()));
+                    return intervalDiscreteComparison((DiscreteDecimalVariable) left, (IntervalRealVariable) right, operator);
                 } else if (left instanceof IntervalRealVariable && right instanceof DiscreteDecimalVariable) {
-                    return new DiscreteBoolVariable("", (((IntervalRealVariable) left).getLowerBound() == ((DiscreteDecimalVariable) right).getValue().doubleValue()) && (((IntervalRealVariable) left).getUpperBound() == ((DiscreteDecimalVariable) right).getValue().doubleValue()));
+                    return intervalDiscreteComparison((IntervalRealVariable) left, (DiscreteDecimalVariable) right, operator);
                 }
             }
             case "!=": {
                 if (left instanceof DiscreteDecimalVariable && right instanceof DiscreteDecimalVariable) {
                     return new DiscreteBoolVariable("", !((DiscreteDecimalVariable) left).getValue().equals(((DiscreteDecimalVariable) right).getValue()));
                 } else if (left instanceof IntervalRealVariable && right instanceof IntervalRealVariable) {
-                    return new DiscreteBoolVariable("", !(((IntervalRealVariable) left).getLowerBound().equals(((IntervalRealVariable) right).getLowerBound()) && ((IntervalRealVariable) left).getUpperBound().equals(((IntervalRealVariable) right).getUpperBound())));
+                    return intervalComparison((IntervalRealVariable) left, (IntervalRealVariable) right, operator);
                 } else if (left instanceof DiscreteBoolVariable && right instanceof DiscreteBoolVariable) {
                     return new DiscreteBoolVariable("", !((DiscreteBoolVariable) left).getValue().equals(((DiscreteBoolVariable) right).getValue()), isDefinite((DiscreteBoolVariable) left, (DiscreteBoolVariable) right, "!="));
                 } else if (left instanceof DiscreteDecimalVariable && right instanceof IntervalRealVariable) {
-                    return new DiscreteBoolVariable("", !(((DiscreteDecimalVariable) left).getValue().doubleValue() == ((IntervalRealVariable) right).getLowerBound()) && (((DiscreteDecimalVariable) left).getValue().doubleValue() == ((IntervalRealVariable) right).getUpperBound()));
+                    return intervalDiscreteComparison((DiscreteDecimalVariable) left, (IntervalRealVariable) right, operator);
                 } else if (left instanceof IntervalRealVariable && right instanceof DiscreteDecimalVariable) {
-                    return new DiscreteBoolVariable("", !(((IntervalRealVariable) left).getLowerBound() == ((DiscreteDecimalVariable) right).getValue().doubleValue()) && (((IntervalRealVariable) left).getUpperBound() == ((DiscreteDecimalVariable) right).getValue().doubleValue()));
+                    return intervalDiscreteComparison((IntervalRealVariable) left, (DiscreteDecimalVariable) right, operator);
                 }
             }
             case "&": {

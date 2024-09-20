@@ -134,7 +134,8 @@ public class SoftwareState extends ActorState {
             // removing message from message bag
             newSoftwareState.removeMessage(message);
             // TODO: add body of the message to list of statement to be executed
-            List<Statement> messageBody = CompilerUtil.getMessageBody(newSoftwareState.getActorName(), message.getServerName());
+            String reactiveClassType = RebecInstantiationMapping.getInstance().getRebecReactiveClassType(newSoftwareState.getActorName());
+            List<Statement> messageBody = CompilerUtil.getMessageBody(reactiveClassType, message.getServerName());
             newSoftwareState.addStatements(messageBody);
             // TODO: update resume time
             // CHECKME: why we should update resume time?
