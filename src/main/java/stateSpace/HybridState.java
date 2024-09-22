@@ -126,7 +126,7 @@ public class HybridState {
     }
 
     public String getHash() {
-        return this.hashString;
+        return this.updateHash();
     }
 
     public HashMap<String, PhysicalState> getPhysicalStates() {

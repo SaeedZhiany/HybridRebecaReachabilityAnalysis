@@ -18,8 +18,8 @@ physicalclass HeaterWithSensor(3)
 			timer' = 1;
 			tempr' = 1;
 		}
-		guard(timer==5){
-			timer = 0;
+		guard(timer>=5){
+			timer = 0.0f;
 			controller.control(tempr);
 		}
 	}
@@ -30,7 +30,7 @@ physicalclass HeaterWithSensor(3)
 			tempr' = -1;
 		}
 		guard(timer==5){
-			timer = 0;
+			timer = 0.0f;
 			controller.control(tempr);
 		}
 	}

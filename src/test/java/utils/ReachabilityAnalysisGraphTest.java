@@ -68,8 +68,8 @@ public class ReachabilityAnalysisGraphTest {
             this.reachabilityAnalysisGraph = new ReachabilityAnalysisGraph(rootState);
 
             ReachabilityAnalysisGraph.TreeNode rootNode = this.reachabilityAnalysisGraph.getRoot();
-            this.reachabilityAnalysisGraph.addNode(rootNode, childState1);
-            this.reachabilityAnalysisGraph.addNode(rootNode, childState2);
+            this.reachabilityAnalysisGraph.addNode(rootNode, childState1, "");
+            this.reachabilityAnalysisGraph.addNode(rootNode, childState2, "");
         }
 
         @Test
@@ -103,10 +103,10 @@ public class ReachabilityAnalysisGraphTest {
         ReachabilityAnalysisGraph reachabilityAnalysisGraph = new ReachabilityAnalysisGraph(this.rootState);
 
         ReachabilityAnalysisGraph.TreeNode rootNode = reachabilityAnalysisGraph.getRoot();
-        reachabilityAnalysisGraph.addNode(rootNode, this.childState1);
-        reachabilityAnalysisGraph.addNode(rootNode, this.childState2);
+        reachabilityAnalysisGraph.addNode(rootNode, this.childState1, "");
+        reachabilityAnalysisGraph.addNode(rootNode, this.childState2, "");
         ReachabilityAnalysisGraph.TreeNode childNode1 = rootNode.getChildren().get(0);
-        reachabilityAnalysisGraph.addNode(childNode1, this.grandChildState);
+        reachabilityAnalysisGraph.addNode(childNode1, this.grandChildState, "");
 
         String jsonOutput = reachabilityAnalysisGraph.toJson();
         System.out.println(jsonOutput);

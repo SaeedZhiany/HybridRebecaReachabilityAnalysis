@@ -38,6 +38,7 @@ public class SpaceStateGenerator {
         Queue<HybridState> queue = new LinkedList<>(nonTimeProgressSOSExecutor.generateNextStates(initialState, false));
         while (!queue.isEmpty() && endSimulation > currentEvent) { // should add time upper bound
             HybridState state = queue.poll();
+            state.updateHash();
 
             ReachabilityAnalysisGraph.TreeNode rootNode = reachabilityAnalysisGraph.findNodeInGraph(state);
 
@@ -58,7 +59,6 @@ public class SpaceStateGenerator {
             updatedPhysicalHybridState.updateGlobalTime(currentEvent);
             Map<String, HybridState> updatedPhysicalHybridStates = new HashMap<>();
             updatedPhysicalHybridStates.put(updatedPhysicalHybridState.updateHash(), updatedPhysicalHybridState);
-            String graph = reachabilityAnalysisGraph.toJson();
             if (ODEs.length > 0) {
                 double[] result = joszefCaller.call(ODEs, intervals, reachParams);
 //                double[] result = {0.0, 0.0, 20.0, 20.0, 0.0, 0.01, 20.0, 20.0};
@@ -82,14 +82,17 @@ public class SpaceStateGenerator {
 
             for (Map.Entry<String, HybridState> hybridStateEntry : updatedPhysicalHybridStates.entrySet()) {
                 hybridStateEntry.getValue().updateHash();
-                reachabilityAnalysisGraph.addNode(rootNode, hybridStateEntry.getValue());
+                reachabilityAnalysisGraph.addNode(rootNode, hybridStateEntry.getValue(), "PhysicalUpdate");
                 List<HybridState> generatedHybridStates = nonTimeProgressSOSExecutor.generateNextStates(hybridStateEntry.getValue(), false);
                 queue.addAll(generatedHybridStates);
                 ReachabilityAnalysisGraph.TreeNode rootTempNode = reachabilityAnalysisGraph.findNodeInGraph(hybridStateEntry.getValue());
-                for (HybridState hybridState : generatedHybridStates)
-                    reachabilityAnalysisGraph.addNode(rootTempNode, hybridState);
+                for (HybridState hybridState : generatedHybridStates) {
+                    if (!hybridStateEntry.getValue().getHash().equals(hybridState.getHash()))
+                        reachabilityAnalysisGraph.addNode(rootTempNode, hybridState, " NonTimeProgressExecute");
+                }
             }
         }
+        String graph = reachabilityAnalysisGraph.toDot();
 
 
         // Queue<HybridState> states = new Queue(makeInitialState);
