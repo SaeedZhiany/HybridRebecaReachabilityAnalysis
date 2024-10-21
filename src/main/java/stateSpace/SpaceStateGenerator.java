@@ -50,9 +50,10 @@ public class SpaceStateGenerator {
 
             double timeStep = 1;
             double[] nextEvents = state.getEvents(currentEvent, timeStep);
+            double previousEvent = currentEvent;
             currentEvent = Arrays.stream(nextEvents).min().orElseThrow();
 
-            double[] reachParams = new double[]{50.0, 0.99, 0.01, 7.0, timeStep};
+            double[] reachParams = new double[]{10.0, 0.99, 0.1, 7.0, currentEvent - previousEvent};
 
             Cloner cloner = new Cloner();
             HybridState updatedPhysicalHybridState = cloner.deepClone(state);

@@ -49,7 +49,11 @@ public class ExpressionExtractorVisitor extends Visitor<Variable> {
     public Variable visit(UnaryExpression unaryExpression) {
         Variable operand = this.visit(unaryExpression.getExpression());
         String operator = unaryExpression.getOperator();
-        return new StringVariable("", operator + '(' + convertToStringVarible(operand).getValue()+ ')');
+        if (unaryExpression.getExpression() instanceof Literal) {
+            return new StringVariable("", operator + convertToStringVarible(operand).getValue());
+        }
+
+        return new StringVariable("", operator + '(' + convertToStringVarible(operand).getValue() + ')');
     }
 
     @Override

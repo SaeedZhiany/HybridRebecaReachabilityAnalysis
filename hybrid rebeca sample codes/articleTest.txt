@@ -1,0 +1,65 @@
+physicalclass HeaterWithSensor(2)
+{
+  knownrebecs {
+    Controller controller;
+  }
+
+  statevars {
+    @Real float temp;
+  }
+
+  HeaterWithSensor(float temp_) {
+    temp = temp_;
+    setMode(On);
+  }
+
+  mode On {
+    inv(temp<=23){
+      temp' = 1;
+      //temp'=0.8*sqrt(T);
+    }
+    guard(temp>=22){
+      setMode(Off);
+    }
+  }
+
+  mode Off {
+    inv(temp>=18){
+      temp' = -1;
+      //temp'=-2(temp-17.5);
+    }
+    guard(temp<=19){
+      controller.control(temp);
+      setMode(On);
+    }
+  }
+
+}
+
+reactiveclass Controller(2){
+  knownrebecs {
+    Alarm alarm;
+  }
+
+  msgsrv control(float temp){
+    delay(0.5,0.5);
+    if (temp<18.5)  alarm.notify();
+  }
+}
+
+
+reactiveclass Alarm(2){
+  knownrebecs {
+    Controller controller;
+  }
+
+  msgsrv notify() {
+    // play an alarm
+  }
+}
+
+main {
+  HeaterWithSensor hws(@Wire controller):(20.0f);
+  Alarm alarm(@Wire controller):();
+  Controller controller(@Wire alarm):();
+}

@@ -16,10 +16,10 @@ public class ReachabilityAnalysisGraph {
 
     // HashMap to store the nodes by their IDs
     private Map<String, TreeNode> nodeMap;
-    private Map<Integer, String> intToNodeMap;
-    private Map<String, Integer> nodeToIntMap;
+    private Map<Integer, HybridState> intToNodeMap;
+    private Map<HybridState, Integer> nodeToIntMap;
     private Integer counter;
-    private Map<Integer, Pair<Integer, String>> edges;
+    private ArrayList<Triple<Integer, Integer, String>> edges;
 
     // Root node of the graph
     private TreeNode root;
@@ -29,11 +29,11 @@ public class ReachabilityAnalysisGraph {
         this.nodeMap = new HashMap<>();
         this.intToNodeMap = new HashMap<>();
         this.nodeToIntMap = new HashMap<>();
-        this.edges = new HashMap<>();
+        this.edges = new ArrayList<>();
         this.nodeMap.put(root.getId(), root); // Add root to the map
         this.counter = 0;
-        this.intToNodeMap.put(this.counter, rootData.getHash());
-        this.nodeToIntMap.put(rootData.getHash(), this.counter);
+        this.intToNodeMap.put(this.counter, rootData);
+        this.nodeToIntMap.put(rootData, this.counter);
         this.counter++;
     }
 
@@ -95,10 +95,10 @@ public class ReachabilityAnalysisGraph {
         TreeNode newNode = new TreeNode(nodeData.getHash(), nodeData);
         parent.addChild(newNode);
         nodeMap.put(nodeData.getHash(), newNode); // Add the new node to the map
-        intToNodeMap.put(this.counter, nodeData.getHash());
-        nodeToIntMap.put(nodeData.getHash(), this.counter);
-        Integer parentIndex = this.nodeToIntMap.get(parent.getId()), childIndex = this.nodeToIntMap.get(nodeData.getHash());
-        this.edges.put(parentIndex, Pair.of(childIndex, message));
+        intToNodeMap.put(this.counter, nodeData);
+        nodeToIntMap.put(nodeData, this.counter);
+        Integer parentIndex = this.nodeToIntMap.get(parent.getData()), childIndex = this.nodeToIntMap.get(nodeData);
+        this.edges.add(new Triple<>(parentIndex, childIndex, message));
         this.counter++;
     }
 
@@ -123,20 +123,38 @@ public class ReachabilityAnalysisGraph {
         buffer += "digraph g {\n" +
                   "  edge [lblstyle=\"above, sloped\"];";
 
-        Map<Integer, String> sortedIntToNodeMap = new TreeMap<>(intToNodeMap);
+        Map<Integer, HybridState> sortedIntToNodeMap = new TreeMap<>(intToNodeMap);
         String templateIntToNodeMap = "  s%s [shape=\"square\" label=\"%s\"];\n";
-        for (Map.Entry<Integer, String> entry : sortedIntToNodeMap.entrySet()) {
+        for (Map.Entry<Integer, HybridState> entry : sortedIntToNodeMap.entrySet()) {
             buffer += String.format(templateIntToNodeMap, entry.getKey(), entry.getKey());
         }
 
-        Map<Integer, Pair<Integer, String>> sortedEdges = new TreeMap<>(edges);
-        String templateEdges = "  s%s -> s%s [label=\"%s\"];\n";
-        for (Map.Entry<Integer, Pair<Integer, String>> entry : sortedEdges.entrySet()) {
-            buffer += String.format(templateEdges, entry.getKey(), entry.getValue().getKey(), entry.getValue().getValue());
+        String blackTemplateEdges = "  s%s -> s%s [label=\"%s\"];\n";
+        String redTemplateEdges = "  s%s -> s%s [label=\"%s\", color=\"red\"];\n";
+
+        for (Triple<Integer, Integer, String> entry : edges) {
+            if (entry.value3.equals("PhysicalUpdate")) {
+                buffer += String.format(blackTemplateEdges, entry.value1, entry.value2, entry.value3);
+            } else {
+                buffer += String.format(redTemplateEdges, entry.value1, entry.value2, entry.value3);
+            }
         }
 
         buffer += "  __start0 [label=\"\" shape=\"none\" width=\"0\" height=\"0\"];\n" +
                   "  __start0 -> s0;\n}";
         return buffer;
+    }
+}
+
+// Custom Triple class to hold three values
+class Triple<K, V, S> {
+    public K value1;
+    public V value2;
+    public S value3;
+
+    public Triple(K value1, V value2, S value3) {
+        this.value1 = value1;
+        this.value2 = value2;
+        this.value3 = value3;
     }
 }
