@@ -38,6 +38,7 @@ public class SpaceStateGenerator {
         Queue<HybridState> queue = new LinkedList<>(nonTimeProgressSOSExecutor.generateNextStates(initialState, false));
         Boolean isFirstRound = true;
         while (!queue.isEmpty() && isReachedEndYet(queue, endSimulation)) { // should add time upper bound
+            System.out.println("Queue size: " + queue.size());
             double currentEvent = 0.0;
             HybridState state = queue.poll();
             currentEvent = state.getGlobalTime().getLowerBound();
@@ -63,11 +64,18 @@ public class SpaceStateGenerator {
             if (isFirstRound) {
                 previousEvent = 0;
             }
-            currentEvent = nextEventsList.get(1);
+            for (Double nextEvent : nextEventsList) {
+                if (Math.abs(previousEvent - nextEvent) > 0.0001) {
+                    currentEvent = nextEvent;
+                    break; // Exit the loop once the condition is met
+                }
+            }
+
+//            currentEvent = nextEventsList.get(1);
 
 //            if (currentEvent > endSimulation)
 //                currentEvent = endSimulation;
-            if (currentEvent >= endSimulation)
+            if (previousEvent >= endSimulation)
                 continue;
 
             Cloner cloner = new Cloner();
