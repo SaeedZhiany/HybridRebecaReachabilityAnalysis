@@ -16,7 +16,7 @@ public class Main {
         try {
             // Uncomment if needed
             // Utils.getUserPassword();
-            CompilerUtil.compile("testBeep.txt");
+            CompilerUtil.compile("imanSimple.txt");
             final HybridRebecaCode hybridRebecaCode = CompilerUtil.getHybridRebecaCode();
             FlowstarExecutor.analyzeFlowstarModel("", Arrays.asList("x", "v"));
             SpaceStateGenerator spaceStateGenerator = new SpaceStateGenerator();

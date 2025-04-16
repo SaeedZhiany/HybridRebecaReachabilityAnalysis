@@ -29,7 +29,7 @@ public class SpaceStateGenerator {
 
     public void analyzeReachability(JoszefCaller joszefCaller) {
          // must be tupple
-        double endSimulation = 3;
+        double endSimulation = 0.1;
 
         NonTimeProgressSOSExecutor nonTimeProgressSOSExecutor = new NonTimeProgressSOSExecutor();
         final HybridRebecaCode hybridRebecaCode = CompilerUtil.getHybridRebecaCode();
@@ -51,8 +51,8 @@ public class SpaceStateGenerator {
 //            String[] ODEs = RebecInstantiationMapping.getInstance().getCurrentFlows(globalStateModes);
 //
 //            double[] intervals = state.getIntervals(ODEs);
-            double timeStep = 0.5;
-            double stepSize = 0.5;
+            double timeStep = 0.01;
+            double stepSize = 0.01;
             double[] nextEvents = state.getEvents(currentEvent, timeStep);
             ArrayList<Double> nextEventsList = new ArrayList<>(Arrays.stream(nextEvents).boxed().toList());
             if (nextEvents.length == 0 || currentEvent + timeStep < nextEvents[0]) {
@@ -159,18 +159,32 @@ public class SpaceStateGenerator {
         String graph = reachabilityAnalysisGraph.toDot();
     }
 
+    private static String getStringOfVariableSimple(Variable variable) {
+        if (variable instanceof DiscreteDecimalVariable decimalVariable)
+            return String.valueOf(decimalVariable.getValue());
+        if (variable instanceof DiscreteBoolVariable boolVariable)
+            return boolVariable.getValue() ? "1" : "0";
+        if (variable instanceof IntervalRealVariable realVariable)
+            return String.valueOf(realVariable.getLowerBound());
+        if (variable instanceof ContinuousVariable continuousVariable)
+            return String.valueOf(continuousVariable.getLowerBound());
+        if (variable instanceof StringVariable stringVariable)
+            return stringVariable.getValue();
+        return "";
+    }
+
     private static void calculateActorODEs(JoszefCaller joszefCaller, HybridState hybridState,
                                            Map.Entry<String, PhysicalState> physicalState, double endSimulation, double stepSize) {
         double[] actorReachParams = new double[]{10.0, 0.99, stepSize, 7.0, endSimulation - hybridState.getGlobalTime().getLowerBound()};
-        String[] actorODEs = RebecInstantiationMapping.getInstance().getActorODEs(physicalState.getKey(), physicalState.getValue().getMode());
+        Map<String, Expression> actorODEs = RebecInstantiationMapping.getInstance().getActorODEs(physicalState.getKey(), physicalState.getValue().getMode());
+        ExpressionEvaluatorVisitor expressionEvaluatorVisitor = new ExpressionEvaluatorVisitor(physicalState.getValue().getVariablesValuation());
 
-        for (String actorODE : actorODEs) {
-            double[] actorIntervals = hybridState.getIntervals(new String[]{actorODE});
-            if (Math.abs(actorIntervals[0] - 17.44999999999996) < 0.0001)
-                System.out.println("sds");
+        for (Map.Entry<String, Expression> actorODE : actorODEs.entrySet()) {
+            String realODE = actorODE.getKey() + "=" + getStringOfVariableSimple(expressionEvaluatorVisitor.visit(actorODE.getValue()));
+            double[] actorIntervals = hybridState.getIntervals(new String[]{realODE});
 //            double[] actorIntervals = new double[]{18.0,21.0};
-            double[] actorResult = joszefCaller.call(new String[]{actorODE}, actorIntervals, actorReachParams);
-            String[] components = extractVariableNames(actorODE);
+            double[] actorResult = joszefCaller.call(new String[]{realODE}, actorIntervals, actorReachParams);
+            String[] components = extractVariableNames(realODE);
             String physicalClassName = components[0], odeVariableName = components[1];
             List<Double> actorResultList = new ArrayList<>(Arrays.stream(actorResult).boxed().toList());
 
@@ -286,6 +300,25 @@ public class SpaceStateGenerator {
         return new HybridState(new ContinuousVariable("globalTime"), softwareStates, physicalStates, new CANNetworkState());
     }
 
+    private boolean checkVariableSameTypes(String type1, String type2) {
+        switch (type1) {
+            case "int":
+            case "byte":
+            case "short": {
+                return type2.equals("int") || type2.equals("byte") || type2.equals("short");
+            }
+            case "float":
+            case "double": {
+                return type2.equals("float") || type2.equals("double");
+
+            }
+            case "boolean": {
+                return type2.equals("boolean");
+            }
+        }
+        return false;
+    }
+
     private SoftwareState createSoftwareState(ReactiveClassDeclaration reactiveClassDeclaration, MainRebecDefinition mainRebecDefinition) {
         ConstructorDeclaration constructorDeclaration = getConstructor(reactiveClassDeclaration.getConstructors(), mainRebecDefinition.getArguments());
         if (constructorDeclaration == null) {
@@ -398,7 +431,7 @@ public class SpaceStateGenerator {
             for (FormalParameterDeclaration parameterDeclaration : parameterDeclarations) {
                 OrdinaryPrimitiveType formalParameterType = (OrdinaryPrimitiveType) parameterDeclaration.getType();
                 OrdinaryPrimitiveType actualParameterType = ((OrdinaryPrimitiveType) declarationArgs.get(parameterDeclarations.indexOf(parameterDeclaration)).getType());
-                if (!formalParameterType.getName().equals(actualParameterType.getName())) {
+                if (!checkVariableSameTypes(formalParameterType.getName(), actualParameterType.getName())) {
                     isFound = false;
                     break;
                 }

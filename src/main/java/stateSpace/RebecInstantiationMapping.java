@@ -19,7 +19,8 @@ public class RebecInstantiationMapping {
     // Map <rebecName, rebecType>
     private Map<String, String> rebecsDeclarationMap;
 
-    private Map<Set<String>, String[]> modeToODEs;
+//    private Map<Set<String>, String[]> modeToODEs;
+    private Map<Set<String>, Map<String, Expression>> modeToODEs;
 
     private static RebecInstantiationMapping rebecInstantiationMapping;
 
@@ -53,7 +54,7 @@ public class RebecInstantiationMapping {
     }
 
 
-    private static Map<Set<String>, String[]> getModeODEs(HybridRebecaCode hybridRebecaCode) {
+    private static Map<Set<String>, Map<String, Expression>> getModeODEs(HybridRebecaCode hybridRebecaCode) {
         List<MainRebecDefinition> allRebecNodes = hybridRebecaCode.getMainDeclaration().getMainRebecDefinition();
         List<PhysicalClassDeclaration> allPhysicalClassDeclaration = hybridRebecaCode.getPhysicalClassDeclaration();
         ExpressionExtractorVisitor expressionExtractorVisitor = new ExpressionExtractorVisitor();
@@ -71,30 +72,38 @@ public class RebecInstantiationMapping {
         }
 
         // get ODEs
-        Map<Set<String>, String[]> modeToODEs = new HashMap<>();
+//        Map<Set<String>, String[]> modeToODEs = new HashMap<>();
+        Map<Set<String>, Map<String, Expression>> modeToODEs = new HashMap<>();
+
         for (Map.Entry<MainRebecDefinition, PhysicalClassDeclaration> entry : allPhysicalNodes.entrySet()) {
             MainRebecDefinition mainRebecDefinition = entry.getKey();
             PhysicalClassDeclaration declaration = entry.getValue();
             for (ModeDeclaration mode : declaration.getModeDeclarations()) {
                 List<Statement> statements = mode.getInvariantDeclaration().getBlock().getStatements();
-                String[] ODEs = new String[statements.size()];
+//                String[] ODEs = new String[statements.size()];
+                Map<String, Expression> ODEs = new HashMap<>();
                 String nameOfPhisicalVarible = "";
                 for (int i = 0; i < statements.size(); i++) {
                     Statement statement = statements.get(i);
                     nameOfPhisicalVarible = mainRebecDefinition.getName();
                     expressionExtractorVisitor.setNameOfPhisicalVarible(nameOfPhisicalVarible);
-                    ODEs[i] = ((StringVariable)expressionExtractorVisitor.visit((BinaryExpression) statement)).getValue();
+                    String keyName = expressionExtractorVisitor.getNameOfPhisicalVarible() +
+                            ((TermPrimary) ((BinaryExpression) statement).getLeft()).getName() + "'";
+//                    ODEs[i] = ((StringVariable)expressionExtractorVisitor.visit((BinaryExpression) statement)).getValue();
+                    Expression ODEExpression = ((BinaryExpression) statement).getRight();
+                    ODEs.put(keyName, ODEExpression);
                 }
 
                 Set<String> keySet = new HashSet<>();
-                Collections.addAll(keySet, new String[]{nameOfPhisicalVarible, mode.getName()});
+                Collections.addAll(keySet, nameOfPhisicalVarible, mode.getName());
 
                 if (modeToODEs.containsKey(keySet)) {
-                    String[] existingODEs = modeToODEs.get(keySet);
-                    String[] combinedODEs = new String[existingODEs.length + ODEs.length];
-                    System.arraycopy(existingODEs, 0, combinedODEs, 0, existingODEs.length);
-                    System.arraycopy(ODEs, 0, combinedODEs, existingODEs.length, ODEs.length);
-                    modeToODEs.put(keySet, combinedODEs);
+//                    String[] existingODEs = modeToODEs.get(keySet);
+//                    String[] combinedODEs = new String[existingODEs.length + ODEs.length];
+//                    System.arraycopy(existingODEs, 0, combinedODEs, 0, existingODEs.length);
+//                    System.arraycopy(ODEs, 0, combinedODEs, existingODEs.length, ODEs.length);
+//                    modeToODEs.put(keySet, combinedODEs);
+                    modeToODEs.get(keySet).putAll(ODEs);
                 } else {
                     modeToODEs.put(keySet, ODEs);
                 }
@@ -105,17 +114,17 @@ public class RebecInstantiationMapping {
         return modeToODEs;
     }
 
-    public String[] getCurrentFlows(List<Set<String>> modes) {
-        String[] result = new String[]{};
-        for(Set<String> mode : modes) {
-            String[] flows = modeToODEs.get(mode);
-            result = appendArrays(result, flows);
-        }
+//    public String[] getCurrentFlows(List<Set<String>> modes) {
+//        String[] result = new String[]{};
+//        for(Set<String> mode : modes) {
+//            String[] flows = modeToODEs.get(mode);
+//            result = appendArrays(result, flows);
+//        }
+//
+//        return result;
+//    }
 
-        return result;
-    }
-
-    public String[] getActorODEs(String actorName, String mode) {
+    public Map<String, Expression> getActorODEs(String actorName, String mode) {
         HashSet<String> actorNameMode = new HashSet<>();
         actorNameMode.add(actorName);
         actorNameMode.add(mode);

@@ -15,6 +15,10 @@ public class ExpressionExtractorVisitor extends Visitor<Variable> {
         this.nameOfPhisicalVarible = (nameOfPhisicalVarible.equals("")) ? "" : nameOfPhisicalVarible + "_";
     }
 
+    public String getNameOfPhisicalVarible() {
+        return nameOfPhisicalVarible;
+    }
+
     private StringVariable convertToStringVarible(Variable variable) {
         if (variable instanceof StringVariable)
             return (StringVariable) variable;
