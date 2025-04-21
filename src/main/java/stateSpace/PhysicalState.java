@@ -23,6 +23,8 @@ public class PhysicalState extends ActorState {
     private final Map<String, List<Double>> ODEsResult;
     private double lastTimeModeChangedLowerBound = 0;
 
+    private boolean guardExecuted;
+
     public PhysicalState(
             @Nonnull String actorName,
             @Nullable String mode,
@@ -34,6 +36,7 @@ public class PhysicalState extends ActorState {
         super(actorName, variableValuation, messageBag, sigma, localTime);
         this.mode = mode;
         this.ODEsResult = new HashMap<>();
+        guardExecuted = false;
     }
 
     public PhysicalState(PhysicalState physicalState) {
@@ -67,6 +70,7 @@ public class PhysicalState extends ActorState {
         this.sigma = newSigma;
         this.localTime = physicalState.getLocalTime();
         this.ODEsResult = new HashMap<>();
+        this.guardExecuted = physicalState.isGuardExecuted();
     }
 
     @Nullable
@@ -254,5 +258,13 @@ public class PhysicalState extends ActorState {
         results.remove(0);
         results.remove(0);
         ODEsResult.put(ODEVaribale, results);
+    }
+
+    public boolean isGuardExecuted() {
+        return guardExecuted;
+    }
+
+    public void setGuardExecuted(boolean guardExecuted) {
+        this.guardExecuted = guardExecuted;
     }
 }
