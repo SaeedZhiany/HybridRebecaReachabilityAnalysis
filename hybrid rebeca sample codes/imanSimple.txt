@@ -16,8 +16,8 @@ physicalclass WheelWithSensor (3){
             spd' = -1.0f - trq;
         }
 
-        guard(t >= 0.05){
-            t = 0;
+        guard(t == 0.05){
+            t = 0.0f;
             ctlr.setWspd(spd);
             if(spd > 0) setMode(Rolling);
             else setMode(none);
@@ -39,9 +39,9 @@ reactiveclass WheelCtlr (3){
     }
 
     msgsrv applyTrq(float reqTrq, float vspd){
-        if(vspd == 0) slprt = 0;
+        if(vspd == 0) slprt = 0.0f;
         else slprt = (vspd - wspd*WRAD) /vspd;
-        if(slprt > 0.2) w.setTrq(0);
+        if(slprt > 0.2) w.setTrq(0.0f);
         else w.setTrq(reqTrq);
     }
 }
@@ -53,7 +53,7 @@ physicalclass BrakeWithSensor (3){
     BrakeWithSensor(float b_, float mx_){
         bprcnt = b_;
         mxprcnt = mx_;
-        r = 1;
+        r = 1.0f;
         setMode(Braking);
     }
 
@@ -64,10 +64,9 @@ physicalclass BrakeWithSensor (3){
         }
 
         guard(t == 0.05){
-            t = 0;
+            t = 0.0f;
             bctlr.setBprcnt(bprcnt);
-            if(bprcnt >= mxprcnt) r = 0;
-            setMode(Braking);
+            if(bprcnt >= mxprcnt) r = 0.0f;
         }
     }
 }
@@ -104,9 +103,8 @@ physicalclass Clock (3){
             t' = 1;
         }
         guard(t == 0.05){
-            t = 0;
+            t = 0.0f;
             bctlr.control();
-            setMode(Running);
         }
     }
 }
