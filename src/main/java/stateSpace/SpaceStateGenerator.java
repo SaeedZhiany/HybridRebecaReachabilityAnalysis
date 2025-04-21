@@ -146,8 +146,10 @@ public class SpaceStateGenerator {
                         HashMap<String, PhysicalState> newPhysicalStates = hybridState.getPhysicalStates();
                         HashMap<String, PhysicalState> oldPhysicalStates = hybridStateEntry.getValue().getPhysicalStates();
                         for (Map.Entry<String, PhysicalState> physicalState: newPhysicalStates.entrySet()) {
-                            if (!physicalState.getValue().getMode().equals(oldPhysicalStates.get(physicalState.getKey()).getMode())) {
-                                calculateActorODEs(joszefCaller, hybridStateEntry.getValue(), physicalState, endSimulation, stepSize);
+                            if (!physicalState.getValue().getMode().equals(oldPhysicalStates.get(physicalState.getKey()).getMode()) ||
+                                    physicalState.getValue().isGuardExecuted()) {
+                                physicalState.getValue().setGuardExecuted(false);
+                                calculateActorODEs(joszefCaller, hybridState, physicalState, endSimulation, stepSize);
                             }
                         }
                         reachabilityAnalysisGraph.addNode(rootTempNode, hybridState, " NonTimeProgressExecute");
@@ -266,6 +268,8 @@ public class SpaceStateGenerator {
             Cloner cloner = new Cloner();
             HybridState newHybridState = cloner.deepClone(hybridStateEntry.getValue());
             PhysicalState newPhysicalState = newHybridState.getPhysicalStates().get(physicalStateEntry.getKey());
+            newPhysicalState.setGuardExecuted(true);
+            newPhysicalState.setLastTimeModeChangedLowerBound(newHybridState.getGlobalTime().getLowerBound());
             List<Statement> guardStatements =
                     Objects.requireNonNull(CompilerUtil.getModeDeclaration(physicalDeclarationName,
                             newPhysicalState.getMode())).getGuardDeclaration().getBlock().getStatements();
