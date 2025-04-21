@@ -20,10 +20,7 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 import static dataStructure.ConnectionType.WIRE;
 
@@ -220,7 +217,53 @@ public class CompilerUtil {
                 }
             }
         }
+
+        List<PhysicalClassDeclaration> physicalClassDeclarations = getHybridRebecaCode().getPhysicalClassDeclaration();
+        for (PhysicalClassDeclaration physicalClassDeclaration : physicalClassDeclarations) {
+            if (physicalClassDeclaration.getName().equals(actorName)) {
+                List<MsgsrvDeclaration> msgsrvs = physicalClassDeclaration.getMsgsrvs();
+                for (MsgsrvDeclaration msgsrv : msgsrvs) {
+                    if (msgsrv.getName().equals(messageName)) {
+                        BlockStatement body = msgsrv.getBlock();
+                        List<Statement> statements = body.getStatements();
+                        return statements;
+                    }
+                }
+            }
+        }
         // CHECKME: is this the correct way to handle this?
         return new ArrayList<>();
+    }
+
+    public static Set<String> getStateVars(@Nonnull String actorName) {
+        Set<String> stateVariables = new HashSet<>();
+
+        List<ReactiveClassDeclaration> reactiveClassDeclarations = getHybridRebecaCode().getReactiveClassDeclaration();
+        for (ReactiveClassDeclaration reactiveClassDeclaration : reactiveClassDeclarations) {
+            if (reactiveClassDeclaration.getName().equals(actorName)) {
+                List<FieldDeclaration> stateVars = reactiveClassDeclaration.getStatevars();
+                for (FieldDeclaration stateVar : stateVars) {
+                    for (VariableDeclarator variableDeclarator : stateVar.getVariableDeclarators()) {
+                        stateVariables.add(variableDeclarator.getVariableName());
+                    }
+                }
+                return stateVariables;
+            }
+        }
+
+        List<PhysicalClassDeclaration> physicalClassDeclarations = getHybridRebecaCode().getPhysicalClassDeclaration();
+        for (PhysicalClassDeclaration physicalClassDeclaration : physicalClassDeclarations) {
+            if (physicalClassDeclaration.getName().equals(actorName)) {
+                List<FieldDeclaration> stateVars = physicalClassDeclaration.getStatevars();
+                for (FieldDeclaration stateVar : stateVars) {
+                    for (VariableDeclarator variableDeclarator : stateVar.getVariableDeclarators()) {
+                        stateVariables.add(variableDeclarator.getVariableName());
+                    }
+                }
+                return stateVariables;
+            }
+        }
+
+        return stateVariables;
     }
 }
