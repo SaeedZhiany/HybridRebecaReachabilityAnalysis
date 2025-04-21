@@ -1,5 +1,6 @@
 package visitors;
 
+import com.rits.cloning.Cloner;
 import dataStructure.DiscreteBoolVariable;
 import dataStructure.DiscreteDecimalVariable;
 import dataStructure.IntervalRealVariable;
@@ -142,9 +143,9 @@ public class ExpressionEvaluatorVisitor extends Visitor<Variable> {
                     return new DiscreteBoolVariable("", false, false);
             }
             case "==": {
-                if (right.getValue().doubleValue() == left.getUpperBound() || right.getValue().doubleValue() == left.getLowerBound())
+                if (right.getValue().doubleValue() == left.getUpperBound())
                     return new DiscreteBoolVariable("", true);
-                else if (right.getValue().doubleValue() < left.getLowerBound() || right.getValue().doubleValue() > left.getUpperBound())
+                else if (right.getValue().doubleValue() < left.getLowerBound() || right.getValue().doubleValue() >= left.getUpperBound())
                     return new DiscreteBoolVariable("", false);
                 else
                     return new DiscreteBoolVariable("", false, false);
@@ -425,7 +426,9 @@ public class ExpressionEvaluatorVisitor extends Visitor<Variable> {
 
     @Override
     public Variable visit(TermPrimary termPrimary) {
-        return symbolTable.get(termPrimary.getName());
+        Cloner cloner = new Cloner();
+        Variable variable = cloner.deepClone(symbolTable.get(termPrimary.getName()));
+        return cloner.deepClone(symbolTable.get(termPrimary.getName()));
     }
 
     @Override
