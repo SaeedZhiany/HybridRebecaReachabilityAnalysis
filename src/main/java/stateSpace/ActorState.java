@@ -2,6 +2,8 @@ package stateSpace;
 
 import com.rits.cloning.Cloner;
 import dataStructure.ContinuousVariable;
+import dataStructure.DiscreteDecimalVariable;
+import dataStructure.IntervalRealVariable;
 import dataStructure.Variable;
 import org.rebecalang.compiler.modelcompiler.corerebeca.objectmodel.Statement;
 
@@ -72,6 +74,23 @@ public abstract class ActorState {
     }
 
     public void updateVariable(Variable variable) {
+//        if (this.variablesValuation.containsKey(variable.getName())) {
+//            if (this.variablesValuation.get(variable.getName()) instanceof IntervalRealVariable && variable instanceof DiscreteDecimalVariable) {
+//                this.variablesValuation.put(variable.getName(), new IntervalRealVariable(variable.getName(),
+//                        ((DiscreteDecimalVariable) variable).getValue().doubleValue(),
+//                        ((DiscreteDecimalVariable) variable).getValue().doubleValue())
+//                );
+//            } else if (this.variablesValuation.get(variable.getName()) instanceof ContinuousVariable && variable instanceof DiscreteDecimalVariable) {
+//                this.variablesValuation.put(variable.getName(), new ContinuousVariable(variable.getName(),
+//                        ((DiscreteDecimalVariable) variable).getValue().doubleValue(),
+//                        ((DiscreteDecimalVariable) variable).getValue().doubleValue())
+//                );
+//            } else {
+//                this.variablesValuation.put(variable.getName(), variable);
+//            }
+//        } else {
+//            this.variablesValuation.put(variable.getName(), variable);
+//        }
         this.variablesValuation.put(variable.getName(), variable);
     }
 
