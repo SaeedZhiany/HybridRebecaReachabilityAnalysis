@@ -140,7 +140,7 @@ public class HybridState {
 
     private void resetResumeTime(ActorState actorState) {
         if (actorState instanceof SoftwareState) {
-            ((SoftwareState) actorState).setResumeTime(new ContinuousVariable("resume time"));
+            ((SoftwareState) actorState).setResumeTime(new ContinuousVariable("resumeTime"));
         }
     }
 
@@ -151,12 +151,20 @@ public class HybridState {
             HybridState newHybridState = cloner.deepClone(this);
             if (isNonDeterministicInResumeTime(((SoftwareState) newActorState).getResumeTime())) {
                 ContinuousVariable resumeTime = ((SoftwareState) newActorState).getResumeTime();
-                ((SoftwareState) newActorState).setResumeTime(new ContinuousVariable("resume time", globalTime.getUpperBound(), resumeTime.getUpperBound()));
+                ((SoftwareState) newActorState).setResumeTime(new ContinuousVariable("resumeTime", globalTime.getUpperBound(), resumeTime.getUpperBound()));
                 newHybridState.replaceActorState(newActorState);
                 return newHybridState;
             }
         }
         return null;
+    }
+
+    private void resetStateVarsIfLastStmt(ActorState actorState) {
+        if (actorState.getSigma().isEmpty()) {
+            String actorClassType = RebecInstantiationMapping.getInstance().getRebecReactiveClassType(actorState.getActorName());
+            Set<String> stateVarsName = CompilerUtil.getStateVars(actorClassType);
+            actorState.getVariableValuation().keySet().retainAll(stateVarsName);
+        }
     }
 
     public boolean isSuspended(ContinuousVariable resumeTime) {
@@ -297,6 +305,8 @@ public class HybridState {
             newHybridState.replaceActorState(newActorState);
             newHybridState.replaceActorState(receiverActorState);
         }
+
+        resetStateVarsIfLastStmt(newActorState);
         result.add(newHybridState);
 
         HybridState suspendedState = createSuspendedState(actorState);
@@ -321,6 +331,8 @@ public class HybridState {
         newActorState.updateVariable(variableValue);
         resetResumeTime(newActorState);
         newHybridState.replaceActorState(newActorState);
+
+        resetStateVarsIfLastStmt(newActorState);
         result.add(newHybridState);
 
         HybridState suspendedState = createSuspendedState(actorState);
@@ -351,6 +363,7 @@ public class HybridState {
 
         newSoftwareState.setResumeTime(delayTime);
         newHybridState.replaceActorState(newSoftwareState);
+        resetStateVarsIfLastStmt(newSoftwareState);
         result.add(newHybridState);
 
         HybridState suspendedState = createSuspendedState(softwareState);
@@ -380,6 +393,7 @@ public class HybridState {
             }
             resetResumeTime(newActorState);
             newHybridState.replaceActorState(newActorState);
+            resetStateVarsIfLastStmt(newActorState);
             result.add(newHybridState);
         } else {
             addExtractedStatement(newActorState, conditionalStatement.getStatement());
@@ -391,6 +405,8 @@ public class HybridState {
             newHybridState.replaceActorState(newActorState);
             HybridState newHybridState2 = cloner.deepClone(newHybridState);
             newHybridState2.replaceActorState(newActorState2);
+            resetStateVarsIfLastStmt(newActorState);
+            resetStateVarsIfLastStmt(newActorState2);
             result.add(newHybridState);
             result.add(newHybridState2);
         }
@@ -417,6 +433,7 @@ public class HybridState {
         newPhysicalState.setMode(mode);
         newPhysicalState.setLastTimeModeChangedLowerBound(globalTime.getLowerBound());
         newHybridState.replaceActorState(newPhysicalState);
+        resetStateVarsIfLastStmt(newPhysicalState);
         result.add(newHybridState);
         return result;
     }
