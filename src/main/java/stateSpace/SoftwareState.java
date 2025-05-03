@@ -1,6 +1,5 @@
 package stateSpace;
 
-import com.rits.cloning.Cloner;
 import dataStructure.*;
 import org.rebecalang.compiler.modelcompiler.corerebeca.objectmodel.Statement;
 import utils.CompilerUtil;
@@ -28,7 +27,7 @@ public class SoftwareState extends ActorState {
     }
 
     public SoftwareState(SoftwareState softwareState) {
-        super("init", new HashMap<>(), new HashSet<>(), new ArrayList<>(), 0);
+        super(softwareState.getActorName(), new HashMap<>(), new HashSet<>(), new ArrayList<>(), 0);
         this.actorName = softwareState.getActorName();
         HashMap<String, Variable> newVariableValuation = new HashMap<>();
         for (Map.Entry<String, Variable> entry : softwareState.getVariableValuation().entrySet()) {
@@ -49,12 +48,12 @@ public class SoftwareState extends ActorState {
         }
         this.messageBag = newMessageBag;
         List<Statement> newSigma = new ArrayList<>();
-        Cloner cloner = new Cloner();
-        for (Statement statement : softwareState.getSigma()) {
-            // CHECKME: this is a shallow copy, should we use a deep copy?
-            Statement copiedStatement = cloner.deepClone(statement);
-            newSigma.add(copiedStatement);
-        }
+        newSigma = new ArrayList<>(softwareState.getSigma()); // TODO: I think shallow copy is fine
+//        for (Statement statement : softwareState.getSigma()) {
+//            // CHECKME: this is a shallow copy, should we use a deep copy?
+//            Statement copiedStatement = cloner.deepClone(statement);
+//            newSigma.add(copiedStatement);
+//        }
         this.sigma = newSigma;
         this.localTime = softwareState.getLocalTime();
         this.resumeTime = new ContinuousVariable(softwareState.getResumeTime());
@@ -122,9 +121,9 @@ public class SoftwareState extends ActorState {
     public List<ActorState> takeMessage(ContinuousVariable globalTime) {
         List<ActorState> result = new ArrayList<>();
         List<Message> messagesToBeTaken = getMessagesToBeTaken(globalTime);
-        Cloner cloner = new Cloner();
         for (Message message : messagesToBeTaken) {
-            SoftwareState newSoftwareState = cloner.deepClone(this);
+//            SoftwareState newSoftwareState = cloner.deepClone(this);
+            SoftwareState newSoftwareState = new SoftwareState(this);
             // TODO: !!!START FROM HERE!!!
 //            BigDecimal tMin = globalTime.getUpperBound().min(message.getArrivalTime().getUpperBound());
             // updating actor valuation function
@@ -145,7 +144,8 @@ public class SoftwareState extends ActorState {
 
             // CHECKME: shouldn't it be <= instead of <?
             if (globalTime.getUpperBound().compareTo(message.getArrivalTime().getUpperBound()) < 0) {
-                newSoftwareState = cloner.deepClone(this);
+//                newSoftwareState = cloner.deepClone(this);
+                newSoftwareState = new SoftwareState(this);
                 Message newMessage = new Message(
                         message.getSenderActor(),
                         message.getReceiverActor(),

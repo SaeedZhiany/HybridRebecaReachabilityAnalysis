@@ -1,6 +1,5 @@
 package stateSpace;
 
-import com.rits.cloning.Cloner;
 import dataStructure.*;
 import org.rebecalang.compiler.modelcompiler.corerebeca.objectmodel.*;
 import org.rebecalang.compiler.modelcompiler.timedrebeca.objectmodel.TimedRebecaParentSuffixPrimary;
@@ -9,7 +8,6 @@ import utils.StringSHA256;
 import visitors.ExpressionEvaluatorVisitor;
 
 import javax.annotation.Nonnull;
-import java.math.BigDecimal;
 import java.util.*;
 
 public class HybridState {
@@ -46,6 +44,8 @@ public class HybridState {
             newPhysicalStates.put(physicalState.actorName, new PhysicalState(physicalState));
         }
         this.physicalStates = newPhysicalStates;
+        this.parentHash = hybridState.getParentHash();
+        this.updateHash();
 //        this.CANNetworkState = new CANNetworkState(hybridState.CANNetworkState);
     }
 
@@ -145,13 +145,14 @@ public class HybridState {
     }
 
     private HybridState createSuspendedState(ActorState actorState) {
-        if (actorState instanceof SoftwareState) {
-            Cloner cloner = new Cloner();
-            ActorState newActorState = cloner.deepClone(actorState);
-            HybridState newHybridState = cloner.deepClone(this);
-            if (isNonDeterministicInResumeTime(((SoftwareState) newActorState).getResumeTime())) {
-                ContinuousVariable resumeTime = ((SoftwareState) newActorState).getResumeTime();
-                ((SoftwareState) newActorState).setResumeTime(new ContinuousVariable("resumeTime", globalTime.getUpperBound(), resumeTime.getUpperBound()));
+        if (actorState instanceof SoftwareState softwareState) {
+//            ActorState newActorState = cloner.deepClone(actorState);
+//            HybridState newHybridState = cloner.deepClone(this);
+            SoftwareState newActorState = new SoftwareState(softwareState);
+            HybridState newHybridState = new HybridState(this);
+            if (isNonDeterministicInResumeTime(newActorState.getResumeTime())) {
+                ContinuousVariable resumeTime = newActorState.getResumeTime();
+                newActorState.setResumeTime(new ContinuousVariable("resumeTime", globalTime.getUpperBound(), resumeTime.getUpperBound()));
                 newHybridState.replaceActorState(newActorState);
                 return newHybridState;
             }
@@ -189,9 +190,12 @@ public class HybridState {
         List<HybridState> result = new ArrayList<>();
         List<ActorState> generatedActorStates = actorState.takeMessage(globalTime);
         for (ActorState actorStateItr : generatedActorStates) {
-            Cloner cloner = new Cloner();
-            HybridState newHybridState = cloner.deepClone(this);
-            ActorState newActorState = cloner.deepClone(actorStateItr);
+//            HybridState newHybridState = cloner.deepClone(this);
+//            ActorState newActorState = cloner.deepClone(actorStateItr);
+            HybridState newHybridState = new HybridState(this);
+            ActorState newActorState = actorStateItr instanceof SoftwareState ?
+                    new SoftwareState((SoftwareState) actorStateItr) :
+                    new PhysicalState((PhysicalState) actorStateItr);
             resetResumeTime(newActorState);
             newHybridState.replaceActorState(newActorState);
             result.add(newHybridState);
@@ -266,12 +270,15 @@ public class HybridState {
     }
 
     public List<HybridState> sendStatement(ActorState actorState) {
-        Cloner cloner = new Cloner();
         List<HybridState> result = new ArrayList<>();
-        HybridState newHybridState = cloner.deepClone(this);
+//        HybridState newHybridState = cloner.deepClone(this);
+        HybridState newHybridState = new HybridState(this);
 //        RunUnchangeableStatementsVisitors runner = new RunUnchangeableStatementsVisitors(actorState);
         // TODO: do it better for another type og statements
-        ActorState newActorState = cloner.deepClone(actorState);
+//        ActorState newActorState = cloner.deepClone(actorState);
+        ActorState newActorState = actorState instanceof SoftwareState ?
+                new SoftwareState((SoftwareState) actorState) :
+                new PhysicalState((PhysicalState) actorState);
         // CHECKME: maybe shouldn't delete
         final DotPrimary sendStatement = (DotPrimary) actorState.getSigma().get(0);
         newActorState.nextStatement();
@@ -298,8 +305,7 @@ public class HybridState {
         if (sender.equals(receiver)) {
             newActorState.addMessage(message);
             newHybridState.replaceActorState(newActorState);
-        }
-        else {
+        } else {
             ActorState receiverActorState = newHybridState.getActorState(receiver);
             receiverActorState.addMessage(message);
             newHybridState.replaceActorState(newActorState);
@@ -318,10 +324,13 @@ public class HybridState {
     }
 
     public List<HybridState> assignStatement(ActorState actorState) {
-        Cloner cloner = new Cloner();
         List<HybridState> result = new ArrayList<>();
-        HybridState newHybridState = cloner.deepClone(this);
-        ActorState newActorState = cloner.deepClone(actorState);
+//        HybridState newHybridState = cloner.deepClone(this);
+//        ActorState newActorState = cloner.deepClone(actorState);
+        HybridState newHybridState = new HybridState(this);
+        ActorState newActorState = actorState instanceof SoftwareState ?
+                new SoftwareState((SoftwareState) actorState) :
+                new PhysicalState((PhysicalState) actorState);
         // CHECKME: maybe shouldn't delete
         BinaryExpression assignStatement = (BinaryExpression) newActorState.nextStatement();
 
@@ -344,10 +353,11 @@ public class HybridState {
     }
 
     public List<HybridState> delayStatement(SoftwareState softwareState) {
-        Cloner cloner = new Cloner();
         List<HybridState> result = new ArrayList<>();
-        HybridState newHybridState = cloner.deepClone(this);
-        SoftwareState newSoftwareState = cloner.deepClone(softwareState);
+//        HybridState newHybridState = cloner.deepClone(this);
+//        SoftwareState newSoftwareState = cloner.deepClone(softwareState);
+        HybridState newHybridState = new HybridState(this);
+        SoftwareState newSoftwareState = new SoftwareState(softwareState);
         // CHECKME: maybe shouldn't delete
         final TermPrimary delayStatement = (TermPrimary) softwareState.getSigma().get(0);
         newSoftwareState.nextStatement();
@@ -374,10 +384,13 @@ public class HybridState {
     }
 
     public List<HybridState> ifStatement(ActorState actorState) {
-        Cloner cloner = new Cloner();
         List<HybridState> result = new ArrayList<>();
-        HybridState newHybridState = cloner.deepClone(this);
-        ActorState newActorState = cloner.deepClone(actorState);
+//        HybridState newHybridState = cloner.deepClone(this);
+//        ActorState newActorState = cloner.deepClone(actorState);
+        HybridState newHybridState = new HybridState(this);
+        ActorState newActorState = actorState instanceof SoftwareState ?
+                new SoftwareState((SoftwareState) actorState) :
+                new PhysicalState((PhysicalState) actorState);
         // CHECKME: maybe shouldn't delete
         ConditionalStatement conditionalStatement = (ConditionalStatement) actorState.getSigma().get(0);
         newActorState.nextStatement();
@@ -387,8 +400,7 @@ public class HybridState {
         if (conditionResult.getDefinite()) {
             if (conditionResult.getValue()) {
                 addExtractedStatement(newActorState, conditionalStatement.getStatement());
-            }
-            else {
+            } else {
                 addExtractedStatement(newActorState, conditionalStatement.getElseStatement());
             }
             resetResumeTime(newActorState);
@@ -397,13 +409,17 @@ public class HybridState {
             result.add(newHybridState);
         } else {
             addExtractedStatement(newActorState, conditionalStatement.getStatement());
-            ActorState newActorState2 = cloner.deepClone(actorState);
+//            ActorState newActorState2 = cloner.deepClone(actorState);
+            ActorState newActorState2 = actorState instanceof SoftwareState ?
+                    new SoftwareState((SoftwareState) actorState) :
+                    new PhysicalState((PhysicalState) actorState);
             newActorState2.nextStatement();
             addExtractedStatement(newActorState2, conditionalStatement.getElseStatement());
             resetResumeTime(newActorState);
             resetResumeTime(newActorState2);
             newHybridState.replaceActorState(newActorState);
-            HybridState newHybridState2 = cloner.deepClone(newHybridState);
+//            HybridState newHybridState2 = cloner.deepClone(newHybridState);
+            HybridState newHybridState2 = new HybridState(newHybridState);
             newHybridState2.replaceActorState(newActorState2);
             resetStateVarsIfLastStmt(newActorState);
             resetStateVarsIfLastStmt(newActorState2);
@@ -420,10 +436,11 @@ public class HybridState {
     }
 
     public List<HybridState> setModeStatement(PhysicalState physicalState) {
-        Cloner cloner = new Cloner();
         List<HybridState> result = new ArrayList<>();
-        HybridState newHybridState = cloner.deepClone(this);
-        PhysicalState newPhysicalState = cloner.deepClone(physicalState);
+//        HybridState newHybridState = cloner.deepClone(this);
+//        PhysicalState newPhysicalState = cloner.deepClone(physicalState);
+        HybridState newHybridState = new HybridState(this);
+        PhysicalState newPhysicalState = new PhysicalState(physicalState);
         // CHECKME: maybe shouldn't delete
         final TermPrimary setModeStatement = (TermPrimary) physicalState.getSigma().get(0);
 
@@ -462,12 +479,12 @@ public class HybridState {
 
             }
         }
-        return  globalStateModes;
+        return globalStateModes;
     }
 
     public double[] getIntervals(String[] ODEs) {
         ArrayList<Double> intervalsList = new ArrayList<>();
-        for (String ODE : ODEs){
+        for (String ODE : ODEs) {
             String[] components = extractVariableNames(ODE);
             String physicalClassName = components[0], odeVariableName = components[1];
 
@@ -480,9 +497,9 @@ public class HybridState {
                         String variable = VariablesValuation.getKey();
                         Variable valuation = VariablesValuation.getValue();
 
-                        if(odeVariableName.equals(variable)) {
-                            intervalsList.add(((IntervalRealVariable)valuation).getLowerBound());
-                            intervalsList.add(((IntervalRealVariable)valuation).getUpperBound());
+                        if (odeVariableName.equals(variable)) {
+                            intervalsList.add(((IntervalRealVariable) valuation).getLowerBound());
+                            intervalsList.add(((IntervalRealVariable) valuation).getUpperBound());
                         }
                     }
                 }

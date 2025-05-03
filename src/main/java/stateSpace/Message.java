@@ -33,6 +33,7 @@ public class Message {
     }
 
     public Message(Message message) {
+        this.id = message.getId();
         this.senderActor = message.getSenderActor();
         this.receiverActor = message.getReceiverActor();
         this.serverName = message.getServerName();

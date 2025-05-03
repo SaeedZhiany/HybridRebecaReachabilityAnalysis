@@ -6,6 +6,8 @@ import utils.FlowstarExecutor;
 
 import java.util.Arrays;
 
+import static configs.MyClonerInstance.startTime;
+
 public class Main {
     public static void main(String[] args) {
         Main mainInstance = new Main();
@@ -16,7 +18,8 @@ public class Main {
         try {
             // Uncomment if needed
             // Utils.getUserPassword();
-            CompilerUtil.compile("imanSimple.txt");
+            startTime = System.nanoTime();
+            CompilerUtil.compile("specialScenario.txt");
             final HybridRebecaCode hybridRebecaCode = CompilerUtil.getHybridRebecaCode();
             FlowstarExecutor.analyzeFlowstarModel("", Arrays.asList("x", "v"));
             SpaceStateGenerator spaceStateGenerator = new SpaceStateGenerator();
@@ -61,10 +64,10 @@ public class Main {
 
         double[] resultArray = new HelloJNI().doTimeStep(ODEs, intervals, reachParams);
 
-        System.out.println("Results from Java");
-
-        for (int i = 0; i<resultArray.length; i++)
-            System.out.println(resultArray[i]);
+//        System.out.println("Results from Java");
+//
+//        for (int i = 0; i<resultArray.length; i++)
+//            System.out.println(resultArray[i]);
 
         return resultArray;
     }
