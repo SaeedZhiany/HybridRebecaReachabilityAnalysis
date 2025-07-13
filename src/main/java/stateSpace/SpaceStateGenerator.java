@@ -38,7 +38,6 @@ public class SpaceStateGenerator {
         Queue<HybridState> queue = new LinkedList<>(nonTimeProgressSOSExecutor.generateNextStates(initialState, false));
         Boolean isFirstRound = true;
         long stateCounter =0;
-//        startTime = System.nanoTime();
         while (!queue.isEmpty() && isReachedEndYet(queue, endSimulation)) { // should add time upper bound
             System.out.println("Queue size: " + queue.size());
             double currentEvent = 0.0;
@@ -51,11 +50,6 @@ public class SpaceStateGenerator {
             if (isFirstRound)
                 rootNode = reachabilityAnalysisGraph.findNodeInGraph(initialState);
 
-//            List<Set<String>> globalStateModes = state.getGlobalStateModes();
-//
-//            String[] ODEs = RebecInstantiationMapping.getInstance().getCurrentFlows(globalStateModes);
-//
-//            double[] intervals = state.getIntervals(ODEs);
             double timeStep = 0.3;
             double stepSize = 0.3;
             double[] nextEvents = state.getEvents(currentEvent, timeStep);
@@ -76,14 +70,10 @@ public class SpaceStateGenerator {
                 }
             }
 
-//            currentEvent = nextEventsList.get(1);
 
-//            if (currentEvent > endSimulation)
-//                currentEvent = endSimulation;
             if (previousEvent >= endSimulation)
                 continue;
 
-//            HybridState updatedPhysicalHybridState = cloner.deepClone(state);
             HybridState updatedPhysicalHybridState = new HybridState(state);
             if (isFirstRound) {
                 updatedPhysicalHybridState.updateGlobalTime(0, currentEvent);
@@ -99,38 +89,6 @@ public class SpaceStateGenerator {
                 }
                 physicalState.getValue().computeODEBoundsForTimeRange(updatedPhysicalHybridState.getGlobalTime(), stepSize, endSimulation);
             }
-
-//            double[] reachParams = new double[]{10.0, 0.99, 0.01, 7.0, currentEvent - previousEvent};
-//
-//            if (ODEs.length > 0) {
-//                double[] result = joszefCaller.call(ODEs, intervals, reachParams);
-//                //                double[] result = {0.0, 0.0, 20.0, 20.0, 0.0, 0.01, 20.0, 20.0};
-//                int index = 0;
-//                int StartIndex = result.length - 2 * ODEs.length;
-//                for (String ODE : ODEs) {
-//                    String[] components = extractVariableNames(ODE);
-//                    String physicalClassName = components[0], odeVariableName = components[1];
-//                    double odeVariableLowerBound, odeVariableUpperBound;
-//                    if (isFirstRound) {
-//                        odeVariableLowerBound = result[2 * index];
-//                        odeVariableUpperBound = result[(index * 2) + 1 + StartIndex];
-//                        if (odeVariableUpperBound < odeVariableLowerBound) {
-//                            double swap;
-//                            swap = odeVariableUpperBound;
-//                            odeVariableUpperBound = odeVariableLowerBound;
-//                            odeVariableLowerBound = swap;
-//                        }
-//                    }
-//                    else {
-//                        odeVariableLowerBound = result[2 * index + StartIndex];
-//                        odeVariableUpperBound = result[(index * 2) + 1 + StartIndex];
-//                    }
-//                    PhysicalState physicalState = (PhysicalState) updatedPhysicalHybridState.getActorState(physicalClassName);
-//                    physicalState.updateVariable(new IntervalRealVariable(odeVariableName, odeVariableLowerBound, odeVariableUpperBound));
-//                    index++;
-//                }
-//                isFirstRound = false;
-//            }
 
             try {
                 updatePhysicalStates(updatedPhysicalHybridState.getPhysicalStates(), updatedPhysicalHybridStates);
@@ -197,10 +155,9 @@ public class SpaceStateGenerator {
         for (Map.Entry<String, Expression> actorODE : actorODEs.entrySet()) {
             String realODE = actorODE.getKey() + "=" + getStringOfVariableSimple(expressionEvaluatorVisitor.visit(actorODE.getValue()));
             double[] actorIntervals = hybridState.getIntervals(new String[]{realODE});
-//            double[] actorIntervals = new double[]{18.0,21.0};
             double[] actorResult = joszefCaller.call(new String[]{realODE}, actorIntervals, actorReachParams);
             String[] components = extractVariableNames(realODE);
-            String physicalClassName = components[0], odeVariableName = components[1];
+            String odeVariableName = components[1];
             List<Double> actorResultList = new ArrayList<>(Arrays.stream(actorResult).boxed().toList());
 
             physicalState.getValue().addODEResult(odeVariableName, actorResultList);
@@ -228,7 +185,6 @@ public class SpaceStateGenerator {
                         (BinaryExpression) Objects.requireNonNull(CompilerUtil.getGuardCondition(physicalDeclarationName, physicalState.getMode())));
                 DiscreteBoolVariable invariantSatisfiedResult = (DiscreteBoolVariable) evaluatorVisitor.visit(
                         (BinaryExpression) Objects.requireNonNull(CompilerUtil.getInvariantCondition(physicalDeclarationName, physicalState.getMode())));
-                PhysicalClassDeclaration physicalClassDeclaration = CompilerUtil.getPhysicalClassDeclaration(physicalDeclarationName);
 
                 if (invariantSatisfiedResult.getDefinite()) {
                     if (invariantSatisfiedResult.getValue()) {
@@ -236,8 +192,6 @@ public class SpaceStateGenerator {
                         checkGuardIfInvariantIsTrue(updatedPhysicalHybridStates, physicalStateEntry, hybridStateEntry,
                                 guardSatisfiedResult, physicalDeclarationName);
                     } else {
-//                        System.out.println("Deadlock happened:");
-//                        System.out.println(hybridStateEntry.getValue());
                         if (updatedPhysicalHybridStates.size() <= 1) {
                             throw new RuntimeException("Deadlock happened");
                         } else {
@@ -278,7 +232,6 @@ public class SpaceStateGenerator {
                                                     DiscreteBoolVariable guardSatisfiedResult,
                                                     String physicalDeclarationName) {
         if ((guardSatisfiedResult.getDefinite() && guardSatisfiedResult.getValue()) || !guardSatisfiedResult.getDefinite()) {
-//            HybridState newHybridState = cloner.deepClone(hybridStateEntry.getValue());
             HybridState newHybridState = new HybridState(hybridStateEntry.getValue());
             PhysicalState newPhysicalState = newHybridState.getPhysicalStates().get(physicalStateEntry.getKey());
             newPhysicalState.setGuardExecuted(true);
@@ -291,8 +244,7 @@ public class SpaceStateGenerator {
         }
     }
 
-    private HybridState makeInitialState() {
-        final HybridRebecaCode hybridRebecaCode = CompilerUtil.getHybridRebecaCode();
+    protected HybridState makeInitialState() {
         HashMap<String, SoftwareState> softwareStates = new HashMap<>();
         HashMap<String, PhysicalState> physicalStates = new HashMap<>();
 
@@ -305,11 +257,9 @@ public class SpaceStateGenerator {
                 if (physicalClassDeclaration == null) {
                     throw new RuntimeException("Main class not found");
                 }
-//                physicalStates.add(createPhysicalState(physicalClassDeclaration, mainRebecDefinition));
                 PhysicalState physicalState = createPhysicalState(physicalClassDeclaration, mainRebecDefinition);
                 physicalStates.put(physicalState.getActorName(), physicalState);
             } else {
-//                softwareStates.add(createSoftwareState(reactiveClassDeclaration, mainRebecDefinition));
                 SoftwareState softwareState = createSoftwareState(reactiveClassDeclaration, mainRebecDefinition);
                 softwareStates.put(softwareState.getActorName(), softwareState);
             }
@@ -336,7 +286,7 @@ public class SpaceStateGenerator {
         return false;
     }
 
-    private SoftwareState createSoftwareState(ReactiveClassDeclaration reactiveClassDeclaration, MainRebecDefinition mainRebecDefinition) {
+    protected SoftwareState createSoftwareState(ReactiveClassDeclaration reactiveClassDeclaration, MainRebecDefinition mainRebecDefinition) {
         ConstructorDeclaration constructorDeclaration = getConstructor(reactiveClassDeclaration.getConstructors(), mainRebecDefinition.getArguments());
         if (constructorDeclaration == null) {
             throw new RuntimeException("Constructor not found");
@@ -384,14 +334,11 @@ public class SpaceStateGenerator {
             }
         }
         // TODO:
-
         return new SoftwareState(mainRebecDefinition.getName(), variableValuation, new HashSet<>(),
                 constructorDeclaration.getBlock().getStatements(), 0, new ContinuousVariable("resumeTime"));
-
-
     }
 
-    private PhysicalState createPhysicalState(PhysicalClassDeclaration physicalClassDeclaration, MainRebecDefinition mainRebecDefinition) {
+    protected PhysicalState createPhysicalState(PhysicalClassDeclaration physicalClassDeclaration, MainRebecDefinition mainRebecDefinition) {
         ConstructorDeclaration constructorDeclaration = getConstructor(physicalClassDeclaration.getConstructors(), mainRebecDefinition.getArguments());
         if (constructorDeclaration == null) {
             throw new RuntimeException("Constructor not found");
