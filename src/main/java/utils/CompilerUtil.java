@@ -55,13 +55,21 @@ public class CompilerUtil {
     }
 
     public static void compile(@Nonnull String fileName) throws Exception {
+        compile(Constants.DIRECTORY_SAMPLES, fileName);
+    }
+
+    public static void compile(@Nonnull String directory, @Nonnull String fileName) throws Exception {
         CompilerUtil compilerUtil = context.getBean(CompilerUtil.class);
-        compilerUtil.doCompile(fileName);
+        compilerUtil.doCompile(directory, fileName);
     }
 
     private void doCompile(@Nonnull String fileName) throws Exception {
+        doCompile(Constants.DIRECTORY_SAMPLES, fileName);
+    }
+
+    private void doCompile(@Nonnull String directory, @Nonnull String fileName) throws Exception {
         pair = rebecaModelCompiler.compileRebecaFile(
-                Paths.get(Constants.DIRECTORY_SAMPLES, fileName).toFile(),
+                Paths.get(directory, fileName).toFile(),
                 new HashSet<>(Arrays.asList(CompilerExtension.HYBRID_REBECA
                 )), CoreVersion.CORE_2_3);
 

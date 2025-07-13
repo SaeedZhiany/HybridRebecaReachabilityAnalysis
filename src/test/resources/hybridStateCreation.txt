@@ -1,0 +1,60 @@
+reactiveclass SoftwareTest(2){
+  knownrebecs {
+  }
+
+  statevars{
+  	 float tempr;
+  	 float timer;
+  	 int inValue;
+  	 float defaultF;
+  	 int defaultI;
+  }
+
+  SoftwareTest(float tempr_, int value_){
+  		tempr = tempr_;
+  		timer = 0.5f;
+  		inValue = value_;
+  	}
+}
+
+physicalclass PhysicalTest(2)
+{
+  statevars {
+  	 float temp;
+  	 float timer;
+  	 int inValue;
+  	 float defaultF;
+  	 int defaultI;  }
+
+  mode On {
+    inv(temp<=23){
+      temp' = 1;
+      //temp'=0.8*sqrt(T);
+    }
+    guard(temp>=22){
+      setMode(Off);
+    }
+  }
+
+  mode Off {
+    inv(temp>=18){
+      temp' = -1;
+      //temp'=-2(temp-17.5);
+    }
+    guard(temp<=19){
+      setMode(On);
+    }
+  }
+
+  PhysicalTest(float tempr_, int value_){
+  		temp = tempr_;
+  		timer = 2.5f;
+  		inValue = value_;
+  		setMode(Off);
+  	}
+}
+
+main {
+	PhysicalTest pp():(20.0f, 6);
+	SoftwareTest ss():(20.0f, 7);
+}
