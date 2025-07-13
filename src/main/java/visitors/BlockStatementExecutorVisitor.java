@@ -54,6 +54,7 @@ public class BlockStatementExecutorVisitor extends Visitor<Void> {
     public Void visit(BinaryExpression binaryExpression) {
         if (binaryExpression.getOperator().equals("=")) {
             Variable rightValue = expressionEvaluatorVisitor.visit(binaryExpression.getRight());
+            rightValue.setName(((TermPrimary) binaryExpression.getLeft()).getName());
             symbolTable.put(
                     ((TermPrimary) binaryExpression.getLeft()).getName(),
                     rightValue
