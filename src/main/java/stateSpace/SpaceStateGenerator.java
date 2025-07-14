@@ -28,7 +28,6 @@ public class SpaceStateGenerator {
     }
 
     public void analyzeReachability(JoszefCaller joszefCaller) {
-        // must be tupple
         double endSimulation = 3;
 
         NonTimeProgressSOSExecutor nonTimeProgressSOSExecutor = new NonTimeProgressSOSExecutor();
@@ -38,7 +37,7 @@ public class SpaceStateGenerator {
         Queue<HybridState> queue = new LinkedList<>(nonTimeProgressSOSExecutor.generateNextStates(initialState, false));
         Boolean isFirstRound = true;
         long stateCounter =0;
-        while (!queue.isEmpty() && isReachedEndYet(queue, endSimulation)) { // should add time upper bound
+        while (!queue.isEmpty() && isReachedEndYet(queue, endSimulation)) {
             System.out.println("Queue size: " + queue.size());
             double currentEvent = 0.0;
             HybridState state = queue.poll();
@@ -66,10 +65,9 @@ public class SpaceStateGenerator {
             for (Double nextEvent : nextEventsList) {
                 if (Math.abs(previousEvent - nextEvent) > 0.0001) {
                     currentEvent = nextEvent;
-                    break; // Exit the loop once the condition is met
+                    break;
                 }
             }
-
 
             if (previousEvent >= endSimulation)
                 continue;
@@ -164,7 +162,7 @@ public class SpaceStateGenerator {
         }
     }
 
-    private Boolean isReachedEndYet(Queue<HybridState> queue, double endSimulation) {
+    protected Boolean isReachedEndYet(Queue<HybridState> queue, double endSimulation) {
         for (HybridState hybridState : queue) {
             if (hybridState.getGlobalTime().getLowerBound() < endSimulation) // CHECKME: Don't need to remove states which endSimulation < UpperBound as it is BFS
                 return true;
@@ -172,11 +170,10 @@ public class SpaceStateGenerator {
         return false;
     }
 
-    private static void updatePhysicalStates(HashMap<String, PhysicalState> physicalStates, Map<String, HybridState> updatedPhysicalHybridStates) {
+    protected static void updatePhysicalStates(HashMap<String, PhysicalState> physicalStates, Map<String, HybridState> updatedPhysicalHybridStates) {
         for (Map.Entry<String, PhysicalState> physicalStateEntry : physicalStates.entrySet()) {
             Map<String, HybridState> shallowCopyCurrentStates = new HashMap<>(updatedPhysicalHybridStates);
             for (Map.Entry<String, HybridState> hybridStateEntry : shallowCopyCurrentStates.entrySet()) {
-
                 PhysicalState physicalState = hybridStateEntry.getValue().getPhysicalStates().get(physicalStateEntry.getKey());
 
                 ExpressionEvaluatorVisitor evaluatorVisitor = new ExpressionEvaluatorVisitor(physicalState.getVariablesValuation());
@@ -202,7 +199,6 @@ public class SpaceStateGenerator {
                     checkGuardIfInvariantIsTrue(updatedPhysicalHybridStates, physicalStateEntry, hybridStateEntry,
                             guardSatisfiedResult, physicalDeclarationName);
                 }
-//            }
             }
         }
     }
@@ -231,7 +227,7 @@ public class SpaceStateGenerator {
                                                     Map.Entry<String, HybridState> hybridStateEntry,
                                                     DiscreteBoolVariable guardSatisfiedResult,
                                                     String physicalDeclarationName) {
-        if ((guardSatisfiedResult.getDefinite() && guardSatisfiedResult.getValue()) || !guardSatisfiedResult.getDefinite()) {
+        if (!guardSatisfiedResult.getDefinite() || guardSatisfiedResult.getValue()) {
             HybridState newHybridState = new HybridState(hybridStateEntry.getValue());
             PhysicalState newPhysicalState = newHybridState.getPhysicalStates().get(physicalStateEntry.getKey());
             newPhysicalState.setGuardExecuted(true);
@@ -286,53 +282,71 @@ public class SpaceStateGenerator {
         return false;
     }
 
-    protected SoftwareState createSoftwareState(ReactiveClassDeclaration reactiveClassDeclaration, MainRebecDefinition mainRebecDefinition) {
-        ConstructorDeclaration constructorDeclaration = getConstructor(reactiveClassDeclaration.getConstructors(), mainRebecDefinition.getArguments());
-        if (constructorDeclaration == null) {
-            throw new RuntimeException("Constructor not found");
-        }
+    private static Map<String, Variable> initializeVariableValuation(MainRebecDefinition mainRebecDefinition, ConstructorDeclaration constructorDeclaration) {
         Map<String, Variable> variableValuationInitial = new HashMap<>();
         ExpressionEvaluatorVisitor expressionEvaluatorVisitor = new ExpressionEvaluatorVisitor(new HashMap<>());
         for (FormalParameterDeclaration formalParameterDeclaration : constructorDeclaration.getFormalParameters()) {
             Variable variable = expressionEvaluatorVisitor.visit(mainRebecDefinition.getArguments().get(constructorDeclaration.getFormalParameters().indexOf(formalParameterDeclaration)));
             variableValuationInitial.put(formalParameterDeclaration.getName(), variable);
         }
+        return variableValuationInitial;
+    }
 
-        List<FieldDeclaration> stateVars = reactiveClassDeclaration.getStatevars();
-        for (FieldDeclaration stateVar : stateVars) {
-            String type = ((OrdinaryPrimitiveType) stateVar.getType()).getName();
-            for (VariableDeclarator variableDeclarator : stateVar.getVariableDeclarators()) {
-                switch (type) {
-                    case "int":
-                    case "byte":
-                    case "short": {
-                        variableValuationInitial.put(variableDeclarator.getVariableName(),
-                                new DiscreteDecimalVariable(variableDeclarator.getVariableName(), new BigDecimal(0)));
-                        break;
-                    }
-                    case "float":
-                    case "double": {
-                        variableValuationInitial.put(variableDeclarator.getVariableName(),
-                                new IntervalRealVariable(variableDeclarator.getVariableName(), 0.0));
-                        break;
-                    }
-                    case "boolean": {
-                        variableValuationInitial.put(variableDeclarator.getVariableName(),
-                                new DiscreteBoolVariable(variableDeclarator.getVariableName(), false));
-                        break;
-                    }
-                }
-            }
-
-        }
-        BlockStatementExecutorVisitor blockStatementExecutorVisitor = new BlockStatementExecutorVisitor(variableValuationInitial);
-        blockStatementExecutorVisitor.visit(constructorDeclaration.getBlock());
+    private static HashMap<String, Variable> getVariableValuation(List<FieldDeclaration> stateVars, Map<String, Variable> variableValuationInitial) {
         HashMap<String, Variable> variableValuation = new HashMap<>();
         for (FieldDeclaration stateVar : stateVars) {
             for (VariableDeclarator variableDeclarator : stateVar.getVariableDeclarators()) {
                 variableValuation.put(variableDeclarator.getVariableName(), variableValuationInitial.get(variableDeclarator.getVariableName()));
             }
         }
+        return variableValuation;
+    }
+
+    private static List<FieldDeclaration> initializeStateVariables(ReactiveClassDeclaration reactiveClassDeclaration, Map<String, Variable> variableValuation) {
+        List<FieldDeclaration> stateVars = reactiveClassDeclaration.getStatevars();
+        for (FieldDeclaration field : stateVars) {
+            String typeName = ((OrdinaryPrimitiveType) field.getType()).getName();
+            for (VariableDeclarator varDecl : field.getVariableDeclarators()) {
+                Variable defaultValue = extractVariableType(typeName, varDecl.getVariableName());
+                if (defaultValue != null) {
+                    variableValuation.put(varDecl.getVariableName(), defaultValue);
+                } else {
+                    throw new UnsupportedOperationException("Unsupported variable type: " + typeName);
+                }
+            }
+        }
+        return stateVars;
+    }
+
+    private static Variable extractVariableType(String type, String variableName) {
+        switch (type) {
+            case "int":
+            case "byte":
+            case "short":
+                return new DiscreteDecimalVariable(variableName, BigDecimal.ZERO);
+
+            case "float":
+            case "double":
+                return new IntervalRealVariable(variableName, 0.0);
+
+            case "boolean":
+                return new DiscreteBoolVariable(variableName, false);
+
+            default:
+                return null;
+        }
+    }
+
+    protected SoftwareState createSoftwareState(ReactiveClassDeclaration reactiveClassDeclaration, MainRebecDefinition mainRebecDefinition) {
+        ConstructorDeclaration constructorDeclaration = getConstructor(reactiveClassDeclaration.getConstructors(), mainRebecDefinition.getArguments());
+        if (constructorDeclaration == null) {
+            throw new RuntimeException("Constructor not found");
+        }
+        Map<String, Variable> variableValuationInitial = initializeVariableValuation(mainRebecDefinition, constructorDeclaration);
+        List<FieldDeclaration> stateVars = initializeStateVariables(reactiveClassDeclaration, variableValuationInitial);
+        BlockStatementExecutorVisitor blockStatementExecutorVisitor = new BlockStatementExecutorVisitor(variableValuationInitial);
+        blockStatementExecutorVisitor.visit(constructorDeclaration.getBlock());
+        HashMap<String, Variable> variableValuation = getVariableValuation(stateVars, variableValuationInitial);
         // TODO:
         return new SoftwareState(mainRebecDefinition.getName(), variableValuation, new HashSet<>(),
                 constructorDeclaration.getBlock().getStatements(), 0, new ContinuousVariable("resumeTime"));
@@ -343,48 +357,11 @@ public class SpaceStateGenerator {
         if (constructorDeclaration == null) {
             throw new RuntimeException("Constructor not found");
         }
-        Map<String, Variable> variableValuationInitial = new HashMap<>();
-        ExpressionEvaluatorVisitor expressionEvaluatorVisitor = new ExpressionEvaluatorVisitor(new HashMap<>());
-        for (FormalParameterDeclaration formalParameterDeclaration : constructorDeclaration.getFormalParameters()) {
-            Variable variable = expressionEvaluatorVisitor.visit(mainRebecDefinition.getArguments().get(constructorDeclaration.getFormalParameters().indexOf(formalParameterDeclaration)));
-            variableValuationInitial.put(formalParameterDeclaration.getName(), variable);
-        }
-
-        List<FieldDeclaration> stateVars = physicalClassDeclaration.getStatevars();
-        for (FieldDeclaration stateVar : stateVars) {
-            String type = ((OrdinaryPrimitiveType) stateVar.getType()).getName();
-            for (VariableDeclarator variableDeclarator : stateVar.getVariableDeclarators()) {
-                switch (type) {
-                    case "int":
-                    case "byte":
-                    case "short": {
-                        variableValuationInitial.put(variableDeclarator.getVariableName(),
-                                new DiscreteDecimalVariable(variableDeclarator.getVariableName(), new BigDecimal(0)));
-                        break;
-                    }
-                    case "float":
-                    case "double": {
-                        variableValuationInitial.put(variableDeclarator.getVariableName(),
-                                new IntervalRealVariable(variableDeclarator.getVariableName(), 0.0));
-                        break;
-                    }
-                    case "boolean": {
-                        variableValuationInitial.put(variableDeclarator.getVariableName(),
-                                new DiscreteBoolVariable(variableDeclarator.getVariableName(), false));
-                        break;
-                    }
-                }
-            }
-
-        }
+        Map<String, Variable> variableValuationInitial = initializeVariableValuation(mainRebecDefinition, constructorDeclaration);
+        List<FieldDeclaration> stateVars = initializeStateVariables(physicalClassDeclaration, variableValuationInitial);
         BlockStatementExecutorVisitor blockStatementExecutorVisitor = new BlockStatementExecutorVisitor(variableValuationInitial, "none");
         blockStatementExecutorVisitor.visit(constructorDeclaration.getBlock());
-        HashMap<String, Variable> variableValuation = new HashMap<>();
-        for (FieldDeclaration stateVar : stateVars) {
-            for (VariableDeclarator variableDeclarator : stateVar.getVariableDeclarators()) {
-                variableValuation.put(variableDeclarator.getVariableName(), variableValuationInitial.get(variableDeclarator.getVariableName()));
-            }
-        }
+        HashMap<String, Variable> variableValuation = getVariableValuation(stateVars, variableValuationInitial);
         return new PhysicalState(mainRebecDefinition.getName(), blockStatementExecutorVisitor.getMode(), variableValuation, new HashSet<>(), new ArrayList<>(), 0);
     }
 
