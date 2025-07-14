@@ -11,8 +11,7 @@ import javax.annotation.Nonnull;
 import java.util.*;
 
 public class HybridState {
-    // CHECKME: should global time be non-null?
-//    @Nonnull
+    //    @Nonnull
     private ContinuousVariable globalTime;
     //    @Nonnull
     private HashMap<String, SoftwareState> softwareStates;
@@ -26,13 +25,10 @@ public class HybridState {
 
 
     public HybridState() {
-        // FIXME: is this the correct way to initialize globalTime?
-        // ContinuousVariable globalTime = new ContinuousVariable("globalTime");
         this(new ContinuousVariable("globalTime"), new HashMap<>(), new HashMap<>(), new CANNetworkState());
     }
 
     public HybridState(HybridState hybridState) {
-        // CHECKME: aren't this attributes private?
         this.globalTime = new ContinuousVariable(hybridState.globalTime);
         HashMap<String, SoftwareState> newSoftwareStates = new HashMap<>();
         for (SoftwareState softwareState : hybridState.softwareStates.values()) {
@@ -46,7 +42,6 @@ public class HybridState {
         this.physicalStates = newPhysicalStates;
         this.parentHash = hybridState.getParentHash();
         this.updateHash();
-//        this.CANNetworkState = new CANNetworkState(hybridState.CANNetworkState);
     }
 
     public HybridState(
@@ -58,8 +53,6 @@ public class HybridState {
         this.globalTime = globalTime;
         this.softwareStates = softwareStates;
         this.physicalStates = physicalStates;
-//        this.CANNetworkState = CANNetworkState;
-        // CHECKME: is this the correct way to handle hashString exception?
         try {
             this.hashString = updateHash();
         } catch (Exception e) {
@@ -70,11 +63,7 @@ public class HybridState {
     public boolean equals(HybridState state) {
         String thisHashString = this.getHash();
         String stateHashString = state.getHash();
-        if (thisHashString != stateHashString) {
-            return false;
-        }
-        // TODO: make sure that the 2 states are actually equal
-        return true;
+        return thisHashString == stateHashString;
     }
 
     private void replaceSoftwareState(SoftwareState softwareState) {
@@ -91,22 +80,17 @@ public class HybridState {
         } else if (actorState instanceof PhysicalState) {
             replacePhysicalState((PhysicalState) actorState);
         }
-        // CHECKME: else
         try {
             this.updateHash();
         } catch (Exception e) {
-            // FIXME: is this the correct way to handle this exception?
             throw new RuntimeException(e);
         }
     }
 
     @Override
     public String toString() {
-        // CHECKME: the order of the states is not guaranteed, is it a problem?
         StringBuilder stringBuilder = new StringBuilder();
-
         stringBuilder.append(globalTime).append("\n");
-
         for (SoftwareState softwareState : softwareStates.values()) {
             stringBuilder.append(softwareState.toString());
             stringBuilder.append(";");
@@ -116,11 +100,9 @@ public class HybridState {
             stringBuilder.append(physicalState.toString());
             stringBuilder.append(";");
         }
-        // stringBuilder.append(CANNetworkState.toString());
         return stringBuilder.toString();
     }
 
-    // CHECKME: when should we call this method?
     public String updateHash() {
         this.hashString = StringSHA256.hashString(this.toString());
         return this.hashString;
@@ -146,8 +128,6 @@ public class HybridState {
 
     private HybridState createSuspendedState(ActorState actorState) {
         if (actorState instanceof SoftwareState softwareState) {
-//            ActorState newActorState = cloner.deepClone(actorState);
-//            HybridState newHybridState = cloner.deepClone(this);
             SoftwareState newActorState = new SoftwareState(softwareState);
             HybridState newHybridState = new HybridState(this);
             if (isNonDeterministicInResumeTime(newActorState.getResumeTime())) {
@@ -169,29 +149,18 @@ public class HybridState {
     }
 
     public boolean isSuspended(ContinuousVariable resumeTime) {
-        if ((resumeTime.getLowerBound().compareTo(this.globalTime.getLowerBound()) <= 0)) { // the less than never happens, just for the sake of completeness
-            return false;
-        }
-        return true;
+        return resumeTime.getLowerBound().compareTo(this.globalTime.getLowerBound()) > 0;
     }
 
     private boolean isNonDeterministicInResumeTime(ContinuousVariable resumeTime) {
-        if ((resumeTime.getLowerBound().compareTo(this.globalTime.getLowerBound()) <= 0) &&
-                (resumeTime.getUpperBound().compareTo(this.globalTime.getUpperBound())) > 0) {
-            return true;
-        }
-        return false;
+        return (resumeTime.getLowerBound().compareTo(this.globalTime.getLowerBound()) <= 0) &&
+                (resumeTime.getUpperBound().compareTo(this.globalTime.getUpperBound())) > 0;
     }
 
     public List<HybridState> takeMessage(ActorState actorState) {
-        // TODO: call takeMessage method on actorState and retrieve the new actorStates
-        // TODO: takeMessage method of SoftwareState can and should return multiple (at most 2?!) newSoftwareStates
-        // CHECKME: does it call on correct class? (software and physical)
         List<HybridState> result = new ArrayList<>();
         List<ActorState> generatedActorStates = actorState.takeMessage(globalTime);
         for (ActorState actorStateItr : generatedActorStates) {
-//            HybridState newHybridState = cloner.deepClone(this);
-//            ActorState newActorState = cloner.deepClone(actorStateItr);
             HybridState newHybridState = new HybridState(this);
             ActorState newActorState = actorStateItr instanceof SoftwareState ?
                     new SoftwareState((SoftwareState) actorStateItr) :
@@ -208,38 +177,48 @@ public class HybridState {
     }
 
     private ContinuousVariable getDelayAfterTime(Expression lowerBoundExp, Expression upperBoundExp, Expression exp, ExpressionEvaluatorVisitor evaluatorVisitor) {
-        Variable lowerBound = (lowerBoundExp != null) ? evaluatorVisitor.visit(lowerBoundExp) : null;
-        Variable upperBound = (upperBoundExp != null) ? evaluatorVisitor.visit(upperBoundExp) : null;
-        Variable after = (exp != null) ? evaluatorVisitor.visit(exp) : null;
+        Variable lowerBound = evaluateIfNotNull(lowerBoundExp, evaluatorVisitor);
+        Variable upperBound = evaluateIfNotNull(upperBoundExp, evaluatorVisitor);
+        Variable after = evaluateIfNotNull(exp, evaluatorVisitor);
 
         ContinuousVariable messageArrivalTime = new ContinuousVariable(globalTime);
+
         if (after != null) {
-            if (after instanceof IntervalRealVariable) {
-                messageArrivalTime.setLowerBound(globalTime.getLowerBound() + ((IntervalRealVariable) after).getLowerBound());
-                messageArrivalTime.setUpperBound(globalTime.getUpperBound() + ((IntervalRealVariable) after).getUpperBound());
-            } else {
-                messageArrivalTime.setLowerBound(globalTime.getLowerBound() + ((DiscreteDecimalVariable) after).getValue().doubleValue());
-                messageArrivalTime.setUpperBound(globalTime.getUpperBound() + (((DiscreteDecimalVariable) after).getValue().doubleValue()));
-            }
+            messageArrivalTime.setLowerBound(globalTime.getLowerBound() + extractLowerBound(after));
+            messageArrivalTime.setUpperBound(globalTime.getUpperBound() + extractUpperBound(after));
         }
 
         if (lowerBound != null) {
-            if (lowerBound instanceof IntervalRealVariable) {
-                messageArrivalTime.setLowerBound(globalTime.getLowerBound() + (((IntervalRealVariable) lowerBound).getLowerBound()));
-            } else {
-                messageArrivalTime.setLowerBound(globalTime.getLowerBound() + (((DiscreteDecimalVariable) lowerBound).getValue().doubleValue()));
-            }
+            messageArrivalTime.setLowerBound(globalTime.getLowerBound() + extractLowerBound(lowerBound));
         }
 
         if (upperBound != null) {
-            if (upperBound instanceof IntervalRealVariable) {
-                messageArrivalTime.setUpperBound(globalTime.getUpperBound() + (((IntervalRealVariable) upperBound).getUpperBound()));
-            } else {
-                messageArrivalTime.setUpperBound(globalTime.getUpperBound() + (((DiscreteDecimalVariable) upperBound).getValue().doubleValue()));
-            }
+            messageArrivalTime.setUpperBound(globalTime.getUpperBound() + extractUpperBound(upperBound));
         }
 
         return messageArrivalTime;
+    }
+
+    private Variable evaluateIfNotNull(Expression expr, ExpressionEvaluatorVisitor visitor) {
+        return (expr != null) ? visitor.visit(expr) : null;
+    }
+
+    private double extractLowerBound(Variable variable) {
+        if (variable instanceof IntervalRealVariable) {
+            return ((IntervalRealVariable) variable).getLowerBound();
+        } else if (variable instanceof DiscreteDecimalVariable) {
+            return ((DiscreteDecimalVariable) variable).getValue().doubleValue();
+        }
+        throw new IllegalArgumentException("Unsupported variable type for lower bound extraction.");
+    }
+
+    private double extractUpperBound(Variable variable) {
+        if (variable instanceof IntervalRealVariable) {
+            return ((IntervalRealVariable) variable).getUpperBound();
+        } else if (variable instanceof DiscreteDecimalVariable) {
+            return ((DiscreteDecimalVariable) variable).getValue().doubleValue();
+        }
+        throw new IllegalArgumentException("Unsupported variable type for upper bound extraction.");
     }
 
     private HashMap<String, Variable> getMessageCallParameter(String receiver, String serverName, ExpressionEvaluatorVisitor evaluatorVisitor, DotPrimary sendStatement) {
@@ -269,48 +248,49 @@ public class HybridState {
         }
     }
 
-    public List<HybridState> sendStatement(ActorState actorState) {
-        List<HybridState> result = new ArrayList<>();
-//        HybridState newHybridState = cloner.deepClone(this);
-        HybridState newHybridState = new HybridState(this);
-//        RunUnchangeableStatementsVisitors runner = new RunUnchangeableStatementsVisitors(actorState);
-        // TODO: do it better for another type og statements
-//        ActorState newActorState = cloner.deepClone(actorState);
-        ActorState newActorState = actorState instanceof SoftwareState ?
+    private ActorState cloneActorState(ActorState actorState) {
+        return actorState instanceof SoftwareState ?
                 new SoftwareState((SoftwareState) actorState) :
                 new PhysicalState((PhysicalState) actorState);
-        // CHECKME: maybe shouldn't delete
-        final DotPrimary sendStatement = (DotPrimary) actorState.getSigma().get(0);
+    }
+
+    private String resolveReceiver(String sender, DotPrimary statement) {
+        String targetName = ((TermPrimary) statement.getLeft()).getName();
+        String receiver = RebecInstantiationMapping.getInstance().getKnownRebecBinding(sender, targetName);
+        return (receiver == null && "self".equals(targetName)) ? sender : receiver;
+    }
+
+    private ContinuousVariable computeArrivalTime(DotPrimary statement, ExpressionEvaluatorVisitor evaluator) {
+        TimedRebecaParentSuffixPrimary suffix = (TimedRebecaParentSuffixPrimary)
+                ((TermPrimary) statement.getRight()).getParentSuffixPrimary();
+        return getDelayAfterTime(
+                suffix.getStartAfterExpression(),
+                suffix.getEndAfterExpression(),
+                suffix.getAfterExpression(),
+                evaluator
+        );
+    }
+
+    public List<HybridState> sendStatement(ActorState actorState) {
+        List<HybridState> result = new ArrayList<>();
+        HybridState newHybridState = new HybridState(this);
+
+        ActorState newActorState = cloneActorState(actorState);
         newActorState.nextStatement();
 
+        DotPrimary sendStatement = (DotPrimary) actorState.getSigma().get(0);
         String sender = actorState.actorName;
-        String receiver = RebecInstantiationMapping.getInstance().getKnownRebecBinding(sender, ((TermPrimary) sendStatement.getLeft()).getName());
-        if (receiver == null && ((TermPrimary) sendStatement.getLeft()).getName().equals("self")) {
-            receiver = sender;
-        }
+        String receiver = resolveReceiver(sender, sendStatement);
         String serverName = ((TermPrimary) sendStatement.getRight()).getName();
 
         ExpressionEvaluatorVisitor evaluatorVisitor = new ExpressionEvaluatorVisitor(newActorState.getVariableValuation());
         HashMap<String, Variable> callParameters = getMessageCallParameter(receiver, serverName, evaluatorVisitor, sendStatement);
+        ContinuousVariable arrivalTime = computeArrivalTime(sendStatement, evaluatorVisitor);
+        arrivalTime.setName("arrivalTime");
 
-        ContinuousVariable messageArrivalTime = getDelayAfterTime(
-                ((TimedRebecaParentSuffixPrimary) ((TermPrimary) sendStatement.getRight()).getParentSuffixPrimary()).getStartAfterExpression(),
-                ((TimedRebecaParentSuffixPrimary) ((TermPrimary) sendStatement.getRight()).getParentSuffixPrimary()).getEndAfterExpression(),
-                ((TimedRebecaParentSuffixPrimary) ((TermPrimary) sendStatement.getRight()).getParentSuffixPrimary()).getAfterExpression(),
-                evaluatorVisitor
-        );
-        messageArrivalTime.setName("arrivalTime");
-        Message message = new Message(actorState.actorName, receiver, serverName, callParameters, messageArrivalTime);
+        Message message = new Message(sender, receiver, serverName, callParameters, arrivalTime);
         resetResumeTime(newActorState);
-        if (sender.equals(receiver)) {
-            newActorState.addMessage(message);
-            newHybridState.replaceActorState(newActorState);
-        } else {
-            ActorState receiverActorState = newHybridState.getActorState(receiver);
-            receiverActorState.addMessage(message);
-            newHybridState.replaceActorState(newActorState);
-            newHybridState.replaceActorState(receiverActorState);
-        }
+        applyMessageToHybridState(newHybridState, newActorState, receiver, message);
 
         resetStateVarsIfLastStmt(newActorState);
         result.add(newHybridState);
@@ -319,19 +299,25 @@ public class HybridState {
         if (suspendedState != null) {
             result.add(suspendedState);
         }
-
         return result;
+    }
+
+    private void applyMessageToHybridState(HybridState state, ActorState senderState, String receiver, Message message) {
+        if (senderState.actorName.equals(receiver)) {
+            senderState.addMessage(message);
+            state.replaceActorState(senderState);
+        } else {
+            ActorState receiverState = state.getActorState(receiver);
+            receiverState.addMessage(message);
+            state.replaceActorState(senderState);
+            state.replaceActorState(receiverState);
+        }
     }
 
     public List<HybridState> assignStatement(ActorState actorState) {
         List<HybridState> result = new ArrayList<>();
-//        HybridState newHybridState = cloner.deepClone(this);
-//        ActorState newActorState = cloner.deepClone(actorState);
         HybridState newHybridState = new HybridState(this);
-        ActorState newActorState = actorState instanceof SoftwareState ?
-                new SoftwareState((SoftwareState) actorState) :
-                new PhysicalState((PhysicalState) actorState);
-        // CHECKME: maybe shouldn't delete
+        ActorState newActorState = cloneActorState(actorState);
         BinaryExpression assignStatement = (BinaryExpression) newActorState.nextStatement();
 
         String variableName = ((TermPrimary) assignStatement.getLeft()).getName();
@@ -354,11 +340,8 @@ public class HybridState {
 
     public List<HybridState> delayStatement(SoftwareState softwareState) {
         List<HybridState> result = new ArrayList<>();
-//        HybridState newHybridState = cloner.deepClone(this);
-//        SoftwareState newSoftwareState = cloner.deepClone(softwareState);
         HybridState newHybridState = new HybridState(this);
         SoftwareState newSoftwareState = new SoftwareState(softwareState);
-        // CHECKME: maybe shouldn't delete
         final TermPrimary delayStatement = (TermPrimary) softwareState.getSigma().get(0);
         newSoftwareState.nextStatement();
 
@@ -385,46 +368,20 @@ public class HybridState {
 
     public List<HybridState> ifStatement(ActorState actorState) {
         List<HybridState> result = new ArrayList<>();
-//        HybridState newHybridState = cloner.deepClone(this);
-//        ActorState newActorState = cloner.deepClone(actorState);
         HybridState newHybridState = new HybridState(this);
-        ActorState newActorState = actorState instanceof SoftwareState ?
-                new SoftwareState((SoftwareState) actorState) :
-                new PhysicalState((PhysicalState) actorState);
-        // CHECKME: maybe shouldn't delete
+
+        ActorState newActorState = cloneActorState(actorState);
         ConditionalStatement conditionalStatement = (ConditionalStatement) actorState.getSigma().get(0);
         newActorState.nextStatement();
-        ExpressionEvaluatorVisitor expressionEvaluatorVisitor = new ExpressionEvaluatorVisitor(actorState.getVariableValuation());
-        DiscreteBoolVariable conditionResult = (DiscreteBoolVariable) expressionEvaluatorVisitor.visit(conditionalStatement.getCondition());
+
+        ExpressionEvaluatorVisitor evaluator = new ExpressionEvaluatorVisitor(actorState.getVariableValuation());
+        DiscreteBoolVariable conditionResult = (DiscreteBoolVariable) evaluator.visit(conditionalStatement.getCondition());
 
         if (conditionResult.getDefinite()) {
-            if (conditionResult.getValue()) {
-                addExtractedStatement(newActorState, conditionalStatement.getStatement());
-            } else {
-                addExtractedStatement(newActorState, conditionalStatement.getElseStatement());
-            }
-            resetResumeTime(newActorState);
-            newHybridState.replaceActorState(newActorState);
-            resetStateVarsIfLastStmt(newActorState);
+            handleDefiniteCondition(newActorState, conditionalStatement, conditionResult, newHybridState);
             result.add(newHybridState);
         } else {
-            addExtractedStatement(newActorState, conditionalStatement.getStatement());
-//            ActorState newActorState2 = cloner.deepClone(actorState);
-            ActorState newActorState2 = actorState instanceof SoftwareState ?
-                    new SoftwareState((SoftwareState) actorState) :
-                    new PhysicalState((PhysicalState) actorState);
-            newActorState2.nextStatement();
-            addExtractedStatement(newActorState2, conditionalStatement.getElseStatement());
-            resetResumeTime(newActorState);
-            resetResumeTime(newActorState2);
-            newHybridState.replaceActorState(newActorState);
-//            HybridState newHybridState2 = cloner.deepClone(newHybridState);
-            HybridState newHybridState2 = new HybridState(newHybridState);
-            newHybridState2.replaceActorState(newActorState2);
-            resetStateVarsIfLastStmt(newActorState);
-            resetStateVarsIfLastStmt(newActorState2);
-            result.add(newHybridState);
-            result.add(newHybridState2);
+            result.addAll(handleIndefiniteCondition(actorState, conditionalStatement, newHybridState));
         }
 
         HybridState suspendedState = createSuspendedState(actorState);
@@ -435,17 +392,56 @@ public class HybridState {
         return result;
     }
 
+    private void handleDefiniteCondition(ActorState actorState, ConditionalStatement conditionalStatement,
+                                         DiscreteBoolVariable conditionResult, HybridState hybridState) {
+        if (conditionResult.getValue()) {
+            addExtractedStatement(actorState, conditionalStatement.getStatement());
+        } else {
+            addExtractedStatement(actorState, conditionalStatement.getElseStatement());
+        }
+        resetResumeTime(actorState);
+        hybridState.replaceActorState(actorState);
+        resetStateVarsIfLastStmt(actorState);
+    }
+
+    private List<HybridState> handleIndefiniteCondition(ActorState originalActorState, ConditionalStatement conditionalStatement,
+                                                        HybridState baseHybridState) {
+        List<HybridState> states = new ArrayList<>();
+
+        // First branch - condition true
+        ActorState trueBranchState = cloneActorState(originalActorState);
+        trueBranchState.nextStatement();
+        addExtractedStatement(trueBranchState, conditionalStatement.getStatement());
+
+        // Second branch - condition false
+        ActorState falseBranchState = cloneActorState(originalActorState);
+        falseBranchState.nextStatement();
+        addExtractedStatement(falseBranchState, conditionalStatement.getElseStatement());
+
+        // Reset times
+        resetResumeTime(trueBranchState);
+        resetResumeTime(falseBranchState);
+
+        // Create HybridStates
+        baseHybridState.replaceActorState(trueBranchState);
+        HybridState falseHybridState = new HybridState(baseHybridState);
+        falseHybridState.replaceActorState(falseBranchState);
+
+        resetStateVarsIfLastStmt(trueBranchState);
+        resetStateVarsIfLastStmt(falseBranchState);
+
+        states.add(baseHybridState);
+        states.add(falseHybridState);
+
+        return states;
+    }
+
     public List<HybridState> setModeStatement(PhysicalState physicalState) {
         List<HybridState> result = new ArrayList<>();
-//        HybridState newHybridState = cloner.deepClone(this);
-//        PhysicalState newPhysicalState = cloner.deepClone(physicalState);
         HybridState newHybridState = new HybridState(this);
         PhysicalState newPhysicalState = new PhysicalState(physicalState);
-        // CHECKME: maybe shouldn't delete
         final TermPrimary setModeStatement = (TermPrimary) physicalState.getSigma().get(0);
-
         newPhysicalState.nextStatement();
-
         String mode = ((TermPrimary) setModeStatement.getParentSuffixPrimary().getArguments().get(0)).getName();
         newPhysicalState.setMode(mode);
         newPhysicalState.setLastTimeModeChangedLowerBound(globalTime.getLowerBound());
@@ -466,17 +462,14 @@ public class HybridState {
 
     public List<Set<String>> getGlobalStateModes() {
         List<Set<String>> globalStateModes = new ArrayList<>();
-
         for (Map.Entry<String, PhysicalState> entry : physicalStates.entrySet()) {
             String key = entry.getKey();
             PhysicalState value = entry.getValue();
-
             if (!("none".equals(value.getMode()))) {
                 Set<String> new_set = new HashSet<>();
                 new_set.add(key);
                 new_set.add(value.getMode());
                 globalStateModes.add(new_set);
-
             }
         }
         return globalStateModes;
@@ -487,16 +480,13 @@ public class HybridState {
         for (String ODE : ODEs) {
             String[] components = extractVariableNames(ODE);
             String physicalClassName = components[0], odeVariableName = components[1];
-
             for (Map.Entry<String, PhysicalState> entry : physicalStates.entrySet()) {
                 PhysicalState it = entry.getValue();
                 String itName = entry.getKey();
-
                 if (physicalClassName.equals(itName)) {
                     for (Map.Entry<String, Variable> VariablesValuation : it.getVariablesValuation().entrySet()) {
                         String variable = VariablesValuation.getKey();
                         Variable valuation = VariablesValuation.getValue();
-
                         if (odeVariableName.equals(variable)) {
                             intervalsList.add(((IntervalRealVariable) valuation).getLowerBound());
                             intervalsList.add(((IntervalRealVariable) valuation).getUpperBound());
@@ -505,7 +495,6 @@ public class HybridState {
                 }
             }
         }
-
         double[] intervalsArray = new double[intervalsList.size()];
         for (int i = 0; i < intervalsList.size(); i++)
             intervalsArray[i] = intervalsList.get(i);
@@ -518,7 +507,6 @@ public class HybridState {
         result[0] = firstSplit[0];
         String secondPart = firstSplit[1].replace("'", "").split("=")[0];
         result[1] = secondPart;
-
         return result;
     }
 
@@ -531,19 +519,13 @@ public class HybridState {
     }
 
     public double[] getEvents(double globalTimeLowerBound, double timeInterval) {
-
         ArrayList<Double> resumeTimes = getSoftwareStatesResumeTimes();
         ArrayList<Double> arrivalTimes = getMessageArrivalTimes();
-
         ArrayList<Double> combinedList = new ArrayList<>(resumeTimes);
-//        combinedList.add(globalTimeLowerBound + timeInterval);
-//        combinedList.add(globalTimeUpperBound + timeInterval);
         combinedList.addAll(arrivalTimes);
         combinedList.removeIf(value -> value <= globalTimeLowerBound);
-
         double[] Events = combinedList.stream().mapToDouble(Double::doubleValue).toArray();
         Arrays.sort(Events);
-
         return Events;
     }
 
@@ -553,7 +535,6 @@ public class HybridState {
             resumeTimes.add(softwareState.getResumeTime().getLowerBound().doubleValue());
             resumeTimes.add(softwareState.getResumeTime().getUpperBound().doubleValue());
         }
-
         return resumeTimes;
     }
 
@@ -565,7 +546,6 @@ public class HybridState {
                 arrivalTimes.add(message.getArrivalTime().getUpperBound().doubleValue());
             }
         }
-
         return arrivalTimes;
     }
 

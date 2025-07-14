@@ -18,30 +18,15 @@ public abstract class ActorState {
     @Nonnull
     protected String actorName;
 
-    /**
-     * key: variable name
-     * value: variable current value
-     */
     @Nonnull
     protected HashMap<String, Variable> variablesValuation;
 
-    /**
-     * queue of messages that must be taken care of
-     */
     @Nonnull
     protected Set<Message> messageBag;
 
-    // CHECKME: what exactly are statements? how to implement toString()?
-    /**
-     * list of statements that must be executed
-     */
     @Nonnull
     protected List<Statement> sigma;
 
-    /**
-     * local time of actor
-     */
-    // CHECKME: what does local time used for?
     protected float localTime;
 
     public ActorState(
@@ -74,23 +59,6 @@ public abstract class ActorState {
     }
 
     public void updateVariable(Variable variable) {
-//        if (this.variablesValuation.containsKey(variable.getName())) {
-//            if (this.variablesValuation.get(variable.getName()) instanceof IntervalRealVariable && variable instanceof DiscreteDecimalVariable) {
-//                this.variablesValuation.put(variable.getName(), new IntervalRealVariable(variable.getName(),
-//                        ((DiscreteDecimalVariable) variable).getValue().doubleValue(),
-//                        ((DiscreteDecimalVariable) variable).getValue().doubleValue())
-//                );
-//            } else if (this.variablesValuation.get(variable.getName()) instanceof ContinuousVariable && variable instanceof DiscreteDecimalVariable) {
-//                this.variablesValuation.put(variable.getName(), new ContinuousVariable(variable.getName(),
-//                        ((DiscreteDecimalVariable) variable).getValue().doubleValue(),
-//                        ((DiscreteDecimalVariable) variable).getValue().doubleValue())
-//                );
-//            } else {
-//                this.variablesValuation.put(variable.getName(), variable);
-//            }
-//        } else {
-//            this.variablesValuation.put(variable.getName(), variable);
-//        }
         this.variablesValuation.put(variable.getName(), variable);
     }
 
@@ -100,7 +68,6 @@ public abstract class ActorState {
     }
 
     @Nullable
-    // CHECKME: is this the correct way to write this method?
     public Message nextMessage() {
         return messageBag.iterator().next();
     }
@@ -120,7 +87,7 @@ public abstract class ActorState {
 
     @Nullable
     public Statement nextStatement() {
-        if (sigma.size() > 0) {
+        if (!sigma.isEmpty()) {
             return sigma.remove(0);
         }
         return null;
@@ -144,7 +111,6 @@ public abstract class ActorState {
         return null;
     }
 
-    // CHECKME: should put it here?
     public boolean hasStatement() {
         return !getSigma().isEmpty();
     }
@@ -158,7 +124,6 @@ public abstract class ActorState {
     }
 
     public void removeMessage(Message message) {
-//        Message messageToBeRemoved = messageBag.stream().filter(e -> e.equals(message)).findFirst().orElse(null);
         this.messageBag.remove(message);
     }
 

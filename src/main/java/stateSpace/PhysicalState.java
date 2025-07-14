@@ -10,11 +10,6 @@ import java.util.*;
 
 public class PhysicalState extends ActorState {
 
-    /**
-     * mode of actor
-     * the none mode represents as "none"
-     */
-
     @Nullable
     private String mode;
     @Nullable
@@ -60,18 +55,10 @@ public class PhysicalState extends ActorState {
         }
         this.messageBag = newMessageBag;
         List<Statement> newSigma = new ArrayList<>();
-        newSigma = new ArrayList<>(physicalState.getSigma()); // TODO: I think shallow copy is fine
-//        for (Statement statement : physicalState.getSigma()) {
-//            // FIXME: this is a shallow copy, should we use a deep copy?
-//            Statement copiedStatement = cloner.deepClone(statement);
-//            newSigma.add(copiedStatement);
-//        }
         Map<String, List<Double>> newODEsResult = new HashMap<>();
         for (Map.Entry<String, List<Double>> entry : physicalState.ODEsResult.entrySet()) {
-            // Create a new list with the same elements for each entry
             newODEsResult.put(entry.getKey(), new ArrayList<>(entry.getValue()));
         }
-
         this.sigma = newSigma;
         this.localTime = physicalState.getLocalTime();
         this.ODEsResult = newODEsResult;
@@ -94,7 +81,6 @@ public class PhysicalState extends ActorState {
 
     @Override
     public String toString() {
-        // CHECKME: which variables should be included in the string?
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("Actor: ").append(getActorName()).append("\n");
         stringBuilder.append("Mode: ").append(getMode()).append("\n");
@@ -143,34 +129,18 @@ public class PhysicalState extends ActorState {
     }
 
     public List<ActorState> takeMessage(ContinuousVariable globalTime) {
-        /**
-         * TODO: START FROM HERE
-         */
         List<ActorState> result = new ArrayList<>();
         List<Message> messagesToBeTaken = getMessagesToBeTaken(globalTime);
         for (Message message : messagesToBeTaken) {
-//            PhysicalState newPhysicalState = cloner.deepClone(this);
             PhysicalState newPhysicalState = new PhysicalState(this);
-            // TODO: !!!START FROM HERE!!!
-//            BigDecimal tMin = globalTime.getUpperBound().min(message.getArrivalTime().getUpperBound());
-            // updating actor valuation function
-            // CHECKME: what should we do if parameters have same name as a valuation variable? we are overwriting them here
-            // CHECKME: shouldn't we get a copy of parameters and then add them to variable valuation? (to avoid overwriting)
             newPhysicalState.addVariables(message.getParameters());
-            // removing message from message bag
             newPhysicalState.removeMessage(message);
-            // TODO: add body of the message to list of statement to be executed
             String physicalClassType = RebecInstantiationMapping.getInstance().getRebecReactiveClassType(newPhysicalState.getActorName());
             List<Statement> messageBody = CompilerUtil.getMessageBody(physicalClassType, message.getServerName());
             newPhysicalState.addStatements(messageBody);
-            // TODO: update resume time
-            // CHECKME: why we should update resume time?
-            // FIXME: what should be the name of the ContinuousVariable?
             result.add(newPhysicalState);
 
-            // CHECKME: shouldn't it be <= instead of <?
             if (globalTime.getUpperBound().compareTo(message.getArrivalTime().getUpperBound()) < 0) {
-//                newPhysicalState = cloner.deepClone(this);
                 newPhysicalState = new PhysicalState(this);
                 Message newMessage = new Message(
                         message.getSenderActor(),
@@ -181,13 +151,10 @@ public class PhysicalState extends ActorState {
                 );
                 newPhysicalState.removeMessage(message);
                 newPhysicalState.addMessage(newMessage);
-                // FIXME: what epsilon means for sigma? should we set it to null? or should we set it to empty list?
                 newPhysicalState.setSigma(new ArrayList<>());
-                // FIXME: what epsilon means for resumeTime?
                 result.add(newPhysicalState);
             }
         }
-
         return result;
     }
 
@@ -209,56 +176,47 @@ public class PhysicalState extends ActorState {
     }
 
     public void computeODEBoundsForTimeRange(ContinuousVariable globalTime, double stepSize, double endSimulation) {
-        double globalLowerBound = globalTime.getLowerBound();
-        double globalUpperBound = globalTime.getUpperBound();
-
-        int startIndex = (int) Math.floor((globalLowerBound - lastTimeModeChangedLowerBound) / stepSize);
-        int endIndex = (int) Math.ceil((globalUpperBound - lastTimeModeChangedLowerBound) / stepSize);
-
-        if (startIndex < 0) startIndex = 0;
-//        if (endIndex > (int) Math.floor((endSimulation - lastTimeModeChangedLowerBound) / stepSize)) {
-//            endIndex = (int) Math.ceil((endSimulation - lastTimeModeChangedLowerBound) / stepSize);
-//        }
+        int startIndex = calculateStartIndex(globalTime.getLowerBound(), stepSize);
+        int endIndex = calculateEndIndex(globalTime.getUpperBound(), stepSize);
 
         for (Map.Entry<String, List<Double>> entry : ODEsResult.entrySet()) {
             String variableName = entry.getKey();
             List<Double> results = entry.getValue();
 
-            double minLowerBound = Double.POSITIVE_INFINITY;
-            double maxUpperBound = Double.NEGATIVE_INFINITY;
+            Bounds bounds = extractBounds(results, startIndex, endIndex);
+            IntervalRealVariable interval = (IntervalRealVariable) variablesValuation.get(variableName);
+            interval.setLowerBound(bounds.min);
+            interval.setUpperBound(bounds.max);
+        }
+    }
 
-            for (int i = startIndex; i < endIndex; i++) {
-//                int baseIndex = i * 4;
-//                if (baseIndex + 3 >= results.size()) break;
+    private int calculateStartIndex(double lowerBound, double stepSize) {
+        int index = (int) Math.floor((lowerBound - lastTimeModeChangedLowerBound) / stepSize);
+        return Math.max(index, 0);
+    }
 
-                int baseIndex = i * 2;
-                if (baseIndex + 1 >= results.size()) {
-                    minLowerBound = results.get(results.size() - 1);
-                    maxUpperBound = results.get(results.size() - 1);
+    private int calculateEndIndex(double upperBound, double stepSize) {
+        return (int) Math.ceil((upperBound - lastTimeModeChangedLowerBound) / stepSize);
+    }
 
-                    break;
-                }
+    private Bounds extractBounds(List<Double> results, int startIndex, int endIndex) {
+        double min = Double.POSITIVE_INFINITY;
+        double max = Double.NEGATIVE_INFINITY;
 
-//                double lowerBoundLowerInterval = results.get(baseIndex);
-//                double upperBoundLowerInterval = results.get(baseIndex + 1);
-//                double lowerBoundUpperInterval = results.get(baseIndex + 2);
-//                double upperBoundUpperInterval = results.get(baseIndex + 3);
-                double lowerBoundLowerInterval = results.get(baseIndex);
-//                double upperBoundLowerInterval = results.get(baseIndex + 1);
-                double lowerBoundUpperInterval = results.get(baseIndex + 1);
-//                double upperBoundUpperInterval = results.get(baseIndex + 3);
-
-
-//                minLowerBound = Math.min(minLowerBound, Math.min(lowerBoundLowerInterval, upperBoundLowerInterval));
-//                maxUpperBound = Math.max(maxUpperBound, Math.max(lowerBoundUpperInterval, upperBoundUpperInterval));
-                minLowerBound = Math.min(minLowerBound, lowerBoundLowerInterval);
-                maxUpperBound = Math.max(maxUpperBound, lowerBoundUpperInterval);
+        for (int i = startIndex; i < endIndex; i++) {
+            int baseIndex = i * 2;
+            if (baseIndex + 1 >= results.size()) {
+                double fallback = results.get(results.size() - 1);
+                return new Bounds(fallback, fallback);
             }
 
-            ((IntervalRealVariable) variablesValuation.get(variableName)).setLowerBound(minLowerBound);
-            ((IntervalRealVariable) variablesValuation.get(variableName)).setUpperBound(maxUpperBound);
+            double lower = results.get(baseIndex);
+            double upper = results.get(baseIndex + 1);
+            min = Math.min(min, lower);
+            max = Math.max(max, upper);
         }
 
+        return new Bounds(min, max);
     }
 
     public void addODEResult(String ODEVaribale, List<Double> results) {
@@ -273,5 +231,14 @@ public class PhysicalState extends ActorState {
 
     public void setGuardExecuted(boolean guardExecuted) {
         this.guardExecuted = guardExecuted;
+    }
+
+    private static class Bounds {
+        double min;
+        double max;
+        Bounds(double min, double max) {
+            this.min = min;
+            this.max = max;
+        }
     }
 }

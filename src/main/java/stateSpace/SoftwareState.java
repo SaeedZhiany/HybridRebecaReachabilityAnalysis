@@ -8,10 +8,6 @@ import javax.annotation.Nonnull;
 import java.util.*;
 
 public class SoftwareState extends ActorState {
-
-    /**
-     * resume time of actor
-     */
     private ContinuousVariable resumeTime;
 
     public SoftwareState(
@@ -48,12 +44,7 @@ public class SoftwareState extends ActorState {
         }
         this.messageBag = newMessageBag;
         List<Statement> newSigma = new ArrayList<>();
-        newSigma = new ArrayList<>(softwareState.getSigma()); // TODO: I think shallow copy is fine
-//        for (Statement statement : softwareState.getSigma()) {
-//            // CHECKME: this is a shallow copy, should we use a deep copy?
-//            Statement copiedStatement = cloner.deepClone(statement);
-//            newSigma.add(copiedStatement);
-//        }
+        newSigma = new ArrayList<>(softwareState.getSigma());
         this.sigma = newSigma;
         this.localTime = softwareState.getLocalTime();
         this.resumeTime = new ContinuousVariable(softwareState.getResumeTime());
@@ -71,7 +62,6 @@ public class SoftwareState extends ActorState {
 
     @Override
     public String toString() {
-        // CHECKME: which variables should be included in the string?
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("Actor: ").append(getActorName()).append("\n");
         stringBuilder.append("Resume Time: ").append(getResumeTime().toString()).append("\n");
@@ -94,7 +84,6 @@ public class SoftwareState extends ActorState {
         for (Statement statement : getSigma()) {
             stringBuilder.append(statement.toString()).append("\n");
         }
-
         return stringBuilder.toString();
     }
 
@@ -122,29 +111,16 @@ public class SoftwareState extends ActorState {
         List<ActorState> result = new ArrayList<>();
         List<Message> messagesToBeTaken = getMessagesToBeTaken(globalTime);
         for (Message message : messagesToBeTaken) {
-//            SoftwareState newSoftwareState = cloner.deepClone(this);
             SoftwareState newSoftwareState = new SoftwareState(this);
-            // TODO: !!!START FROM HERE!!!
-//            BigDecimal tMin = globalTime.getUpperBound().min(message.getArrivalTime().getUpperBound());
-            // updating actor valuation function
-            // CHECKME: what should we do if parameters have same name as a valuation variable? we are overwriting them here
-            // CHECKME: shouldn't we get a copy of parameters and then add them to variable valuation? (to avoid overwriting)
             newSoftwareState.addVariables(message.getParameters());
-            // removing message from message bag
             newSoftwareState.removeMessage(message);
-            // TODO: add body of the message to list of statement to be executed
             String reactiveClassType = RebecInstantiationMapping.getInstance().getRebecReactiveClassType(newSoftwareState.getActorName());
             List<Statement> messageBody = CompilerUtil.getMessageBody(reactiveClassType, message.getServerName());
             newSoftwareState.addStatements(messageBody);
-            // TODO: update resume time
-            // CHECKME: why we should update resume time?
-            // FIXME: what should be the name of the ContinuousVariable?
             newSoftwareState.setResumeTime(new ContinuousVariable("resumeTime", globalTime.getLowerBound(), globalTime.getUpperBound()));
             result.add(newSoftwareState);
 
-            // CHECKME: shouldn't it be <= instead of <?
             if (globalTime.getUpperBound().compareTo(message.getArrivalTime().getUpperBound()) < 0) {
-//                newSoftwareState = cloner.deepClone(this);
                 newSoftwareState = new SoftwareState(this);
                 Message newMessage = new Message(
                         message.getSenderActor(),
@@ -155,14 +131,11 @@ public class SoftwareState extends ActorState {
                 );
                 newSoftwareState.removeMessage(message);
                 newSoftwareState.addMessage(newMessage);
-                // FIXME: what epsilon means for sigma? should we set it to null? or should we set it to empty list?
                 newSoftwareState.setSigma(new ArrayList<>());
-                // FIXME: what epsilon means for resumeTime?
                 newSoftwareState.setResumeTime(new ContinuousVariable("resumeTime", globalTime.getLowerBound(), globalTime.getUpperBound()));
                 result.add(newSoftwareState);
             }
         }
-
         return result;
     }
 
