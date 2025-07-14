@@ -1,46 +1,79 @@
 package utils;
 
+import configs.SpringConfig;
 import dataStructure.ConnectionType;
-import org.rebecalang.compiler.modelcompiler.RebecaCompiler;
+import org.rebecalang.compiler.modelcompiler.RebecaModelCompiler;
 import org.rebecalang.compiler.modelcompiler.SymbolTable;
 import org.rebecalang.compiler.modelcompiler.corerebeca.objectmodel.*;
 import org.rebecalang.compiler.modelcompiler.hybridrebeca.objectmodel.HybridRebecaCode;
 import org.rebecalang.compiler.modelcompiler.hybridrebeca.objectmodel.ModeDeclaration;
 import org.rebecalang.compiler.modelcompiler.hybridrebeca.objectmodel.PhysicalClassDeclaration;
-import org.rebecalang.compiler.utils.CompilerFeature;
+import org.rebecalang.compiler.utils.CompilerExtension;
+import org.rebecalang.compiler.utils.CoreVersion;
 import org.rebecalang.compiler.utils.ExceptionContainer;
 import org.rebecalang.compiler.utils.Pair;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.stereotype.Component;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 import static dataStructure.ConnectionType.WIRE;
 
+@Component
 public class CompilerUtil {
 
     @Nonnull
+//    @Autowired
     private static Pair<RebecaModel, SymbolTable> pair;
 
     static {
         pair = new Pair<>();
     }
 
+    @Autowired
+    private RebecaModelCompiler rebecaModelCompiler;
+
+    @Autowired
+    private ExceptionContainer exceptionContainer;
+
+    private static ApplicationContext context;
+
+    static {
+        initializeSpring();
+    }
+
+    private static void initializeSpring() {
+        context = new AnnotationConfigApplicationContext(SpringConfig.class);
+    }
+
     private CompilerUtil() {
     }
 
     public static void compile(@Nonnull String fileName) throws Exception {
-        RebecaCompiler compiler = new RebecaCompiler();
-        pair = compiler.compileRebecaFile(
-                Paths.get(Constants.DIRECTORY_SAMPLES, fileName).toFile(),
-                new HashSet<>(Arrays.asList(CompilerFeature.CORE_2_3, CompilerFeature.HYBRID_REBECA))
-        );
+        compile(Constants.DIRECTORY_SAMPLES, fileName);
+    }
 
-        final ExceptionContainer exceptionContainer = compiler.getExceptionContainer();
+    public static void compile(@Nonnull String directory, @Nonnull String fileName) throws Exception {
+        CompilerUtil compilerUtil = context.getBean(CompilerUtil.class);
+        compilerUtil.doCompile(directory, fileName);
+    }
+
+    private void doCompile(@Nonnull String fileName) throws Exception {
+        doCompile(Constants.DIRECTORY_SAMPLES, fileName);
+    }
+
+    private void doCompile(@Nonnull String directory, @Nonnull String fileName) throws Exception {
+        pair = rebecaModelCompiler.compileRebecaFile(
+                Paths.get(directory, fileName).toFile(),
+                new HashSet<>(Arrays.asList(CompilerExtension.HYBRID_REBECA
+                )), CoreVersion.CORE_2_3);
+
+//        final ExceptionContainer exceptionContainer = rebecaModelCompiler.getExceptionContainer();g
         if (!exceptionContainer.exceptionsIsEmpty()) {
             System.err.println(exceptionContainer.getExceptions());
             pair = new Pair<>();
@@ -51,6 +84,7 @@ public class CompilerUtil {
             System.out.println(Constants.Green + exceptionContainer.getWarnings() + Constants.DefaultColor);
         }
     }
+
 
     @Nonnull
     public static RebecaModel getRebecaModel() {
@@ -115,6 +149,30 @@ public class CompilerUtil {
         return null;
     }
 
+    public static ReactiveClassDeclaration getReactiveClassDeclaration(@Nonnull String actorDeclaration) {
+        for (ReactiveClassDeclaration reactiveClassDeclaration : getHybridRebecaCode().getReactiveClassDeclaration()) {
+            if (reactiveClassDeclaration.getName().equals(actorDeclaration)) {
+                return reactiveClassDeclaration;
+            }
+        }
+        return null;
+    }
+
+    public static List<FormalParameterDeclaration> getServerParameters(@Nonnull String actorDeclaration, @Nonnull String serverName) {
+        ReactiveClassDeclaration reactiveClassDeclaration = getReactiveClassDeclaration(actorDeclaration);
+        if (reactiveClassDeclaration == null) {
+            reactiveClassDeclaration = getPhysicalClassDeclaration(actorDeclaration);
+        }
+        if (reactiveClassDeclaration != null) {
+            for (MsgsrvDeclaration msgsrvDeclaration : reactiveClassDeclaration.getMsgsrvs()) {
+                if (msgsrvDeclaration.getName().equals(serverName)) {
+                    return msgsrvDeclaration.getFormalParameters();
+                }
+            }
+        }
+        return new ArrayList<>();
+    }
+
     @Nullable
     public static ModeDeclaration getModeDeclaration(@Nonnull String actorName, @Nullable String modeName) {
         if (modeName != null) {
@@ -150,5 +208,70 @@ public class CompilerUtil {
             }
         }
         return continuesVariables;
+    }
+
+    @Nonnull
+    public static List<Statement> getMessageBody(@Nonnull String actorName, @Nonnull String messageName) {
+        List<ReactiveClassDeclaration> reactiveClassDeclarations = getHybridRebecaCode().getReactiveClassDeclaration();
+        for (ReactiveClassDeclaration reactiveClassDeclaration : reactiveClassDeclarations) {
+            if (reactiveClassDeclaration.getName().equals(actorName)) {
+                List<MsgsrvDeclaration> msgsrvs = reactiveClassDeclaration.getMsgsrvs();
+                for (MsgsrvDeclaration msgsrv : msgsrvs) {
+                    if (msgsrv.getName().equals(messageName)) {
+                        BlockStatement body = msgsrv.getBlock();
+                        List<Statement> statements = body.getStatements();
+                        return statements;
+                    }
+                }
+            }
+        }
+
+        List<PhysicalClassDeclaration> physicalClassDeclarations = getHybridRebecaCode().getPhysicalClassDeclaration();
+        for (PhysicalClassDeclaration physicalClassDeclaration : physicalClassDeclarations) {
+            if (physicalClassDeclaration.getName().equals(actorName)) {
+                List<MsgsrvDeclaration> msgsrvs = physicalClassDeclaration.getMsgsrvs();
+                for (MsgsrvDeclaration msgsrv : msgsrvs) {
+                    if (msgsrv.getName().equals(messageName)) {
+                        BlockStatement body = msgsrv.getBlock();
+                        List<Statement> statements = body.getStatements();
+                        return statements;
+                    }
+                }
+            }
+        }
+        // CHECKME: is this the correct way to handle this?
+        return new ArrayList<>();
+    }
+
+    public static Set<String> getStateVars(@Nonnull String actorName) {
+        Set<String> stateVariables = new HashSet<>();
+
+        List<ReactiveClassDeclaration> reactiveClassDeclarations = getHybridRebecaCode().getReactiveClassDeclaration();
+        for (ReactiveClassDeclaration reactiveClassDeclaration : reactiveClassDeclarations) {
+            if (reactiveClassDeclaration.getName().equals(actorName)) {
+                List<FieldDeclaration> stateVars = reactiveClassDeclaration.getStatevars();
+                for (FieldDeclaration stateVar : stateVars) {
+                    for (VariableDeclarator variableDeclarator : stateVar.getVariableDeclarators()) {
+                        stateVariables.add(variableDeclarator.getVariableName());
+                    }
+                }
+                return stateVariables;
+            }
+        }
+
+        List<PhysicalClassDeclaration> physicalClassDeclarations = getHybridRebecaCode().getPhysicalClassDeclaration();
+        for (PhysicalClassDeclaration physicalClassDeclaration : physicalClassDeclarations) {
+            if (physicalClassDeclaration.getName().equals(actorName)) {
+                List<FieldDeclaration> stateVars = physicalClassDeclaration.getStatevars();
+                for (FieldDeclaration stateVar : stateVars) {
+                    for (VariableDeclarator variableDeclarator : stateVar.getVariableDeclarators()) {
+                        stateVariables.add(variableDeclarator.getVariableName());
+                    }
+                }
+                return stateVariables;
+            }
+        }
+
+        return stateVariables;
     }
 }

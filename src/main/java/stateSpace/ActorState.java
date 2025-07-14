@@ -1,57 +1,44 @@
 package stateSpace;
 
-import dataStructure.DiscreteVariable;
+import com.rits.cloning.Cloner;
+import dataStructure.ContinuousVariable;
+import dataStructure.DiscreteDecimalVariable;
+import dataStructure.IntervalRealVariable;
+import dataStructure.Variable;
 import org.rebecalang.compiler.modelcompiler.corerebeca.objectmodel.Statement;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Queue;
+import java.util.Set;
 
 public abstract class ActorState {
 
     @Nonnull
     protected String actorName;
 
-    /**
-     * key: variable name
-     * value: variable current value
-     */
     @Nonnull
-    protected HashMap<String, DiscreteVariable> discreteVariablesValuation;
+    protected HashMap<String, Variable> variablesValuation;
 
-    /**
-     * key: message server name
-     * value: a hashMap of parameters values
-     * key: parameter name
-     * value: parameter value
-     */
     @Nonnull
-    protected Queue<Map.Entry<String, HashMap<String, Number>>> queue;
+    protected Set<Message> messageBag;
 
-    /**
-     * list of statements that must be executed
-     */
     @Nonnull
     protected List<Statement> sigma;
 
-    /**
-     * local time of actor
-     */
     protected float localTime;
 
     public ActorState(
             @Nonnull String actorName,
-            @Nonnull HashMap<String, DiscreteVariable> discreteVariablesValuation,
-            @Nonnull Queue<Map.Entry<String, HashMap<String, Number>>> queue,
+            @Nonnull HashMap<String, Variable> variablesValuation,
+            @Nonnull Set<Message> messageBag,
             @Nonnull List<Statement> sigma,
             float localTime
     ) {
         this.actorName = actorName;
-        this.discreteVariablesValuation = discreteVariablesValuation;
-        this.queue = queue;
+        this.variablesValuation = variablesValuation;
+        this.messageBag = messageBag;
         this.sigma = sigma;
         this.localTime = localTime;
     }
@@ -62,26 +49,31 @@ public abstract class ActorState {
     }
 
     @Nonnull
-    public HashMap<String, DiscreteVariable> getDiscreteVariablesValuation() {
-        return discreteVariablesValuation;
+    public HashMap<String, Variable> getVariablesValuation() {
+        return variablesValuation;
     }
 
     @Nullable
-    public DiscreteVariable getVariable(String name) {
-        return this.discreteVariablesValuation.get(name);
+    public Variable getVariable(String name) {
+        return this.variablesValuation.get(name);
     }
 
-    public void updateVariable(DiscreteVariable discreteVariable) {
-        this.discreteVariablesValuation.put(discreteVariable.getName(), discreteVariable);
+    public void updateVariable(Variable variable) {
+        this.variablesValuation.put(variable.getName(), variable);
+    }
+
+    @Nonnull
+    public Set<Message> getMessageBag() {
+        return messageBag;
     }
 
     @Nullable
-    public Map.Entry<String, HashMap<String, Number>> nextMessage() {
-        return queue.poll();
+    public Message nextMessage() {
+        return messageBag.iterator().next();
     }
 
-    public void addMessage(Map.Entry<String, HashMap<String, Number>> message) {
-        this.queue.add(message);
+    public void addMessage(Message message) {
+        this.messageBag.add(message);
     }
 
     @Nonnull
@@ -93,6 +85,14 @@ public abstract class ActorState {
         this.sigma = sigma;
     }
 
+    @Nullable
+    public Statement nextStatement() {
+        if (!sigma.isEmpty()) {
+            return sigma.remove(0);
+        }
+        return null;
+    }
+
     public float getLocalTime() {
         return localTime;
     }
@@ -101,5 +101,41 @@ public abstract class ActorState {
         if (localTime >= 0) {
             this.localTime = localTime;
         }
+    }
+
+    public HashMap<String, Variable> getVariableValuation() {
+        return variablesValuation;
+    }
+
+    public List<ActorState> takeMessage (ContinuousVariable globalTime) {
+        return null;
+    }
+
+    public boolean hasStatement() {
+        return !getSigma().isEmpty();
+    }
+
+    public void addVariable(Variable variable) {
+        this.variablesValuation.put(variable.getName(), variable);
+    }
+
+    public void addVariables(HashMap<String, Variable> variables) {
+        this.variablesValuation.putAll(variables);
+    }
+
+    public void removeMessage(Message message) {
+        this.messageBag.remove(message);
+    }
+
+    public void addStatements(List<Statement> statements) {
+        this.sigma.addAll(statements);
+    }
+
+    public void addStatementsToFront(List<Statement> statements) {
+        this.sigma.addAll(0, statements);
+    }
+
+    public void setVariablesValuation(@Nonnull HashMap<String, Variable> variablesValuation) {
+        this.variablesValuation = variablesValuation;
     }
 }

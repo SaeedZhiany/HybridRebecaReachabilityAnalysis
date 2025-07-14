@@ -1,0 +1,51 @@
+package visitors;
+
+import dataStructure.Variable;
+import org.rebecalang.compiler.modelcompiler.corerebeca.objectmodel.*;
+import org.rebecalang.compiler.modelcompiler.hybridrebeca.objectmodel.HybridTermPrimary;
+
+public abstract class Visitor<T> implements IVisitor<T>{
+
+    @Override
+    public T visit(DotPrimary dotPrimary) {
+        return null;
+    }
+
+    @Override
+    public T visit(UnaryExpression unaryExpression) {
+        return null;
+    }
+
+    @Override
+    public T visit(BinaryExpression binaryExpression) {
+        return null;
+    }
+
+    @Override
+    public T visit(HybridTermPrimary hybridTermPrimary) {
+        return null;
+    }
+
+    @Override
+    public T visit(TermPrimary termPrimary) {
+        return null;
+    }
+
+    @Override
+    public T visit(Literal literal) {
+        return null;
+    }
+
+    @Override
+    public T visit(BlockStatement blockStatement) {
+        return null;
+    }
+
+    @Override
+    public T visit(FieldDeclaration fieldDeclaration) {
+        return null;
+    }
+
+    @Override
+    public T visit(ConditionalStatement conditionalStatement) { return null; }
+}

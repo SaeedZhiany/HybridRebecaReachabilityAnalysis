@@ -8,7 +8,7 @@ import java.util.List;
 public class SOSExecutorContainer {
 
     private static final List<AbstractSOSExecutor> sosExecutors = new ArrayList<AbstractSOSExecutor>() {{
-        add(new AssignmentSOSExecutor());
+        add(new AssignmentStatementSOSExecutor());
         add(new TimeProgressSOSExecutor());
         add(new TakeMessageSOSExecutor());
         // TODO add all SOSExecutors here

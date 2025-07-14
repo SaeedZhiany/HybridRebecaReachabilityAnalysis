@@ -1,0 +1,150 @@
+digraph g {
+  edge [lblstyle="above, sloped"];  s0 [shape="square" label="ContinuousVariable{ globalTime = [0.0, 0.0] }
+Actor: a
+Resume Time: ContinuousVariable{ resumeTime = [0.0, 0.0] }
+Local Time: 0.0
+Variable Valuation: 
+count=DiscreteDecimalVariable{ count = 0 }
+Message Bag: 
+Sigma: 
+;Actor: c
+Resume Time: ContinuousVariable{ resumeTime = [0.0, 0.0] }
+Local Time: 0.0
+Variable Valuation: 
+Message Bag: 
+Sigma: 
+;
+Actor: hws
+Mode: Off
+Local Time: 0.0
+Variable Valuation: 
+temp=IntervalRealVariable{  = [20.0, 20.0] }
+Message Bag: 
+Sigma: 
+;"];
+  s1 [shape="square" label="ContinuousVariable{ globalTime = [0.0, 0.5] }
+Actor: a
+Resume Time: ContinuousVariable{ resumeTime = [0.0, 0.0] }
+Local Time: 0.0
+Variable Valuation: 
+count=DiscreteDecimalVariable{ count = 0 }
+Message Bag: 
+Sigma: 
+;Actor: c
+Resume Time: ContinuousVariable{ resumeTime = [0.0, 0.0] }
+Local Time: 0.0
+Variable Valuation: 
+Message Bag: 
+Sigma: 
+;
+Actor: hws
+Mode: Off
+Local Time: 0.0
+Variable Valuation: 
+temp=IntervalRealVariable{  = [19.5, 20.0] }
+Message Bag: 
+Sigma: 
+;"];
+  s2 [shape="square" label="ContinuousVariable{ globalTime = [0.5, 1.0] }
+Actor: a
+Resume Time: ContinuousVariable{ resumeTime = [0.0, 0.0] }
+Local Time: 0.0
+Variable Valuation: 
+count=DiscreteDecimalVariable{ count = 0 }
+Message Bag: 
+Sigma: 
+;Actor: c
+Resume Time: ContinuousVariable{ resumeTime = [0.0, 0.0] }
+Local Time: 0.0
+Variable Valuation: 
+Message Bag: 
+Sigma: 
+;
+Actor: hws
+Mode: Off
+Local Time: 0.0
+Variable Valuation: 
+temp=IntervalRealVariable{  = [19.0, 19.5] }
+Message Bag: 
+Sigma: 
+;"];
+  s3 [shape="square" label="ContinuousVariable{ globalTime = [1.0, 1.5] }
+Actor: a
+Resume Time: ContinuousVariable{ resumeTime = [0.0, 0.0] }
+Local Time: 0.0
+Variable Valuation: 
+count=DiscreteDecimalVariable{ count = 0 }
+Message Bag: 
+Sigma: 
+;Actor: c
+Resume Time: ContinuousVariable{ resumeTime = [0.0, 0.0] }
+Local Time: 0.0
+Variable Valuation: 
+Message Bag: 
+Sigma: 
+;
+Actor: hws
+Mode: Off
+Local Time: 0.0
+Variable Valuation: 
+temp=IntervalRealVariable{  = [18.5, 19.0] }
+Message Bag: 
+Sigma: 
+;"];
+  s4 [shape="square" label="ContinuousVariable{ globalTime = [1.0, 1.5] }
+Actor: a
+Resume Time: ContinuousVariable{ resumeTime = [0.0, 0.0] }
+Local Time: 0.0
+Variable Valuation: 
+count=DiscreteDecimalVariable{ count = 0 }
+Message Bag: 
+Sigma: 
+;Actor: c
+Resume Time: ContinuousVariable{ resumeTime = [0.0, 0.0] }
+Local Time: 0.0
+Variable Valuation: 
+Message Bag: 
+Sigma: 
+;
+Actor: hws
+Mode: Off
+Local Time: 0.0
+Variable Valuation: 
+temp=IntervalRealVariable{  = [18.5, 19.0] }
+Message Bag: 
+Sigma: 
+org.rebecalang.compiler.modelcompiler.corerebeca.objectmodel.DotPrimary@3bcd426c
+org.rebecalang.compiler.modelcompiler.corerebeca.objectmodel.TermPrimary@5f14a673
+;"];
+  s5 [shape="square" label="ContinuousVariable{ globalTime = [1.0, 1.5] }
+Actor: a
+Resume Time: ContinuousVariable{ resumeTime = [0.0, 0.0] }
+Local Time: 0.0
+Variable Valuation: 
+count=DiscreteDecimalVariable{ count = 0 }
+Message Bag: 
+Sigma: 
+;Actor: c
+Resume Time: ContinuousVariable{ resume time = [0.0, 0.0] }
+Local Time: 0.0
+Variable Valuation: 
+t=IntervalRealVariable{ t = [18.5, 19.0] }
+Message Bag: 
+Sigma: 
+;
+Actor: hws
+Mode: On
+Local Time: 0.0
+Variable Valuation: 
+temp=IntervalRealVariable{ t = [18.5, 19.0] }
+Message Bag: 
+Sigma: 
+;"];
+  s0 -> s1 [label="PhysicalUpdate"];
+  s1 -> s2 [label="PhysicalUpdate"];
+  s2 -> s3 [label="PhysicalUpdate"];
+  s2 -> s4 [label="PhysicalUpdate"];
+  s4 -> s5 [label=" NonTimeProgressExecute", color="red"];
+  __start0 [label="" shape="none" width="0" height="0"];
+  __start0 -> s0;
+}

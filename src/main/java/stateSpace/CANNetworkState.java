@@ -41,13 +41,13 @@ public class CANNetworkState implements NetworkState<CANMessage> {
         return messagesBuffer.isEmpty();
     }
 
-    public void increaseMessagesArrivalTime(float deltaTime) {
-        messagesBuffer.forEach(canMessage ->
-                canMessage.getMessage().setArrivalTime(canMessage.getMessage().getArrivalTime() + deltaTime)
-        );
-    }
+//    public void increaseMessagesArrivalTime(float deltaTime) {
+//        messagesBuffer.forEach(canMessage ->
+//                canMessage.getMessage().setArrivalTime(canMessage.getMessage().getArrivalTime() + deltaTime)
+//        );
+//    }
 
-    private static class CANMessagesComparator implements Comparator<CANMessage> {
+    public static class CANMessagesComparator implements Comparator<CANMessage> {
 
         @Override
         public int compare(CANMessage m1, CANMessage m2) {

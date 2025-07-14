@@ -1,0 +1,39 @@
+reactiveclass A (3){
+	knownrebecs{
+	  B b;
+	  C c;
+	}
+	A(){
+	    self.sendToRebecs() after(0.5, 0.5);
+	}
+	msgsrv sendToRebecs() {
+	    b.m1() after (0.1,0.5);
+        c.m2() after (0.1,0.5);
+	}
+
+}
+
+reactiveclass B (3){
+	knownrebecs{D d;}
+	B(){}
+	msgsrv m1(){
+		d.m3() after (0.3,0.4);
+	}
+}
+reactiveclass C (3){
+	knownrebecs{}
+	C(){}
+	msgsrv m2(){}
+}
+reactiveclass D (3){
+	knownrebecs{}
+	D(){}
+	msgsrv m3(){}
+}
+
+main{
+    A a(b,c):();
+	B b(d):();
+	C c():();
+	D d():();
+}

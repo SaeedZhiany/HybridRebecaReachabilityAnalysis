@@ -1,0 +1,23 @@
+reactiveclass SoftwareTest(2){
+  knownrebecs {
+  }
+
+  statevars{
+  	 float tempr;
+  	 float timer;
+  	 int inValue;
+  	 float defaultF;
+  	 int defaultI;
+  }
+
+  SoftwareTest(float tempr_, int value_){
+  		tempr = tempr_;
+  		timer = 1.5f;
+  		inValue = value_;
+  	}
+}
+
+main
+{
+	SoftwareTest ss():(20.0f, 5);
+}

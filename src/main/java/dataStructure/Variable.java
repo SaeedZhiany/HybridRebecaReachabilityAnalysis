@@ -11,6 +11,10 @@ public abstract class Variable {
         this.name = name;
     }
 
+    public Variable(@Nonnull Variable variable) {
+        this.name = variable.name;
+    }
+
     @Nonnull
     public String getName() {
         return name;
