@@ -4,7 +4,7 @@ import dataStructure.*;
 import org.rebecalang.compiler.modelcompiler.corerebeca.objectmodel.*;
 import org.rebecalang.compiler.modelcompiler.hybridrebeca.objectmodel.HybridRebecaCode;
 import org.rebecalang.compiler.modelcompiler.hybridrebeca.objectmodel.PhysicalClassDeclaration;
-import sos.NonTimeProgressSOSExecutor;
+import sos.*;
 import utils.CompilerUtil;
 import utils.ReachabilityAnalysisGraph;
 import visitors.BlockStatementExecutorVisitor;
@@ -35,7 +35,15 @@ public class SpaceStateGenerator {
         final HybridRebecaCode hybridRebecaCode = CompilerUtil.getHybridRebecaCode();
         HybridState initialState = makeInitialState();
         ReachabilityAnalysisGraph reachabilityAnalysisGraph = new ReachabilityAnalysisGraph(initialState);
-        Queue<HybridState> queue = new LinkedList<>(nonTimeProgressSOSExecutor.generateNextStates(initialState, false));
+        Queue<HybridState> queue = new LinkedList<>();
+        List<HybridState> initialStatesAfterConstruction = executeConstructors(initialState);
+
+        ReachabilityAnalysisGraph.TreeNode initialNode = reachabilityAnalysisGraph.findNodeInGraph(initialState);
+        for (HybridState state : initialStatesAfterConstruction) {
+            reachabilityAnalysisGraph.addNode(initialNode, state, "Constructor");
+            queue.add(state);
+        }
+
         Boolean isFirstRound = true;
         long stateCounter =0;
         while (!queue.isEmpty() && isReachedEndYet(queue, endSimulation)) { // should add time upper bound
@@ -44,7 +52,7 @@ public class SpaceStateGenerator {
             HybridState state = queue.poll();
             stateCounter ++;
             currentEvent = state.getGlobalTime().getLowerBound();
-            state.updateHash();
+            state.updateHash(); // MAYBE REMOVAL RISKY
 
             ReachabilityAnalysisGraph.TreeNode rootNode = reachabilityAnalysisGraph.findNodeInGraph(state);
             if (isFirstRound)
@@ -100,7 +108,7 @@ public class SpaceStateGenerator {
             if (updatedPhysicalHybridStates.size() > 1)
                 System.out.println("sds");
             for (Map.Entry<String, HybridState> hybridStateEntry : updatedPhysicalHybridStates.entrySet()) {
-                hybridStateEntry.getValue().updateHash();
+                hybridStateEntry.getValue().updateHash(); // MAYBE REMOVAL
                 reachabilityAnalysisGraph.addNode(rootNode, hybridStateEntry.getValue(), "PhysicalUpdate");
                 List<HybridState> generatedHybridStates = nonTimeProgressSOSExecutor.generateNextStates(hybridStateEntry.getValue(), false);
                 queue.addAll(generatedHybridStates);
@@ -126,6 +134,11 @@ public class SpaceStateGenerator {
         System.out.println("Execution time: " + ((endTime - startTime)/ 1_000_000) + " ms");
         System.out.println("Total Stated: " + stateCounter);
         String graph = reachabilityAnalysisGraph.toDot();
+    }
+
+    protected List<HybridState> executeConstructors(HybridState initialState) {
+        NonTimeProgressSOSExecutor nonTimeProgressSOSExecutor = new NonTimeProgressSOSExecutor();
+        return  nonTimeProgressSOSExecutor.generateNextStates(initialState, false);
     }
 
     private static String getStringOfVariableSimple(Variable variable) {
@@ -325,14 +338,15 @@ public class SpaceStateGenerator {
             }
 
         }
-        BlockStatementExecutorVisitor blockStatementExecutorVisitor = new BlockStatementExecutorVisitor(variableValuationInitial);
-        blockStatementExecutorVisitor.visit(constructorDeclaration.getBlock());
-        HashMap<String, Variable> variableValuation = new HashMap<>();
-        for (FieldDeclaration stateVar : stateVars) {
-            for (VariableDeclarator variableDeclarator : stateVar.getVariableDeclarators()) {
-                variableValuation.put(variableDeclarator.getVariableName(), variableValuationInitial.get(variableDeclarator.getVariableName()));
-            }
-        }
+        HashMap<String, Variable> variableValuation = new HashMap<>(variableValuationInitial);
+//        BlockStatementExecutorVisitor blockStatementExecutorVisitor = new BlockStatementExecutorVisitor(variableValuationInitial);
+//        blockStatementExecutorVisitor.visit(constructorDeclaration.getBlock());
+//        HashMap<String, Variable> variableValuation = new HashMap<>();
+//        for (FieldDeclaration stateVar : stateVars) {
+//            for (VariableDeclarator variableDeclarator : stateVar.getVariableDeclarators()) {
+//                variableValuation.put(variableDeclarator.getVariableName(), variableValuationInitial.get(variableDeclarator.getVariableName()));
+//            }
+//        }
         // TODO:
         return new SoftwareState(mainRebecDefinition.getName(), variableValuation, new HashSet<>(),
                 constructorDeclaration.getBlock().getStatements(), 0, new ContinuousVariable("resumeTime"));
@@ -377,15 +391,19 @@ public class SpaceStateGenerator {
             }
 
         }
-        BlockStatementExecutorVisitor blockStatementExecutorVisitor = new BlockStatementExecutorVisitor(variableValuationInitial, "none");
-        blockStatementExecutorVisitor.visit(constructorDeclaration.getBlock());
-        HashMap<String, Variable> variableValuation = new HashMap<>();
-        for (FieldDeclaration stateVar : stateVars) {
-            for (VariableDeclarator variableDeclarator : stateVar.getVariableDeclarators()) {
-                variableValuation.put(variableDeclarator.getVariableName(), variableValuationInitial.get(variableDeclarator.getVariableName()));
-            }
-        }
-        return new PhysicalState(mainRebecDefinition.getName(), blockStatementExecutorVisitor.getMode(), variableValuation, new HashSet<>(), new ArrayList<>(), 0);
+        HashMap<String, Variable> variableValuation = new HashMap<>(variableValuationInitial);
+
+//        BlockStatementExecutorVisitor blockStatementExecutorVisitor = new BlockStatementExecutorVisitor(variableValuationInitial, "none");
+//        blockStatementExecutorVisitor.visit(constructorDeclaration.getBlock());
+//        HashMap<String, Variable> variableValuation = new HashMap<>();
+//        for (FieldDeclaration stateVar : stateVars) {
+//            for (VariableDeclarator variableDeclarator : stateVar.getVariableDeclarators()) {
+//                variableValuation.put(variableDeclarator.getVariableName(), variableValuationInitial.get(variableDeclarator.getVariableName()));
+//            }
+//        }
+//        variableValuation = variableValuationInitial;
+        return new PhysicalState(mainRebecDefinition.getName(), "init", variableValuation, new HashSet<>(),
+                constructorDeclaration.getBlock().getStatements(), 0);
     }
 
     private ConstructorDeclaration getConstructor(List<ConstructorDeclaration> constructorDeclarations, List<Expression> declarationArgs) {

@@ -25,7 +25,7 @@ public class NonTimeProgressSOSExecutor {
         Map<String, HybridState> nextRoundStates = new HashMap<>();
         Map<String, HybridState> currentRoundStates = new HashMap<>();
 
-        hybridState.updateHash();
+        hybridState.updateHash(); // MAYBE REMOVAL
         currentRoundStates.put(hybridState.getHash(), hybridState);
         boolean isProcessEnd = false;
         while (!isProcessEnd) {
@@ -38,7 +38,7 @@ public class NonTimeProgressSOSExecutor {
                         isStateProcessEnd = false;
                         List<HybridState> generatedHybridStates = executor.execute(entry.getValue());
                         for (HybridState generatedHybridState : generatedHybridStates) {
-                            generatedHybridState.updateHash();
+                            generatedHybridState.updateHash(); // MAYBE REMOVAL
                             generatedHybridState.setParentHash(entry.getKey());
                             nextRoundStates.put(generatedHybridState.getHash(), generatedHybridState);
                         }

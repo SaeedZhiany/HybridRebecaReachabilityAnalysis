@@ -14,17 +14,35 @@ reactiveclass SoftwareTest(2){
   		tempr = tempr_;
   		timer = 0.5f;
   		inValue = value_;
+  		self.control(2.5f) after(0.5, 1.5);
   	}
+
+  msgsrv control(float temp){
+      delay(0.5,0.5);
+      if (temp<18.5)  tempr = 5.0f;
+  }
 }
 
 physicalclass PhysicalTest(2)
 {
+
+
+    knownrebecs {
+          SoftwareTest st;
+      }
+
+
   statevars {
   	 float temp;
   	 float timer;
   	 int inValue;
   	 float defaultF;
-  	 int defaultI;  }
+  	 int defaultI;
+  }
+
+
+
+
 
   mode On {
     inv(temp<=23){
@@ -55,6 +73,6 @@ physicalclass PhysicalTest(2)
 }
 
 main {
-	PhysicalTest pp():(20.0f, 6);
+	PhysicalTest pp(ss):(20.0f, 6);
 	SoftwareTest ss():(20.0f, 7);
 }
